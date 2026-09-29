@@ -73,7 +73,7 @@ the value and the threshold.
 | Estimated inversion risk | not flagged | flagged | — |
 
 - Overall status: any `FAIL` → `UNFAVORABLE`; else any `CAUTION` → `CAUTION`; else `FAVORABLE`.
-  `UNKNOWN` rules make the data quality `PARTIAL` and never count as `PASS`.
+  An `UNKNOWN` rule never counts as `PASS`: the hour is at best `CAUTION` and its data quality is `PARTIAL`.
 - Delta T is dry-bulb minus wet-bulb temperature. Wet bulb uses Stull (2011), valid for
   RH 5–99 % and −20 to 50 °C.
 - Estimated inversion risk is flagged when wind is below 5 km/h, cloud cover below 30 % and it is
