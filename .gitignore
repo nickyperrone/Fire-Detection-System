@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+data/cache/
+ml/datasets/
+ml/runs/
+*.pt
+node_modules/
+.next/

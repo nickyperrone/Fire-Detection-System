@@ -1,0 +1,55 @@
+# 00 — Conventions
+
+Rules for every file in the repository. Reviews reject changes that break them.
+
+## Language
+
+English for code, identifiers, comments, docs, UI copy and commit messages.
+
+## Writing (docs, README, UI copy)
+
+- Short, factual sentences. State the decision and the reason.
+- No introductions ("In this section we will..."), no closing summaries.
+- No marketing words: seamless, powerful, robust, leverage, unlock, cutting-edge, delve, elevate.
+- No emojis.
+- Numbers carry units and, when relevant, the period or time they refer to ("3.7 km", "acquired 2 h ago").
+- The product never states more certainty than the data has. A fire is a "possible fire", an inversion
+  is an "estimated inversion risk", and "no detections" is only shown when the field was observed.
+
+## Code
+
+- Comments explain why: a data quirk, a trade-off, a non-obvious constraint. They never restate the code.
+- No abstraction with a single implementation: no base classes, factories, plugin registries or
+  interfaces created "for later". Provider modules share a normalized record (a dataclass), and an
+  interface is added when a second provider of the same kind exists.
+- No dead code, commented-out code, unused parameters, or TODO comments on `main`.
+- Names come from the domain: `observation`, `fire_event`, `territory`, `spray_assessment`.
+  Forbidden module and variable names: `utils`, `helpers`, `misc`, `info`, `manager`, `handler`.
+- A function does one thing and fits on one screen.
+- Catch specific exceptions. Provider calls convert network and parsing errors into a failed
+  `IngestionRun`; they never crash the worker.
+- Thresholds and heuristics live in `config/thresholds.yaml`, never as literals in the code.
+- Every derived row stores the `processing_version` that produced it (see [02-architecture](02-architecture.md#processing-version)).
+
+### Backend
+
+- Layers: `routers/` (HTTP only) → `services/` (logic and SQL) → `db.py` (session).
+  Routers never contain SQL; services never import FastAPI.
+- `providers/` only talk to external APIs and return normalized records. They never touch the database.
+- Every SQL statement is parameterized. User input is never formatted into SQL text.
+- All timestamps are timezone-aware UTC. Local time (America/Argentina/Buenos_Aires) is only used for display.
+- Formatting and lint: `ruff format`, `ruff check` (rules E, F, I, B, UP), line length 100.
+
+## Commits
+
+- Group related changes in one commit. Avoid small commits for trivial edits.
+- Message: one line in English, plain B1 level, at most 14 words, starting with an imperative verb
+  (`Add fire correlation with configurable distance and time window`).
+- No prefixes (`feat:`), no trailers, no mention of AI tools or assistants.
+- A spec change is committed before the code that implements it.
+
+## Acceptance criteria
+
+- `ruff check` and `ruff format --check` pass.
+- `grep -rniE "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md` returns nothing.
+- `grep -rn "TODO" backend/app` returns nothing.
