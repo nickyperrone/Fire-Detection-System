@@ -1,6 +1,7 @@
 """All fields and sections with their three answers, worst first."""
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -71,7 +72,7 @@ def build_portfolio(
     owner: str,
     thresholds: dict,
     now: datetime,
-    tags: list[str] = (),
+    tags: Sequence[str] = (),
     profile: str = "default",
 ) -> list[PortfolioEntry]:
     territories = list_territories(session, owner, tags)

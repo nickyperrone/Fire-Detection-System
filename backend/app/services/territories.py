@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from geoalchemy2 import Geography, WKTElement
 from shapely.geometry import MultiPolygon, Polygon, shape
 from sqlalchemy import cast, delete, func, select
@@ -38,7 +40,7 @@ def create_territory(
     name: str,
     geometry: dict,
     parent_id: int | None = None,
-    tags: list[str] = (),
+    tags: Sequence[str] = (),
     attributes: dict | None = None,
     section_tolerance_m: float,
 ) -> Territory:
@@ -70,18 +72,21 @@ def create_territory(
 def _check_inside(
     session: Session, geom: WKTElement, parent: Territory, tolerance_m: float
 ) -> None:
+    # Compared in SQL against the stored row: parent.geom may be WKB or WKT depending on
+    # whether the parent was loaded or created in this session.
     covered = session.scalar(
         select(
             func.ST_CoveredBy(
-                cast(geom, Geography), func.ST_Buffer(cast(parent.geom, Geography), tolerance_m)
+                cast(geom, Geography),
+                func.ST_Buffer(cast(Territory.geom, Geography), tolerance_m),
             )
-        )
+        ).where(Territory.id == parent.id)
     )
     if not covered:
         raise TerritoryError(f"the section is not inside field {parent.name!r}")
 
 
-def set_tags(session: Session, territory: Territory, labels: list[str]) -> None:
+def set_tags(session: Session, territory: Territory, labels: Sequence[str]) -> None:
     session.execute(delete(TerritoryTag).where(TerritoryTag.territory_id == territory.id))
     for label in dict.fromkeys(labels):
         tag = get_or_create_tag(session, territory.owner, label)
@@ -106,7 +111,7 @@ def get_or_create_tag(session: Session, owner: str, label: str) -> Tag:
     return tag
 
 
-def list_territories(session: Session, owner: str, tags: list[str] = ()) -> list[Territory]:
+def list_territories(session: Session, owner: str, tags: Sequence[str] = ()) -> list[Territory]:
     """Territories that carry every tag in `tags`, fields before their sections."""
     query = select(Territory).where(Territory.owner == owner)
     for label in tags:
@@ -180,3 +185,8 @@ def _exists(session: Session, owner: str, name: str, parent: Territory | None) -
         )
         is not None
     )
+
+
+def get_territory(session: Session, owner: str, territory_id: int) -> Territory | None:
+    territory = session.get(Territory, territory_id)
+    return territory if territory is not None and territory.owner == owner else None
