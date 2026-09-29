@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: fieldwatch
+      POSTGRES_PASSWORD: fieldwatch
+      POSTGRES_DB: fieldwatch
+    # 5433 so it does not collide with a local Postgres on 5432.
+    ports: ["5433:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fieldwatch"]
+      interval: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment: &app_env
+      DATABASE_URL: postgresql+psycopg://fieldwatch:fieldwatch@db:5432/fieldwatch
+      FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
+      THRESHOLDS_PATH: /config/thresholds.yaml
+    volumes: ["./config:/config:ro"]
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+
+  worker:
+    build: ./backend
+    command: python -m app.worker
+    environment: *app_env
+    volumes: ["./config:/config:ro"]
+    depends_on:
+      api: {condition: service_started}
+
+volumes:
+  pgdata:
