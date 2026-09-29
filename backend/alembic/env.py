@@ -12,8 +12,9 @@ if config.config_file_name is not None:
 
 
 def include_object(obj, name, type_, reflected, compare_to):
-    # spatial_ref_sys belongs to the PostGIS extension, not to this app.
-    return not (type_ == "table" and name == "spatial_ref_sys")
+    # Tables that exist only in the database belong to extensions (spatial_ref_sys, and the
+    # Tiger geocoder tables that the postgis/postgis image installs), never to this app.
+    return not (type_ == "table" and reflected and compare_to is None)
 
 
 def run_migrations_online() -> None:
