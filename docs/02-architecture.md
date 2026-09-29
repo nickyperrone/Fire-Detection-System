@@ -42,7 +42,7 @@ flowchart LR
 - **Capture and normalize** happen in `providers/`. Each provider returns normalized records
   (`FireObservation`, `HourlyWeather`). Business code never sees provider column names or product codes.
 - **One read per region, not per field.** FIRMS is queried once per sensor for the region bounding box
-  (Larroque and the fields to its NW: `-59.35,-33.25,-58.80,-32.70`). Matching detections to fields is a PostGIS join, so
+  (Entre Ríos and the Paraná Delta: `-61.0,-34.5,-57.5,-30.0`). Matching detections to fields is a PostGIS join, so
   10 or 10,000 fields cost the same number of external calls. Weather is read in one batched request
   for all field centroids, rounded to a 0.02° grid to share nearby points.
 - **Store, then derive.** Raw observations are stored with their original payload. Fire events,

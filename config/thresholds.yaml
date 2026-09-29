@@ -2,10 +2,10 @@
 # Changing any of them changes the version stored on new derived rows.
 
 region:
-  name: larroque
-  # west, south, east, north (EPSG:4326). Covers Larroque and the fields to its NW,
-  # plus the widest field risk band (10 km) around them.
-  bbox: [-59.35, -33.25, -58.80, -32.70]
+  name: entre-rios-delta
+  # west, south, east, north (EPSG:4326). Entre Ríos and the Paraná Delta: the fields near
+  # Larroque plus the area shown in explore mode and used to train the fire forecast.
+  bbox: [-61.0, -34.5, -57.5, -30.0]
 
 territories:
   # A section may stick out of its field by this much, to absorb drawing and simplification error.

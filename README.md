@@ -68,9 +68,9 @@ flowchart LR
     DB --> CLI["CLI portfolio"]
 ```
 
-- **One read per region, not per field.** FIRMS is queried once per sensor for the Larroque bounding
-  box, and PostGIS matches detections to fields. The number of external calls does not grow with the
-  number of fields.
+- **One read per region, not per field.** FIRMS is queried once per sensor for the Entre Ríos and
+  Delta bounding box, and PostGIS matches detections to fields. The number of external calls does
+  not grow with the number of fields.
 - **Observation, fire event and field risk event are separate.** Three satellites seeing the same fire
   are three observations and one fire event. One fire near fifteen fields is one fire event and
   fifteen field risk events.
