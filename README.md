@@ -1,5 +1,7 @@
 # Field Watch
 
+[![CI](https://github.com/nickyperrone/Fire-Detection-System/actions/workflows/ci.yml/badge.svg)](https://github.com/nickyperrone/Fire-Detection-System/actions/workflows/ci.yml)
+
 Satellite monitoring for the fields of a crop-spraying contractor around Larroque, Entre Ríos
 (Argentina). For every field and section it answers three questions: is there a fire nearby, are
 spraying conditions favorable, and is something unusual happening in the field. Every answer shows
@@ -29,20 +31,29 @@ make portfolio            # prints every field and section with its answers
 - `make api` serves the API on http://localhost:8000 (docs at `/docs`). `make worker` runs the
   scheduled worker (FIRMS every 15 min, weather every 60 min).
 - `docker compose up --build` runs the database, API and worker together.
+- The `postgis/postgis` image is amd64 only. On Apple Silicon Docker runs it under emulation, which
+  works but makes the first start take about a minute.
+- Real fields go in `data/aoi/private/`, which is not committed: field outlines are private data.
 
 Other commands: `make test` (unit and PostGIS integration tests), `make lint`, `make migration m="..."`.
 
 ## Example output
 
+`make portfolio TAG=to-spray-this-week`, with a fire detected east of La Esperanza:
+
 ```
-La Esperanza (312 ha)                     client:Juan Perez  zone:larroque-east
-  Fire   HIGH      Possible fire 3.7 km NE · VIIRS NOAA-21, MODIS · high · acquired 2 h ago, received 5 min ago
-  Spray  CAUTION   gusts 18 km/h (caution from 17) · next favorable window 18:00–21:00
-  Weird  NO_DATA   imagery analysis starts in Phase 1
-  Lote 1 — Soy (156 ha)                   crop:soy  to-spray-this-week
-    Fire   HIGH    Possible fire 3.9 km NE
-    Spray  CAUTION gusts 18 km/h (caution from 17)
+Campo Norte (311 ha)    client:Maria Gomez  crop:wheat  to-spray-this-week  zone:larroque-nw
+  Fire   WATCH       Possible fire 8.7 km E · VIIRS NOAA-21, MODIS Aqua · high · acquired 4 h ago, received 12 min ago
+  Spray  UNFAVORABLE gusts 23 km/h > 20 · drift toward N · next favorable Wed 01:00–02:00
+  Weird  NO_DATA     imagery analysis starts in Phase 1
+La Esperanza / Lote 1 - Soy (194 ha)    crop:soy  to-spray-this-week
+  Fire   HIGH        Possible fire 3.9 km NE · VIIRS NOAA-21, MODIS Aqua · high · acquired 4 h ago, received 12 min ago
+  Spray  CAUTION     gusts 18 km/h (caution from 17) · drift toward N · next favorable Wed 01:00–02:00
+  Weird  NO_DATA     imagery analysis starts in Phase 1
 ```
+
+Without a FIRMS key the fire line says `NO_DATA  no fire data: FIRMS has not been read successfully`,
+never "no detections".
 
 ## Architecture
 
@@ -84,6 +95,11 @@ Full diagrams, the data model and the decision log are in [02-architecture](docs
 | [01-product](docs/01-product.md) | User, the three questions, fields, sections, tags, roadmap |
 | [02-architecture](docs/02-architecture.md) | Pipeline, data model, processing version, stack, decisions |
 | [03-rules](docs/03-rules.md) | FIRMS normalization, correlation, severity, spray rules, data quality |
+| [04-frontend](docs/04-frontend.md) | Map-first UI, bottom sheet, vector tiles by zoom, explore mode |
+| [05-fire-forecast](docs/05-fire-forecast.md) | Fire probability per field for 24–72 h: data, model, evaluation |
+
+CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
+the tests against a PostGIS service container, and a Docker image build.
 
 ## Data sources
 
@@ -105,6 +121,7 @@ Full diagrams, the data model and the decision log are in [02-architecture](docs
 | `data/aoi/` | Sample fields, sections and tags near Larroque (GeoJSON) |
 | `backend/app/providers/` | FIRMS and Open-Meteo clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray conditions, data quality, portfolio |
-| `backend/app/routers/` | FastAPI endpoints |
+| `backend/app/routers/` | FastAPI endpoints (HTTP only) |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
+| `.github/workflows/` | CI |

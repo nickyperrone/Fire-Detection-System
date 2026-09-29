@@ -36,6 +36,11 @@ different answers:
 - The **portfolio** shows every field and section at once, sorted by the worst answer and filterable
   by tag. Example: "which `to-spray-this-week` lots have favorable conditions tomorrow from 6 to 10 am?".
 
+## Without a field
+
+Anyone can open the map without an account and see fires in the covered regions as they are
+ingested (explore mode). Explore mode sends no notifications. Alerts need a login and at least one field.
+
 ## What the product does not claim
 
 - It does not detect a fire the moment it starts. Satellite detections for Argentina reach FIRMS
@@ -51,9 +56,9 @@ different answers:
 | Phase | Scope |
 |---|---|
 | 0 — Spike | Sample fields near Larroque, FIRMS ingestion, fire events, field risk, spray conditions, portfolio in the CLI and API |
-| 1 — Imagery | Sentinel-2 acquisitions, NDVI/NDRE/NDWI/NBR per field, change detection against each field's own baseline, before/after images, map UI |
-| 2 — YOLO and GOES | Smoke and fire detection on Sentinel-2 and GOES tiles, dataset tooling, inference in the worker |
-| 3 — MVP | Login, alert rules and spray profiles in the UI, email alerts, history, seen/resolved |
+| 1 — Imagery and map | Sentinel-2 acquisitions, NDVI/NDRE/NDWI/NBR per field, change detection against each field's own baseline, before/after images; map UI with vector tiles and explore mode ([04-frontend](04-frontend.md)) |
+| 2 — Forecast, YOLO and GOES | Fire forecast per field for 24–72 h ([05-fire-forecast](05-fire-forecast.md)); smoke and fire detection on Sentinel-2 and GOES tiles; inference in the worker |
+| 3 — MVP | Login, alert rules and spray profiles in the UI, email alerts for logged-in users with fields, history, seen/resolved |
 | 4 — Risk and deploy | Wind-aware fire risk, historical baselines, AWS deploy, drone photo upload |
 
 ## Phase 0 user stories
