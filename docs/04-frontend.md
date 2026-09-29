@@ -40,9 +40,12 @@ more than two taps.
   live, then name and tags. A drawn field can be split into sections the same way.
 - **Provenance in one tap**: every fire answer opens a card with sensors, confidence, "acquired 2 h ago ·
   received 5 min ago", and the processing version.
-- **Visual style**: dark basemap by default (fires and colors read better, less glare), light basemap
-  as an option, one accent color, large type for the three answers, system font stack. Smooth camera
-  moves (`flyTo`) when selecting a field, like a navigation app.
+- **Visual style**: dark basemap by default (fires and colors read better, less glare), with light and
+  satellite basemaps in the layers button; satellite is what a contractor uses to recognize a field.
+  One accent color, large type for the three answers, system font stack. Smooth camera moves
+  (`flyTo`) when selecting a field, like a navigation app.
+- **Data freshness is always visible**: a small pill under the search bar says when fires were last
+  read ("Fires read 6 min ago"), and turns gray with the reason when the source is `STALE` or failing.
 
 ## Progressive map loading
 
@@ -57,7 +60,9 @@ The map loads what is on screen, at the detail the zoom needs, like Google Maps.
   observations and exact outlines appear.
 - Tiles carry `Cache-Control` headers: short for fire layers (5 min), longer for territories, which
   are invalidated by a version parameter when a field changes.
-- Portfolio and detail data (answers, timelines) come from the JSON API, not from tiles.
+- Portfolio and detail data (answers, timelines) come from the JSON API, not from tiles. Field tiles
+  only carry `id`, `name` and `kind`; the map colors each field with MapLibre feature state set from
+  the portfolio, so a status change does not invalidate any tile.
 
 ## Explore mode (no login)
 
@@ -69,6 +74,16 @@ The map loads what is on screen, at the detail the zoom needs, like Google Maps.
 
 ## Stack
 
-Next.js (App Router), TypeScript, Tailwind, MapLibre GL JS, mapbox-gl-draw for drawing,
-TanStack Query for API data. Filters, the selected field and the map view live in the URL, so every
-view can be shared as a link.
+| Piece | Choice | Why |
+|---|---|---|
+| App | Next.js (App Router), TypeScript strict, Tailwind | |
+| Map | MapLibre GL JS | Open source, vector tiles, feature state |
+| Drawing | Terra Draw with its MapLibre adapter | Supports MapLibre directly; mapbox-gl-draw needs patches for it |
+| Area while drawing | `@turf/area` | Live hectares; the backend value is the one saved |
+| Basemaps | CARTO Dark Matter and Positron (vector), Esri World Imagery (satellite raster) | Free with attribution, no API key |
+| API data | TanStack Query | Caching and background refetch of the portfolio |
+| API types | `openapi-typescript` from the FastAPI OpenAPI document (`make codegen`) | Types never drift from the backend; CI fails if they do |
+
+- Components never call `fetch`; data access goes through the hooks in `src/api/queries.ts`.
+- Filters, the selected field and the map view live in the URL, so every view can be shared as a link.
+- In development, Next.js proxies `/api/*` to the FastAPI server, so there is no CORS setup.
