@@ -30,6 +30,8 @@ def engine():
     try:
         engine.connect().close()
     except OperationalError:
+        if os.environ.get("REQUIRE_TEST_DATABASE"):
+            raise
         pytest.skip("PostGIS test database is not running (make db)")
     # Running the real migrations also tests them.
     config = Config(str(BACKEND / "alembic.ini"))

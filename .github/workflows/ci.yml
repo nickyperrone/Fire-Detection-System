@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: fieldwatch
+          POSTGRES_PASSWORD: fieldwatch
+          POSTGRES_DB: fieldwatch_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U fieldwatch"
+          --health-interval 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://fieldwatch:fieldwatch@localhost:5432/fieldwatch_test
+      TEST_DATABASE_URL: postgresql+psycopg://fieldwatch:fieldwatch@localhost:5432/fieldwatch_test
+      # In CI a missing database is a failure, not a skipped test.
+      REQUIRE_TEST_DATABASE: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Writing rules (docs/00-conventions.md)
+        working-directory: .
+        run: |
+          if grep -rniE "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md; then exit 1; fi
+          if grep -rn "TODO" backend/app; then exit 1; fi
+      - name: Migrations match the models
+        run: uv run alembic upgrade head && uv run alembic check
+      - name: Tests
+        run: uv run pytest -q
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the backend image
+        run: docker build -t field-watch-backend backend
