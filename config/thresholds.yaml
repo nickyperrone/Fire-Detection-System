@@ -3,8 +3,13 @@
 
 region:
   name: larroque
-  # west, south, east, north (EPSG:4326)
-  bbox: [-59.30, -33.30, -58.70, -32.80]
+  # west, south, east, north (EPSG:4326). Covers Larroque and the fields to its NW,
+  # plus the widest field risk band (10 km) around them.
+  bbox: [-59.35, -33.25, -58.80, -32.70]
+
+territories:
+  # A section may stick out of its field by this much, to absorb drawing and simplification error.
+  section_tolerance_m: 5
 
 firms:
   # FIRMS Landsat detections only cover the US and Canada.

@@ -11,3 +11,4 @@ ml/runs/
 *.pt
 node_modules/
 .next/
+data/aoi/private/

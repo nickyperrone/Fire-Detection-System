@@ -1,0 +1,54 @@
+import os
+from pathlib import Path
+
+import pytest
+import yaml
+from alembic.config import Config
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
+
+from alembic import command
+from app.models import Base
+
+BACKEND = Path(__file__).resolve().parents[1]
+FIXTURES = Path(__file__).parent / "fixtures"
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql+psycopg://fieldwatch:fieldwatch@localhost:5433/fieldwatch_test",
+)
+
+
+@pytest.fixture(scope="session")
+def thresholds() -> dict:
+    return yaml.safe_load((BACKEND.parent / "config" / "thresholds.yaml").read_text())
+
+
+@pytest.fixture(scope="session")
+def engine():
+    engine = create_engine(TEST_DATABASE_URL)
+    try:
+        engine.connect().close()
+    except OperationalError:
+        pytest.skip("PostGIS test database is not running (make db)")
+    # Running the real migrations also tests them.
+    config = Config(str(BACKEND / "alembic.ini"))
+    config.set_main_option("script_location", str(BACKEND / "alembic"))
+    config.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+    command.upgrade(config, "head")
+    return engine
+
+
+@pytest.fixture
+def session(engine):
+    with engine.begin() as connection:
+        tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
+        connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    with Session(engine, expire_on_commit=False) as session:
+        yield session
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        if "session" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.db)

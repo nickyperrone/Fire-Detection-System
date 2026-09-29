@@ -1,0 +1,274 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "La Esperanza",
+        "kind": "FIELD",
+        "tags": [
+          "client:Juan Perez",
+          "zone:larroque-nw"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.075,
+              -32.975
+            ],
+            [
+              -59.05,
+              -32.975
+            ],
+            [
+              -59.05,
+              -32.96
+            ],
+            [
+              -59.075,
+              -32.96
+            ],
+            [
+              -59.075,
+              -32.975
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lote 1 - Soy",
+        "kind": "SECTION",
+        "parent": "La Esperanza",
+        "tags": [
+          "crop:soy",
+          "to-spray-this-week"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.075,
+              -32.975
+            ],
+            [
+              -59.0625,
+              -32.975
+            ],
+            [
+              -59.0625,
+              -32.96
+            ],
+            [
+              -59.075,
+              -32.96
+            ],
+            [
+              -59.075,
+              -32.975
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lote 2 - Corn",
+        "kind": "SECTION",
+        "parent": "La Esperanza",
+        "tags": [
+          "crop:corn"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.0625,
+              -32.975
+            ],
+            [
+              -59.05,
+              -32.975
+            ],
+            [
+              -59.05,
+              -32.96
+            ],
+            [
+              -59.0625,
+              -32.96
+            ],
+            [
+              -59.0625,
+              -32.975
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Campo Norte",
+        "kind": "FIELD",
+        "tags": [
+          "client:Maria Gomez",
+          "crop:wheat",
+          "zone:larroque-nw",
+          "to-spray-this-week"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.13,
+              -32.92
+            ],
+            [
+              -59.11,
+              -32.92
+            ],
+            [
+              -59.11,
+              -32.905
+            ],
+            [
+              -59.13,
+              -32.905
+            ],
+            [
+              -59.13,
+              -32.92
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "El Ombu",
+        "kind": "FIELD",
+        "tags": [
+          "client:Juan Perez",
+          "zone:larroque-w"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.15,
+              -32.995
+            ],
+            [
+              -59.125,
+              -32.995
+            ],
+            [
+              -59.125,
+              -32.98
+            ],
+            [
+              -59.15,
+              -32.98
+            ],
+            [
+              -59.15,
+              -32.995
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lote A - Soy",
+        "kind": "SECTION",
+        "parent": "El Ombu",
+        "tags": [
+          "crop:soy"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.15,
+              -32.995
+            ],
+            [
+              -59.125,
+              -32.995
+            ],
+            [
+              -59.125,
+              -32.9875
+            ],
+            [
+              -59.15,
+              -32.9875
+            ],
+            [
+              -59.15,
+              -32.995
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lote B - Pasture",
+        "kind": "SECTION",
+        "parent": "El Ombu",
+        "tags": [
+          "crop:pasture"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.15,
+              -32.9875
+            ],
+            [
+              -59.125,
+              -32.9875
+            ],
+            [
+              -59.125,
+              -32.98
+            ],
+            [
+              -59.15,
+              -32.98
+            ],
+            [
+              -59.15,
+              -32.9875
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
