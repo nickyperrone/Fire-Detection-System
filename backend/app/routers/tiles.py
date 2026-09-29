@@ -1,0 +1,35 @@
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Path, Response
+
+from app.routers.dependencies import SessionDep, SettingsDep
+from app.services.tiles import Layer, build_tile
+
+router = APIRouter(tags=["tiles"])
+
+MVT_MEDIA_TYPE = "application/vnd.mapbox-vector-tile"
+# Fires change with each ingestion (every 15 min). Fields change only when the user edits them,
+# and the frontend adds a version parameter to the tile URL after every edit.
+CACHE_CONTROL = {
+    Layer.TERRITORIES: "private, max-age=60",
+    Layer.FIRE_EVENTS: "public, max-age=300",
+    Layer.OBSERVATIONS: "public, max-age=300",
+}
+
+
+@router.get("/tiles/{layer}/{z}/{x}/{y}.pbf", response_class=Response)
+def tile(
+    session: SessionDep,
+    settings: SettingsDep,
+    layer: Layer,
+    z: Annotated[int, Path(ge=0, le=22)],
+    x: Annotated[int, Path(ge=0)],
+    y: Annotated[int, Path(ge=0)],
+):
+    if x >= 2**z or y >= 2**z:
+        raise HTTPException(404, "tile outside the zoom level")
+    content = build_tile(session, layer, z, x, y, settings.owner)
+    headers = {"Cache-Control": CACHE_CONTROL[layer]}
+    if not content:
+        return Response(status_code=204, headers=headers)
+    return Response(content, media_type=MVT_MEDIA_TYPE, headers=headers)

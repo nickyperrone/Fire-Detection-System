@@ -2,6 +2,7 @@ import json
 from datetime import UTC, datetime, timedelta
 
 import httpx
+import mapbox_vector_tile
 import pytest
 from sqlalchemy import func, select, text
 
@@ -22,8 +23,10 @@ from app.services.field_risk import assess_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.territories import load_feature_collection
+from app.services.tiles import Layer, build_tile
 from tests.conftest import FIXTURES
 from tests.test_territories import SAMPLE
+from tests.test_tiles import tile_xy
 
 NOW = datetime(2026, 9, 28, 18, 0, tzinfo=UTC)
 VERSION = "test+cfg.00000000"
@@ -136,3 +139,18 @@ def test_fire_data_quality(pipeline, session, thresholds):
     later = datetime.now(UTC) + timedelta(hours=13)
     assert fire_quality(statuses, 12, later) == DataQuality.STALE
     assert fire_quality(source_statuses(session, "goes", products), 12, NOW) == DataQuality.NO_DATA
+
+
+def test_zoomed_out_fire_tile_clusters_events_and_zoomed_in_shows_them(pipeline, session):
+    x, y = tile_xy(-59.0, -33.0, 5)
+    clusters = mapbox_vector_tile.decode(build_tile(session, Layer.FIRE_EVENTS, 5, x, y, "default"))
+    features = clusters["fire_events"]["features"]
+    assert sum(f["properties"]["event_count"] for f in features) == 3
+    assert len(features) < 3
+    x, y = tile_xy(-59.021, -32.943, 12)
+    events = mapbox_vector_tile.decode(build_tile(session, Layer.FIRE_EVENTS, 12, x, y, "default"))
+    (main,) = events["fire_events"]["features"]
+    assert main["properties"]["sensors"] == "VIIRS NOAA-21, MODIS Aqua"
+    observations = build_tile(session, Layer.OBSERVATIONS, 12, x, y, "default")
+    assert len(mapbox_vector_tile.decode(observations)["observations"]["features"]) == 3
+    assert build_tile(session, Layer.OBSERVATIONS, 8, 0, 0, "default") == b""
