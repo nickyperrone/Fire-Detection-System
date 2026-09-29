@@ -51,5 +51,5 @@ English for code, identifiers, comments, docs, UI copy and commit messages.
 ## Acceptance criteria
 
 - `ruff check` and `ruff format --check` pass.
-- `grep -rniE "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md` returns nothing.
+- `grep -rniE --exclude=00-conventions.md "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md` returns nothing.
 - `grep -rn "TODO" backend/app` returns nothing.

@@ -37,7 +37,7 @@ jobs:
       - name: Writing rules (docs/00-conventions.md)
         working-directory: .
         run: |
-          if grep -rniE "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md; then exit 1; fi
+          if grep -rniE --exclude=00-conventions.md "seamless|leverage|robust|cutting-edge|delve" docs backend/app README.md; then exit 1; fi
           if grep -rn "TODO" backend/app; then exit 1; fi
       - name: Migrations match the models
         run: uv run alembic upgrade head && uv run alembic check
