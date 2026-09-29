@@ -114,3 +114,20 @@ def _store(
     )
     session.execute(statement)
     return len(rows)
+
+
+def list_spray_hours(
+    session: Session, territory_id: int, profile: str, now: datetime
+) -> list[SprayAssessment]:
+    current_hour = now.replace(minute=0, second=0, microsecond=0)
+    return list(
+        session.scalars(
+            select(SprayAssessment)
+            .where(
+                SprayAssessment.territory_id == territory_id,
+                SprayAssessment.profile == profile,
+                SprayAssessment.valid_at >= current_hour,
+            )
+            .order_by(SprayAssessment.valid_at)
+        )
+    )
