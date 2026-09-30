@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 export type Snap = "peek" | "half" | "full";
 
 const PEEK_PX = 168;
@@ -30,6 +32,7 @@ type Props = {
 
 /** Mobile: a sheet dragged between three heights. Desktop: a fixed panel on the left. */
 export function BottomSheet({ snap, onSnapChange, contentKey, children }: Props) {
+  const { t } = useLocale();
   const [viewport, setViewport] = useState(800);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
   const drag = useRef<{ startY: number; startHeight: number } | null>(null);
@@ -76,7 +79,7 @@ export function BottomSheet({ snap, onSnapChange, contentKey, children }: Props)
     >
       <div
         role="button"
-        aria-label="Resize panel"
+        aria-label={t.sheet.resize}
         tabIndex={0}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FireAnswer, SprayAnswer } from "../api/client";
-import { fireLabel, fireTone, sprayTone } from "./status";
+import { fireTone, sprayTone } from "./status";
 
 const noFire: FireAnswer = {
   data_quality: "GOOD",
@@ -23,14 +23,12 @@ describe("fire tone", () => {
     expect(fireTone({ ...noFire, data_quality: "PARTIAL" })).toBe("ok");
     expect(fireTone({ ...noFire, data_quality: "NO_DATA" })).toBe("unknown");
     expect(fireTone({ ...noFire, data_quality: "STALE" })).toBe("unknown");
-    expect(fireLabel({ ...noFire, data_quality: "NO_DATA" })).toBe("No fire data");
   });
 
   it("follows severity", () => {
     expect(fireTone({ ...noFire, severity: "CRITICAL" })).toBe("critical");
     expect(fireTone({ ...noFire, severity: "VERY_HIGH" })).toBe("high");
     expect(fireTone({ ...noFire, severity: "WATCH" })).toBe("watch");
-    expect(fireLabel({ ...noFire, severity: "VERY_HIGH" })).toBe("VERY HIGH");
   });
 });
 
@@ -40,7 +38,7 @@ describe("spray tone", () => {
     profile: "default",
     status: "CAUTION",
     valid_at: null,
-    reasons: [],
+    problems: [],
     drift_toward: null,
     next_favorable: null,
   };

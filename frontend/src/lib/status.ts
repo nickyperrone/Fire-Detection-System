@@ -40,16 +40,3 @@ export function sprayTone(spray: SprayAnswer): Tone {
 export function sprayStatusTone(status: SprayStatus): Tone {
   return SPRAY_TONE[status];
 }
-
-export function fireLabel(fire: FireAnswer): string {
-  if (fire.severity) return fire.severity.replace("_", " ");
-  if (fire.data_quality === "NO_DATA") return "No fire data";
-  if (fire.data_quality === "STALE") return "Fire data stale";
-  return "No detections";
-}
-
-export function sprayLabel(spray: SprayAnswer): string {
-  if (!spray.status) return "No forecast";
-  if (spray.data_quality === "STALE") return "Forecast stale";
-  return spray.status.charAt(0) + spray.status.slice(1).toLowerCase();
-}

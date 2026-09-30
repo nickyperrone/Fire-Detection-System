@@ -37,8 +37,8 @@ export type FieldDrawing = {
   setTool: (tool: DrawTool) => void;
   /** Discards the shape and starts again with the current tool. */
   restart: () => void;
-  /** Why the last shape was discarded, if it was. */
-  notice: string | null;
+  /** The last shape was discarded because it was smaller than a field. */
+  tooSmall: boolean;
 };
 
 // Half a hectare: smaller shapes are a slip of the finger, not a field.
@@ -90,7 +90,7 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
   const [polygon, setPolygon] = useState<DrawnPolygon | null>(null);
   const [hectares, setHectares] = useState(0);
   const [tool, setToolState] = useState<DrawTool>("trace");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [tooSmall, setTooSmall] = useState(false);
   const drawRef = useRef<TerraDraw | null>(null);
   const closedIdRef = useRef<string | number | null>(null);
   const toolRef = useRef(tool);
@@ -115,7 +115,7 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
       return feature?.geometry.type === "Polygon" ? (feature.geometry as DrawnPolygon) : null;
     };
     draw.on("change", (ids) => {
-      setNotice(null);
+      setTooSmall(false);
       const closedId = closedIdRef.current;
       const shape = closedId !== null ? polygonOf(closedId) : ids.map(polygonOf).find(Boolean);
       if (!shape) return;
@@ -129,7 +129,7 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
         draw.clear();
         draw.setMode(MODE[toolRef.current]);
         setHectares(0);
-        setNotice("That shape is too small. Go around the whole field.");
+        setTooSmall(true);
         return;
       }
       if (toolRef.current === "trace") {
@@ -140,7 +140,7 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
       closedIdRef.current = id;
       draw.setMode("select");
       draw.selectFeature(id);
-      setNotice(null);
+      setTooSmall(false);
       setPolygon(shape);
       setHectares(area(shape) / 10_000);
     });
@@ -169,8 +169,8 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
     closedIdRef.current = null;
     setPolygon(null);
     setHectares(0);
-    setNotice(null);
+    setTooSmall(false);
   }, []);
 
-  return { polygon, hectares, tool, setTool, restart, notice };
+  return { polygon, hectares, tool, setTool, restart, tooSmall };
 }

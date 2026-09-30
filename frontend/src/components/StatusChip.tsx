@@ -9,20 +9,14 @@ const TONE_CLASSES: Record<Tone, string> = {
   unknown: "bg-unknown/15 text-slate-300 border-dashed border-unknown",
 };
 
-const DOT_CLASSES: Record<Tone, string> = {
-  critical: "bg-critical",
-  high: "bg-high",
-  watch: "bg-watch",
-  ok: "bg-ok",
-  unknown: "bg-unknown",
-};
+type Props = { tone: Tone; icon?: React.ReactNode; children: React.ReactNode };
 
-export function StatusChip({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+export function StatusChip({ tone, icon, children }: Props) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${TONE_CLASSES[tone]}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${TONE_CLASSES[tone]}`}
     >
-      <span className={`size-1.5 rounded-full ${DOT_CLASSES[tone]}`} />
+      {icon}
       {children}
     </span>
   );

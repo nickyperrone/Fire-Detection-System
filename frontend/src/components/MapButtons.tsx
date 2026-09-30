@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
-import { BASEMAPS, type Basemap } from "./map/overlay";
+import { useLocale } from "@/i18n/LocaleProvider";
 
-const BASEMAP_LABEL: Record<Basemap, string> = { dark: "Dark", light: "Light", satellite: "Satellite" };
+import { LayersIcon, LocateIcon, PlusIcon } from "./Icons";
+import { BASEMAPS, type Basemap } from "./map/overlay";
 
 type Props = {
   basemap: Basemap;
@@ -13,23 +14,17 @@ type Props = {
   onAddField: () => void;
 };
 
-function RoundButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={`glass grid size-12 place-items-center rounded-full text-lg text-slate-100 disabled:opacity-40 ${props.className ?? ""}`}
-    />
-  );
-}
+const ROUND = "glass grid size-12 place-items-center rounded-full text-slate-100";
 
 export function MapButtons({ basemap, onBasemap, onLocate, onAddField }: Props) {
+  const { t } = useLocale();
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex flex-col items-end gap-3">
       <div className="relative">
-        <RoundButton aria-label="Map layers" onClick={() => setMenu((m) => !m)}>
-          ◧
-        </RoundButton>
+        <button aria-label={t.buttons.layers} aria-expanded={menu} onClick={() => setMenu((m) => !m)} className={ROUND}>
+          <LayersIcon />
+        </button>
         {menu && (
           <div className="glass absolute right-14 top-0 flex overflow-hidden rounded-2xl">
             {BASEMAPS.map((b) => (
@@ -41,22 +36,23 @@ export function MapButtons({ basemap, onBasemap, onLocate, onAddField }: Props) 
                 }}
                 className={`px-3 py-3 text-sm ${b === basemap ? "text-accent" : "text-slate-200"}`}
               >
-                {BASEMAP_LABEL[b]}
+                {t.basemaps[b]}
               </button>
             ))}
           </div>
         )}
       </div>
-      <RoundButton aria-label="Go to my location" onClick={onLocate}>
-        ◎
-      </RoundButton>
-      <RoundButton
-        aria-label="Draw a new field"
+      <button aria-label={t.buttons.locate} onClick={onLocate} className={ROUND}>
+        <LocateIcon />
+      </button>
+      <button
+        aria-label={t.buttons.addFieldLabel}
         onClick={onAddField}
-        className="!bg-accent !text-slate-950 text-2xl font-semibold"
+        className="flex h-12 items-center gap-1.5 rounded-full bg-accent pl-3.5 pr-4 font-semibold text-slate-950 shadow-lg shadow-black/40"
       >
-        +
-      </RoundButton>
+        <PlusIcon />
+        {t.buttons.addField}
+      </button>
     </div>
   );
 }

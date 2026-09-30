@@ -12,7 +12,8 @@ import {
 import { useEffect, useRef } from "react";
 
 import { tileUrl } from "@/api/client";
-import { formatAge } from "@/lib/format";
+import type { Messages } from "@/i18n/messages";
+import { formatAge } from "@/i18n/text";
 import type { Tone } from "@/lib/status";
 
 import {
@@ -42,6 +43,8 @@ type Props = {
   onSelect: (id: number | null, additive: boolean) => void;
   onCameraChange: (camera: MapCamera) => void;
   onReady: (map: MapLibreMap | null) => void;
+  /** Texts for the fire popup, in the current language. */
+  messages: Messages;
 };
 
 export function MapView(props: Props) {
@@ -145,7 +148,7 @@ function handleClick(map: MapLibreMap, event: MapMouseEvent, props: Props) {
   if (!props.interactive) return;
   const fires = map.queryRenderedFeatures(event.point, { layers: [FIRE_LAYER] });
   if (fires.length) {
-    showFire(map, fires[0], event);
+    showFire(map, fires[0], event, props.messages);
     return;
   }
   // Sections are drawn above their field, so they come first when both are hit.
@@ -154,19 +157,20 @@ function handleClick(map: MapLibreMap, event: MapMouseEvent, props: Props) {
   props.onSelect(territory ? Number(territory.id) : null, additive);
 }
 
-function showFire(map: MapLibreMap, fire: MapGeoJSONFeature, event: MapMouseEvent) {
+function showFire(map: MapLibreMap, fire: MapGeoJSONFeature, event: MapMouseEvent, t: Messages) {
   const p = fire.properties;
   if (p.event_count !== undefined && p.event_count > 1) {
     map.easeTo({ center: event.lngLat, zoom: map.getZoom() + 2 });
     return;
   }
-  const detected = formatAge(new Date(Number(p.last_detected_at) * 1000).toISOString());
+  const detected = formatAge(t, new Date(Number(p.last_detected_at) * 1000).toISOString());
   const content = document.createElement("div");
   content.className = "text-xs leading-5 text-slate-900";
   const title = document.createElement("strong");
-  title.textContent = "Possible fire";
+  title.textContent = t.fire.popupTitle;
   const details = document.createElement("div");
-  details.textContent = [p.sensors, p.confidence && `${p.confidence} confidence`, `detected ${detected}`]
+  const confidence = p.confidence ? t.fire.confidence(t.confidence[p.confidence] ?? p.confidence) : "";
+  details.textContent = [p.sensors, confidence, t.fire.detected(detected)]
     .filter(Boolean)
     .join(" · ");
   content.append(title, details);

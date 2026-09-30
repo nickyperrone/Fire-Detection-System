@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { PortfolioEntry, Territory } from "@/api/client";
 import { usePortfolio, useTerritories } from "@/api/queries";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { fireTone } from "@/lib/status";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
 
@@ -12,6 +13,7 @@ import { BottomSheet, type Snap } from "./BottomSheet";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldDetail } from "./FieldDetail";
 import { FreshnessPill } from "./FreshnessPill";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
@@ -41,6 +43,7 @@ function withLots(ids: number[], entries: PortfolioEntry[]): Set<number> {
 }
 
 export function FieldWatchApp() {
+  const { t } = useLocale();
   const url = useUrlState();
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [snap, setSnap] = useState<Snap>("peek");
@@ -91,7 +94,7 @@ export function FieldWatchApp() {
       const mobile = window.innerWidth < 768;
       map?.fitBounds(bounds, {
         padding: mobile
-          ? { top: 90, bottom: window.innerHeight * 0.5, left: 30, right: 30 }
+          ? { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
           : { top: 60, bottom: 60, left: 440, right: 60 },
         maxZoom: 15,
         duration: 900,
@@ -182,6 +185,7 @@ export function FieldWatchApp() {
         onSelect={onMapSelect}
         onCameraChange={onCameraChange}
         onReady={setMap}
+        messages={t}
       />
 
       {drawingActive ? (
@@ -197,8 +201,9 @@ export function FieldWatchApp() {
             <div className="pointer-events-auto">
               <SearchBar territories={territories.data ?? []} onPick={(t) => open(t.id)} />
             </div>
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto flex items-center justify-between gap-2">
               <FreshnessPill />
+              <LanguageSwitch />
             </div>
           </div>
 
@@ -217,7 +222,7 @@ export function FieldWatchApp() {
             contentKey={String(url.selectedId ?? "portfolio")}
           >
             {everything.isError ? (
-              <p className="text-sm text-critical">Cannot reach the Field Watch API.</p>
+              <p className="text-sm text-critical">{t.app.apiDown}</p>
             ) : selected ? (
               <FieldDetail
                 entry={selected}
@@ -243,11 +248,8 @@ export function FieldWatchApp() {
             ) : (
               everything.data && (
                 <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">Fires in Entre Ríos and the Delta</h2>
-                  <p className="text-sm text-slate-300">
-                    The map shows satellite fire detections as they arrive. Draw your first field
-                    with + to see its distance to fires and when it is good to spray.
-                  </p>
+                  <h2 className="text-lg font-semibold">{t.app.exploreTitle}</h2>
+                  <p className="text-sm text-slate-300">{t.app.exploreBody}</p>
                 </div>
               )
             )}
