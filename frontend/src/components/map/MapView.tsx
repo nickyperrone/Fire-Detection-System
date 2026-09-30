@@ -29,7 +29,7 @@ setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export type MapCamera = { lat: number; lon: number; zoom: number };
 
-export type TerritoryState = { tone: Tone; dimmed: boolean };
+export type TerritoryState = { tone: Tone; dimmed: boolean; picked: boolean };
 
 type Props = {
   basemap: Basemap;
@@ -38,7 +38,8 @@ type Props = {
   territoriesVersion: number;
   selectedId: number | null;
   interactive: boolean;
-  onSelect: (id: number | null) => void;
+  /** `additive` is true for Shift or Cmd clicks. */
+  onSelect: (id: number | null, additive: boolean) => void;
   onCameraChange: (camera: MapCamera) => void;
   onReady: (map: MapLibreMap | null) => void;
 };
@@ -144,7 +145,8 @@ function handleClick(map: MapLibreMap, event: MapMouseEvent, props: Props) {
   }
   // Sections are drawn above their field, so they come first when both are hit.
   const [territory] = map.queryRenderedFeatures(event.point, { layers: [...TERRITORY_LAYERS] });
-  props.onSelect(territory ? Number(territory.id) : null);
+  const additive = event.originalEvent.shiftKey || event.originalEvent.metaKey;
+  props.onSelect(territory ? Number(territory.id) : null, additive);
 }
 
 function showFire(map: MapLibreMap, fire: MapGeoJSONFeature, event: MapMouseEvent) {

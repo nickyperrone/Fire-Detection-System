@@ -3,29 +3,41 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { useCallback, useMemo, useState } from "react";
 
-import type { Territory } from "@/api/client";
+import type { PortfolioEntry, Territory } from "@/api/client";
 import { usePortfolio, useTerritories } from "@/api/queries";
 import { fireTone } from "@/lib/status";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
+import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldDetail } from "./FieldDetail";
 import { FreshnessPill } from "./FreshnessPill";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
-import { NewFieldPanel } from "./NewFieldPanel";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { SearchBar } from "./SearchBar";
 
-function boundsOf(territory: Territory): [[number, number], [number, number]] {
-  const points = (territory.geometry.coordinates as number[][][][]).flat(2);
+type Bounds = [[number, number], [number, number]];
+
+function boundsOf(territories: Territory[]): Bounds | null {
+  const points = territories.flatMap((t) => (t.geometry.coordinates as number[][][][]).flat(2));
+  if (points.length === 0) return null;
   const lons = points.map((p) => p[0]);
   const lats = points.map((p) => p[1]);
   return [
     [Math.min(...lons), Math.min(...lats)],
     [Math.max(...lons), Math.max(...lats)],
   ];
+}
+
+/** Picked fields plus their lots: picking a field brings its lots along. */
+function withLots(ids: number[], entries: PortfolioEntry[]): Set<number> {
+  const picked = new Set(ids);
+  for (const e of entries) {
+    if (e.parent_id !== null && picked.has(e.parent_id)) picked.add(e.territory_id);
+  }
+  return picked;
 }
 
 export function FieldWatchApp() {
@@ -38,8 +50,7 @@ export function FieldWatchApp() {
   const everything = usePortfolio([]);
   const filtered = usePortfolio(url.tags);
   const territories = useTerritories();
-  // Opening the sheet when the shape closes leaves room for the name and tags form.
-  const drawing = useFieldDrawing(map, drawingActive, () => setSnap("half"));
+  const drawing = useFieldDrawing(map, drawingActive);
 
   const territoryById = useMemo(
     () => new Map((territories.data ?? []).map((t) => [t.id, t])),
@@ -49,21 +60,36 @@ export function FieldWatchApp() {
     () => [...new Set((territories.data ?? []).flatMap((t) => t.tags))].sort(),
     [territories.data],
   );
+  const pickedWithLots = useMemo(
+    () => withLots(url.picked, everything.data ?? []),
+    [url.picked, everything.data],
+  );
+  const listed = useMemo(() => {
+    const entries = filtered.data ?? [];
+    return url.onlyPicked ? entries.filter((e) => pickedWithLots.has(e.territory_id)) : entries;
+  }, [filtered.data, url.onlyPicked, pickedWithLots]);
   const territoryStates = useMemo(() => {
-    const shown = new Set((filtered.data ?? []).map((e) => e.territory_id));
+    const shown = new Set(listed.map((e) => e.territory_id));
+    const narrowed = url.tags.length > 0 || url.onlyPicked;
     return new Map<number, TerritoryState>(
       (everything.data ?? []).map((e) => [
         e.territory_id,
-        { tone: fireTone(e.fire), dimmed: url.tags.length > 0 && !shown.has(e.territory_id) },
+        {
+          tone: fireTone(e.fire),
+          dimmed: narrowed && !shown.has(e.territory_id),
+          picked: url.picked.includes(e.territory_id),
+        },
       ]),
     );
-  }, [everything.data, filtered.data, url.tags]);
+  }, [everything.data, listed, url.tags, url.onlyPicked, url.picked]);
   const selected = everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
 
-  const flyTo = useCallback(
-    (territory: Territory) => {
+  const frame = useCallback(
+    (targets: Territory[]) => {
+      const bounds = boundsOf(targets);
+      if (!bounds) return;
       const mobile = window.innerWidth < 768;
-      map?.fitBounds(boundsOf(territory), {
+      map?.fitBounds(bounds, {
         padding: mobile
           ? { top: 90, bottom: window.innerHeight * 0.5, left: 30, right: 30 }
           : { top: 60, bottom: 60, left: 440, right: 60 },
@@ -74,14 +100,39 @@ export function FieldWatchApp() {
     [map],
   );
 
-  const select = useCallback(
+  const open = useCallback(
     (id: number | null) => {
       url.update({ f: id === null ? null : String(id) });
       setSnap(id === null ? "peek" : "half");
       const territory = id === null ? undefined : territoryById.get(id);
-      if (territory) flyTo(territory);
+      if (territory) frame([territory]);
     },
-    [url, territoryById, flyTo],
+    [url, territoryById, frame],
+  );
+
+  const togglePick = useCallback(
+    (id: number) => {
+      const next = url.picked.includes(id)
+        ? url.picked.filter((p) => p !== id)
+        : [...url.picked, id];
+      url.update({ s: next.map(String), only: next.length && url.onlyPicked ? "1" : null });
+    },
+    [url],
+  );
+
+  const showOnlyPicked = () => {
+    url.update({ only: "1", f: null });
+    frame(url.picked.map((id) => territoryById.get(id)).filter((t): t is Territory => !!t));
+    setSnap("half");
+  };
+
+  // Shift or Cmd click on the map adds a field to the selection, as in most map apps.
+  const onMapSelect = useCallback(
+    (id: number | null, additive: boolean) => {
+      if (additive && id !== null) togglePick(id);
+      else open(id);
+    },
+    [togglePick, open],
   );
 
   const onCameraChange = useCallback(
@@ -90,7 +141,9 @@ export function FieldWatchApp() {
   );
 
   const toggleTag = (tag: string) =>
-    url.update({ tag: url.tags.includes(tag) ? url.tags.filter((t) => t !== tag) : [...url.tags, tag] });
+    url.update({
+      tag: url.tags.includes(tag) ? url.tags.filter((t) => t !== tag) : [...url.tags, tag],
+    });
 
   const locate = () =>
     navigator.geolocation?.getCurrentPosition((position) =>
@@ -106,6 +159,7 @@ export function FieldWatchApp() {
   };
 
   const hasFields = (everything.data?.length ?? 0) > 0;
+  const fields = (territories.data ?? []).filter((t) => t.kind === "FIELD");
 
   return (
     <main className="fixed inset-0">
@@ -116,73 +170,81 @@ export function FieldWatchApp() {
         territoriesVersion={tilesVersion}
         selectedId={url.selectedId}
         interactive={!drawingActive}
-        onSelect={select}
+        onSelect={onMapSelect}
         onCameraChange={onCameraChange}
         onReady={setMap}
       />
 
-      <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-col gap-2 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
-        <div className="pointer-events-auto">
-          <SearchBar territories={territories.data ?? []} onPick={(t) => select(t.id)} />
-        </div>
-        <div className="pointer-events-auto">
-          <FreshnessPill />
-        </div>
-      </div>
-
-      <div className="absolute right-3 top-[120px] z-10 md:top-3">
-        <MapButtons
-          basemap={url.basemap}
-          onBasemap={(b) => url.update({ b })}
-          onLocate={locate}
-          onAddField={() => {
-            setDrawingActive(true);
-            setSnap("peek");
-          }}
-          drawing={drawingActive}
+      {drawingActive ? (
+        <DrawFieldOverlay
+          drawing={drawing}
+          fields={fields}
+          defaultParentId={selected?.kind === "FIELD" ? selected.territory_id : null}
+          onDone={finishDrawing}
         />
-      </div>
-
-      <BottomSheet
-        snap={snap}
-        onSnapChange={setSnap}
-        contentKey={drawingActive ? "draw" : String(url.selectedId ?? "portfolio")}
-      >
-        {drawingActive ? (
-          <NewFieldPanel
-            drawing={drawing}
-            fields={(territories.data ?? []).filter((t) => t.kind === "FIELD")}
-            defaultParentId={selected?.kind === "FIELD" ? selected.territory_id : null}
-            onDone={finishDrawing}
-          />
-        ) : everything.isError ? (
-          <p className="text-sm text-critical">Cannot reach the Field Watch API.</p>
-        ) : selected ? (
-          <FieldDetail
-            entry={selected}
-            parentName={selected.parent_id ? (territoryById.get(selected.parent_id)?.name ?? null) : null}
-            onClose={() => select(null)}
-          />
-        ) : hasFields || url.tags.length ? (
-          <PortfolioPanel
-            entries={filtered.data ?? []}
-            allTags={allTags}
-            activeTags={url.tags}
-            onToggleTag={toggleTag}
-            onSelect={select}
-          />
-        ) : (
-          everything.data && (
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Fires in Entre Ríos and the Delta</h2>
-              <p className="text-sm text-slate-300">
-                The map shows satellite fire detections as they arrive. Draw your first field with + to
-                see its distance to fires and when it is good to spray.
-              </p>
+      ) : (
+        <>
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-col gap-2 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
+            <div className="pointer-events-auto">
+              <SearchBar territories={territories.data ?? []} onPick={(t) => open(t.id)} />
             </div>
-          )
-        )}
-      </BottomSheet>
+            <div className="pointer-events-auto">
+              <FreshnessPill />
+            </div>
+          </div>
+
+          <div className="absolute right-3 top-[120px] z-10 md:top-3">
+            <MapButtons
+              basemap={url.basemap}
+              onBasemap={(b) => url.update({ b })}
+              onLocate={locate}
+              onAddField={() => setDrawingActive(true)}
+            />
+          </div>
+
+          <BottomSheet
+            snap={snap}
+            onSnapChange={setSnap}
+            contentKey={String(url.selectedId ?? "portfolio")}
+          >
+            {everything.isError ? (
+              <p className="text-sm text-critical">Cannot reach the Field Watch API.</p>
+            ) : selected ? (
+              <FieldDetail
+                entry={selected}
+                parentName={
+                  selected.parent_id ? (territoryById.get(selected.parent_id)?.name ?? null) : null
+                }
+                onClose={() => open(null)}
+              />
+            ) : hasFields || url.tags.length ? (
+              <PortfolioPanel
+                entries={listed}
+                allTags={allTags}
+                activeTags={url.tags}
+                picked={url.picked}
+                onlyPicked={url.onlyPicked}
+                onToggleTag={toggleTag}
+                onTogglePick={togglePick}
+                onShowOnlyPicked={showOnlyPicked}
+                onShowAll={() => url.update({ only: null })}
+                onClearPicked={() => url.update({ s: [], only: null })}
+                onSelect={open}
+              />
+            ) : (
+              everything.data && (
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold">Fires in Entre Ríos and the Delta</h2>
+                  <p className="text-sm text-slate-300">
+                    The map shows satellite fire detections as they arrive. Draw your first field
+                    with + to see its distance to fires and when it is good to spray.
+                  </p>
+                </div>
+              )
+            )}
+          </BottomSheet>
+        </>
+      )}
     </main>
   );
 }

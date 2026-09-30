@@ -56,16 +56,29 @@ const toneColor: ExpressionSpecification = [
   TONE_HEX.unknown,
 ];
 
+const highlighted: ExpressionSpecification = [
+  "any",
+  ["boolean", ["feature-state", "selected"], false],
+  ["boolean", ["feature-state", "picked"], false],
+];
+
 function fillOpacity(base: number): ExpressionSpecification {
   return [
     "case",
-    ["boolean", ["feature-state", "selected"], false],
+    highlighted,
     base + 0.1,
     ["boolean", ["feature-state", "dimmed"], false],
     base / 4,
     base,
   ];
 }
+
+const lineOpacity: ExpressionSpecification = [
+  "case",
+  ["boolean", ["feature-state", "dimmed"], false],
+  0.3,
+  1,
+];
 
 const isCluster: ExpressionSpecification = ["has", "event_count"];
 
@@ -109,7 +122,8 @@ export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
     filter: byKind("FIELD"),
     paint: {
       "line-color": toneColor,
-      "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 3.5, 2],
+      "line-width": ["case", highlighted, 3.5, 2],
+      "line-opacity": lineOpacity,
     },
   });
   map.addLayer({
@@ -118,7 +132,12 @@ export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
     source: "territories",
     "source-layer": "territories",
     filter: byKind("SECTION"),
-    paint: { "line-color": toneColor, "line-width": 1.2, "line-dasharray": [2, 2] },
+    paint: {
+      "line-color": toneColor,
+      "line-width": 1.2,
+      "line-dasharray": [2, 2],
+      "line-opacity": lineOpacity,
+    },
   });
   const labelPaint = { "text-color": "#f3f6fa", "text-halo-color": "#0b0e13", "text-halo-width": 1.4 };
   // Field names while the field is small on screen, lot names once the lots are readable.

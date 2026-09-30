@@ -9,7 +9,14 @@ import type { MapCamera } from "@/components/map/MapView";
 // Larroque, Entre Ríos: where the first fields are.
 const DEFAULT_CAMERA: MapCamera = { lat: -32.97, lon: -59.05, zoom: 10.5 };
 
-type Changes = Partial<{ f: string | null; tag: string[]; b: string; v: string }>;
+type Changes = Partial<{
+  f: string | null;
+  tag: string[];
+  b: string;
+  v: string;
+  s: string[];
+  only: string | null;
+}>;
 
 function parseCamera(value: string | null): MapCamera {
   const [lat, lon, zoom] = (value ?? "").split(",").map(Number);
@@ -20,13 +27,22 @@ export function formatCamera({ lat, lon, zoom }: MapCamera): string {
   return `${lat.toFixed(5)},${lon.toFixed(5)},${zoom.toFixed(2)}`;
 }
 
-/** App state that belongs in a shareable link: selected field, tag filters, basemap, camera. */
+/**
+ * App state that belongs in a shareable link: the open field (f), tag filters (tag), the fields
+ * picked to compare (s) and whether only those are shown (only), basemap (b) and camera (v).
+ */
 export function useUrlState() {
   const params = useSearchParams();
 
   const selectedId = params.get("f") ? Number(params.get("f")) : null;
   const tagsKey = params.getAll("tag").join("\n");
   const tags = useMemo(() => (tagsKey ? tagsKey.split("\n") : []), [tagsKey]);
+  const pickedKey = params.getAll("s").join(",");
+  const picked = useMemo(
+    () => (pickedKey ? pickedKey.split(",").map(Number).filter(Number.isInteger) : []),
+    [pickedKey],
+  );
+  const onlyPicked = params.get("only") === "1" && picked.length > 0;
   const basemapParam = params.get("b") as Basemap | null;
   const basemap = basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
   // Read once: afterwards the map owns the camera and only writes it back.
@@ -43,5 +59,5 @@ export function useUrlState() {
     window.history.replaceState(null, "", `?${next}`);
   }, []);
 
-  return { selectedId, tags, basemap, initialCamera, update };
+  return { selectedId, tags, picked, onlyPicked, basemap, initialCamera, update };
 }
