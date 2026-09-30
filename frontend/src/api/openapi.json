@@ -5,15 +5,10 @@
         "properties": {
           "data_quality": {
             "$ref": "#/components/schemas/DataQuality"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
           }
         },
         "required": [
-          "data_quality",
-          "message"
+          "data_quality"
         ],
         "title": "AnomalyAnswerOut",
         "type": "object"
@@ -253,6 +248,16 @@
           "fire_data_quality": {
             "$ref": "#/components/schemas/DataQuality"
           },
+          "latest_pass": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatestPassOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "processing_version": {
             "title": "Processing Version",
             "type": "string"
@@ -269,9 +274,40 @@
           "database",
           "processing_version",
           "fire_data_quality",
+          "latest_pass",
           "sources"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "LatestPassOut": {
+        "properties": {
+          "acquired_at": {
+            "format": "date-time",
+            "title": "Acquired At",
+            "type": "string"
+          },
+          "ingested_at": {
+            "format": "date-time",
+            "title": "Ingested At",
+            "type": "string"
+          },
+          "satellite": {
+            "title": "Satellite",
+            "type": "string"
+          },
+          "sensor": {
+            "title": "Sensor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sensor",
+          "satellite",
+          "acquired_at",
+          "ingested_at"
+        ],
+        "title": "LatestPassOut",
         "type": "object"
       },
       "Layer": {
@@ -555,16 +591,16 @@
             ],
             "title": "Next Favorable"
           },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/SprayRuleOut"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
           "profile": {
             "title": "Profile",
             "type": "string"
-          },
-          "reasons": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Reasons",
-            "type": "array"
           },
           "status": {
             "anyOf": [
@@ -594,7 +630,7 @@
           "profile",
           "status",
           "valid_at",
-          "reasons",
+          "problems",
           "drift_toward",
           "next_favorable"
         ],
@@ -649,14 +685,23 @@
         "type": "object"
       },
       "SprayRuleOut": {
+        "description": "Codes and numbers only; the frontend writes the sentence in the user's language.",
         "properties": {
           "estimated": {
+            "default": false,
             "title": "Estimated",
             "type": "boolean"
           },
-          "message": {
-            "title": "Message",
-            "type": "string"
+          "limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
           },
           "rule": {
             "title": "Rule",
@@ -679,15 +724,24 @@
               }
             ],
             "title": "Value"
+          },
+          "window_h": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window H"
           }
         },
         "required": [
           "rule",
           "status",
           "value",
-          "unit",
-          "message",
-          "estimated"
+          "unit"
         ],
         "title": "SprayRuleOut",
         "type": "object"

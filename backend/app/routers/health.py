@@ -7,7 +7,7 @@ from sqlalchemy import text
 from app.config import get_thresholds
 from app.routers.dependencies import SessionDep
 from app.schemas import HealthOut
-from app.services.data_quality import fire_quality, source_statuses
+from app.services.data_quality import fire_quality, latest_pass, source_statuses
 from app.versioning import processing_version
 
 router = APIRouter(tags=["health"])
@@ -26,5 +26,6 @@ def health(session: SessionDep):
         fire_data_quality=fire_quality(
             firms_statuses, thresholds["data_quality"]["fire_stale_after_hours"], datetime.now(UTC)
         ),
+        latest_pass=asdict(newest) if (newest := latest_pass(session, "firms")) else None,
         sources=[asdict(s) for s in statuses],
     )

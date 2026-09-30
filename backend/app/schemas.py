@@ -83,14 +83,13 @@ class SprayAnswerOut(BaseModel):
     profile: str
     status: SprayStatus | None
     valid_at: datetime | None
-    reasons: list[str]
+    problems: list["SprayRuleOut"]
     drift_toward: str | None
     next_favorable: tuple[datetime, datetime] | None
 
 
 class AnomalyAnswerOut(BaseModel):
     data_quality: DataQuality
-    message: str
 
 
 class PortfolioEntryOut(BaseModel):
@@ -106,12 +105,16 @@ class PortfolioEntryOut(BaseModel):
 
 
 class SprayRuleOut(BaseModel):
+    """Codes and numbers only; the frontend writes the sentence in the user's language."""
+
     rule: str
     status: RuleStatus
     value: float | None
     unit: str
-    message: str
-    estimated: bool
+    # Defaults: assessments stored before these fields existed do not have them.
+    limit: float | None = None
+    estimated: bool = False
+    window_h: int | None = None
 
 
 class SprayHourOut(BaseModel):
@@ -133,8 +136,16 @@ class SourceStatusOut(BaseModel):
     last_error: str | None
 
 
+class LatestPassOut(BaseModel):
+    sensor: str
+    satellite: str
+    acquired_at: datetime
+    ingested_at: datetime
+
+
 class HealthOut(BaseModel):
     database: bool
     processing_version: str
     fire_data_quality: DataQuality
+    latest_pass: LatestPassOut | None
     sources: list[SourceStatusOut]

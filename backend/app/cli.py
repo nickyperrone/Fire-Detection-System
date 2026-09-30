@@ -62,7 +62,7 @@ def fire_line(fire: FireAnswer, now: datetime) -> str:
 def spray_line(spray: SprayAnswer) -> str:
     if spray.status is None:
         return f"{spray.data_quality.value:<12}no forecast"
-    parts = spray.reasons[:2] or ["all rules pass"]
+    parts = [problem["message"] for problem in spray.problems[:2]] or ["all rules pass"]
     if spray.drift_toward:
         parts.append(f"drift toward {spray.drift_toward}")
     if spray.status.value != "FAVORABLE":

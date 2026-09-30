@@ -22,12 +22,18 @@ class RuleStatus(StrEnum):
 
 @dataclass(frozen=True)
 class RuleResult:
+    """`limit` is the threshold that decided a CAUTION or FAIL. The frontend writes its own
+    translated sentence from rule, status, value and limit; `message` is the English one for
+    the CLI."""
+
     rule: str
     status: RuleStatus
     value: float | None
     unit: str
     message: str
+    limit: float | None = None
     estimated: bool = False
+    window_h: int | None = None
 
     def as_dict(self) -> dict:
         return {**asdict(self), "status": self.status.value}
@@ -54,15 +60,14 @@ def wind_rule(hour: HourlyWeather, limits: dict) -> RuleResult:
     if v is None:
         return RuleResult("wind", RuleStatus.UNKNOWN, None, "km/h", "no wind forecast")
     if v > limits["max"]:
-        return RuleResult(
-            "wind", RuleStatus.FAIL, v, "km/h", f"wind {v:.0f} km/h > {limits['max']}"
-        )
+        msg = f"wind {v:.0f} km/h > {limits['max']}"
+        return RuleResult("wind", RuleStatus.FAIL, v, "km/h", msg, limits["max"])
     if v < limits["min"]:
         msg = f"wind {v:.0f} km/h < {limits['min']}: drift can hang in still air"
-        return RuleResult("wind", RuleStatus.CAUTION, v, "km/h", msg)
+        return RuleResult("wind", RuleStatus.CAUTION, v, "km/h", msg, limits["min"])
     if v > limits["caution_from"]:
         msg = f"wind {v:.0f} km/h (caution from {limits['caution_from']})"
-        return RuleResult("wind", RuleStatus.CAUTION, v, "km/h", msg)
+        return RuleResult("wind", RuleStatus.CAUTION, v, "km/h", msg, limits["caution_from"])
     return RuleResult("wind", RuleStatus.PASS, v, "km/h", f"wind {v:.0f} km/h")
 
 
@@ -71,12 +76,11 @@ def gusts_rule(hour: HourlyWeather, limits: dict) -> RuleResult:
     if v is None:
         return RuleResult("gusts", RuleStatus.UNKNOWN, None, "km/h", "no gust forecast")
     if v > limits["max"]:
-        return RuleResult(
-            "gusts", RuleStatus.FAIL, v, "km/h", f"gusts {v:.0f} km/h > {limits['max']}"
-        )
+        msg = f"gusts {v:.0f} km/h > {limits['max']}"
+        return RuleResult("gusts", RuleStatus.FAIL, v, "km/h", msg, limits["max"])
     if v >= limits["caution_from"]:
         msg = f"gusts {v:.0f} km/h (caution from {limits['caution_from']})"
-        return RuleResult("gusts", RuleStatus.CAUTION, v, "km/h", msg)
+        return RuleResult("gusts", RuleStatus.CAUTION, v, "km/h", msg, limits["caution_from"])
     return RuleResult("gusts", RuleStatus.PASS, v, "km/h", f"gusts {v:.0f} km/h")
 
 
@@ -86,13 +90,13 @@ def delta_t_rule(hour: HourlyWeather, limits: dict) -> RuleResult:
     v = round(delta_t_c(hour.temperature_c, hour.relative_humidity_pct), 1)
     if v > limits["max"]:
         msg = f"Delta T {v} °C > {limits['max']}: droplets evaporate"
-        return RuleResult("delta_t", RuleStatus.FAIL, v, "°C", msg)
+        return RuleResult("delta_t", RuleStatus.FAIL, v, "°C", msg, limits["max"])
     if v < limits["min"]:
         msg = f"Delta T {v} °C < {limits['min']}: droplets stay suspended"
-        return RuleResult("delta_t", RuleStatus.CAUTION, v, "°C", msg)
+        return RuleResult("delta_t", RuleStatus.CAUTION, v, "°C", msg, limits["min"])
     if v > limits["caution_from"]:
         msg = f"Delta T {v} °C (caution from {limits['caution_from']})"
-        return RuleResult("delta_t", RuleStatus.CAUTION, v, "°C", msg)
+        return RuleResult("delta_t", RuleStatus.CAUTION, v, "°C", msg, limits["caution_from"])
     return RuleResult("delta_t", RuleStatus.PASS, v, "°C", f"Delta T {v} °C")
 
 
@@ -102,23 +106,26 @@ def temperature_rule(hour: HourlyWeather, limits: dict) -> RuleResult:
         return RuleResult("temperature", RuleStatus.UNKNOWN, None, "°C", "no temperature")
     if v > limits["max"]:
         msg = f"temperature {v:.0f} °C > {limits['max']}"
-        return RuleResult("temperature", RuleStatus.FAIL, v, "°C", msg)
+        return RuleResult("temperature", RuleStatus.FAIL, v, "°C", msg, limits["max"])
     if v >= limits["caution_from"]:
         msg = f"temperature {v:.0f} °C (caution from {limits['caution_from']})"
-        return RuleResult("temperature", RuleStatus.CAUTION, v, "°C", msg)
+        return RuleResult("temperature", RuleStatus.CAUTION, v, "°C", msg, limits["caution_from"])
     return RuleResult("temperature", RuleStatus.PASS, v, "°C", f"temperature {v:.0f} °C")
 
 
 def rain_rule(window: list[HourlyWeather], limits: dict) -> RuleResult:
     """`window` is this hour and the following ones up to the lookahead."""
     amounts = [h.precipitation_mm for h in window if h.precipitation_mm is not None]
-    if not amounts:
-        return RuleResult("rain", RuleStatus.UNKNOWN, None, "mm", "no rain forecast")
-    total = round(sum(amounts), 1)
     hours = limits["lookahead_hours"]
-    if total >= limits["max_mm"]:
+    if not amounts:
         return RuleResult(
-            "rain", RuleStatus.FAIL, total, "mm", f"{total} mm of rain in the next {hours} h"
+            "rain", RuleStatus.UNKNOWN, None, "mm", "no rain forecast", window_h=hours
+        )
+    total = round(sum(amounts), 1)
+    if total >= limits["max_mm"]:
+        msg = f"{total} mm of rain in the next {hours} h"
+        return RuleResult(
+            "rain", RuleStatus.FAIL, total, "mm", msg, limits["max_mm"], window_h=hours
         )
     probabilities = [
         h.precipitation_probability_pct
@@ -126,11 +133,19 @@ def rain_rule(window: list[HourlyWeather], limits: dict) -> RuleResult:
         if h.precipitation_probability_pct is not None
     ]
     if probabilities and max(probabilities) >= limits["caution_probability_pct"]:
-        msg = f"{max(probabilities):.0f} % chance of rain in the next {hours} h"
-        return RuleResult("rain", RuleStatus.CAUTION, total, "mm", msg)
-    return RuleResult(
-        "rain", RuleStatus.PASS, total, "mm", f"no rain expected in the next {hours} h"
-    )
+        chance = max(probabilities)
+        msg = f"{chance:.0f} % chance of rain in the next {hours} h"
+        return RuleResult(
+            "rain",
+            RuleStatus.CAUTION,
+            chance,
+            "%",
+            msg,
+            limits["caution_probability_pct"],
+            window_h=hours,
+        )
+    msg = f"no rain expected in the next {hours} h"
+    return RuleResult("rain", RuleStatus.PASS, total, "mm", msg, window_h=hours)
 
 
 def inversion_rule(hour: HourlyWeather, sunrises: list[datetime], limits: dict) -> RuleResult:

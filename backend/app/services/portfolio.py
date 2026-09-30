@@ -48,7 +48,8 @@ class SprayAnswer:
     profile: str
     status: SprayStatus | None = None
     valid_at: datetime | None = None
-    reasons: list[str] = field(default_factory=list)
+    # Rules that did not pass for the current hour, as stored (see spray_rules.RuleResult).
+    problems: list[dict] = field(default_factory=list)
     drift_toward: str | None = None
     next_favorable: tuple[datetime, datetime] | None = None
 
@@ -181,9 +182,7 @@ def _spray_answer(
         return answer
     answer.status = current.status
     answer.valid_at = current.valid_at
-    answer.reasons = [
-        r["message"] for r in current.rules if r["status"] in ("FAIL", "CAUTION", "UNKNOWN")
-    ]
+    answer.problems = [r for r in current.rules if r["status"] != "PASS"]
     answer.drift_toward = drift_direction(current.weather.get("wind_direction_deg"))
     answer.next_favorable = next_favorable_window(assessments)
     return answer

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import DataQuality, IngestionRun, RunStatus, SprayAssessment
+from app.models import DataQuality, IngestionRun, Observation, RunStatus, SprayAssessment
 
 
 @dataclass(frozen=True)
@@ -74,3 +74,25 @@ def spray_quality(
     if now - assessment.forecast_fetched_at > timedelta(hours=stale_after_hours):
         return DataQuality.STALE
     return assessment.data_quality
+
+
+@dataclass(frozen=True)
+class LatestPass:
+    sensor: str
+    satellite: str
+    acquired_at: datetime
+    ingested_at: datetime
+
+
+def latest_pass(session: Session, source: str) -> LatestPass | None:
+    """The newest satellite pass we hold data from. FIRMS only lists passes with detections,
+    so this is the latest pass that saw a fire somewhere in the region."""
+    newest = session.scalar(
+        select(Observation)
+        .where(Observation.source == source)
+        .order_by(Observation.acquired_at.desc())
+        .limit(1)
+    )
+    if newest is None:
+        return None
+    return LatestPass(newest.sensor, newest.satellite, newest.acquired_at, newest.ingested_at)

@@ -18,7 +18,7 @@ from app.models import (
     Severity,
     Territory,
 )
-from app.services.data_quality import fire_quality, source_statuses
+from app.services.data_quality import fire_quality, latest_pass, source_statuses
 from app.services.field_risk import assess_active_fire_events, assess_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
@@ -179,3 +179,10 @@ def test_field_created_after_ingestion_gets_the_active_fire(pipeline, session, t
     assess_active_fire_events(session, thresholds["field_risk"], VERSION, NOW)
     risk = session.scalar(select(FieldRiskEvent).where(FieldRiskEvent.territory_id == field.id))
     assert risk.severity == Severity.VERY_HIGH
+
+
+def test_latest_pass_is_the_newest_acquisition(pipeline, session):
+    newest = latest_pass(session, "firms")
+    assert (newest.sensor, newest.satellite) == ("VIIRS", "NOAA-21")
+    assert newest.acquired_at == datetime(2026, 9, 28, 17, 48, tzinfo=UTC)
+    assert latest_pass(session, "goes") is None

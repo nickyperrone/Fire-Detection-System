@@ -183,8 +183,6 @@ export interface components {
         /** AnomalyAnswerOut */
         AnomalyAnswerOut: {
             data_quality: components["schemas"]["DataQuality"];
-            /** Message */
-            message: string;
         };
         /**
          * DataQuality
@@ -259,10 +257,28 @@ export interface components {
             /** Database */
             database: boolean;
             fire_data_quality: components["schemas"]["DataQuality"];
+            latest_pass: components["schemas"]["LatestPassOut"] | null;
             /** Processing Version */
             processing_version: string;
             /** Sources */
             sources: components["schemas"]["SourceStatusOut"][];
+        };
+        /** LatestPassOut */
+        LatestPassOut: {
+            /**
+             * Acquired At
+             * Format: date-time
+             */
+            acquired_at: string;
+            /**
+             * Ingested At
+             * Format: date-time
+             */
+            ingested_at: string;
+            /** Satellite */
+            satellite: string;
+            /** Sensor */
+            sensor: string;
         };
         /**
          * Layer
@@ -356,10 +372,10 @@ export interface components {
                 string,
                 string
             ] | null;
+            /** Problems */
+            problems: components["schemas"]["SprayRuleOut"][];
             /** Profile */
             profile: string;
-            /** Reasons */
-            reasons: string[];
             status: components["schemas"]["SprayStatus"] | null;
             /** Valid At */
             valid_at: string | null;
@@ -387,12 +403,18 @@ export interface components {
                 [key: string]: unknown;
             };
         };
-        /** SprayRuleOut */
+        /**
+         * SprayRuleOut
+         * @description Codes and numbers only; the frontend writes the sentence in the user's language.
+         */
         SprayRuleOut: {
-            /** Estimated */
+            /**
+             * Estimated
+             * @default false
+             */
             estimated: boolean;
-            /** Message */
-            message: string;
+            /** Limit */
+            limit?: number | null;
             /** Rule */
             rule: string;
             status: components["schemas"]["RuleStatus"];
@@ -400,6 +422,8 @@ export interface components {
             unit: string;
             /** Value */
             value: number | null;
+            /** Window H */
+            window_h?: number | null;
         };
         /**
          * SprayStatus
