@@ -18,4 +18,4 @@ app.include_router(tiles.router)
 
 @app.exception_handler(TerritoryError)
 def territory_error_handler(request: Request, exc: TerritoryError) -> JSONResponse:
-    return JSONResponse(status_code=422, content={"detail": str(exc)})
+    return JSONResponse(status_code=422, content={"detail": str(exc), "code": exc.code})

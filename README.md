@@ -124,6 +124,7 @@ the tests against a PostGIS service container, and a Docker image build.
 | `docs/` | Specs |
 | `config/` | `thresholds.yaml`: every rule parameter |
 | `data/aoi/` | Sample fields, sections and tags near Larroque (GeoJSON) |
+| `data/boundaries/` | Argentina's boundary from Natural Earth (public domain); fields must lie inside |
 | `backend/app/providers/` | FIRMS and Open-Meteo clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray conditions, data quality, portfolio |
 | `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |

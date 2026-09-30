@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from app.boundaries import allowed_area
 from app.config import get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
@@ -109,11 +110,13 @@ def main() -> None:
     settings, thresholds = get_settings(), get_thresholds()
     with session_factory()() as session, httpx.Client() as client:
         if args.command == "load-territories":
+            config = thresholds["territories"]
             created = load_feature_collection(
                 session,
                 settings.owner,
                 json.loads(args.path.read_text()),
-                thresholds["territories"]["section_tolerance_m"],
+                config["section_tolerance_m"],
+                allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
             )
             session.commit()
             print(f"loaded {len(created)} territories")

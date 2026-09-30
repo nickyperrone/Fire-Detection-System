@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
+from app.boundaries import allowed_area
 from app.config import Settings, get_thresholds
 from app.models import Territory
 from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
@@ -50,6 +51,7 @@ def create(
     settings: SettingsDep,
     body: TerritoryIn,
 ):
+    config = get_thresholds()["territories"]
     territory = create_territory(
         session,
         owner=settings.owner,
@@ -57,7 +59,8 @@ def create(
         geometry=body.geometry,
         parent_id=body.parent_id,
         tags=body.tags,
-        section_tolerance_m=get_thresholds()["territories"]["section_tolerance_m"],
+        section_tolerance_m=config["section_tolerance_m"],
+        allowed_area=allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
     )
     session.commit()
     # A new field near a fire that is already active gets its answer now, not after the next ingest.

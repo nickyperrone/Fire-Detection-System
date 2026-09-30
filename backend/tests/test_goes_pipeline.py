@@ -14,6 +14,7 @@ from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
 from app.services.lightning import nearby_lightning
 from app.services.territories import load_feature_collection
 from app.services.tiles import Layer, build_tile
+from tests.conftest import ARGENTINA
 from tests.goes_files import GOES_EAST, fire_file, grid, lightning_file
 from tests.test_territories import SAMPLE
 from tests.test_tiles import tile_xy
@@ -60,7 +61,7 @@ class FakeBucket:
 
 @pytest.fixture
 def fields(session):
-    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5)
+    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5, ARGENTINA)
     session.commit()
 
 

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from app.db import get_session
 from app.main import app
 from app.services.territories import load_feature_collection
+from tests.conftest import ARGENTINA
 from tests.test_territories import SAMPLE
 
 # Center of La Esperanza. Its longitude is exactly a tile edge from zoom 7 up, so the field is
@@ -24,7 +25,7 @@ def tile_xy(lon: float, lat: float, z: int) -> tuple[int, int]:
 
 @pytest.fixture
 def client(session):
-    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5)
+    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5, ARGENTINA)
     session.commit()
     app.dependency_overrides[get_session] = lambda: session
     yield TestClient(app)

@@ -28,7 +28,9 @@ different answers:
 ## Fields, sections and tags
 
 - A **field** is a polygon drawn on the map or imported from GeoJSON/KML. Its area in hectares is
-  computed by the backend.
+  computed by the backend. Fields must lie in Argentina: the backend checks them against the
+  Natural Earth 1:10m boundary (`data/boundaries/argentina.geojson`, public domain) with 1 km of
+  tolerance for the generalized rivers and coasts, and the map does not pan far outside the country.
 - A field can be split into **sections** (lots): "La Esperanza / Lote 3". A section must lie inside
   its field. Every answer is computed for fields and for sections.
 - Any field or section can carry **tags** in `key:value` form: `client:Juan Perez`, `crop:soy`,

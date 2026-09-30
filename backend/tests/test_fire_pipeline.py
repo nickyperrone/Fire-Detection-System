@@ -24,7 +24,7 @@ from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.territories import create_territory, load_feature_collection
 from app.services.tiles import Layer, build_tile
-from tests.conftest import FIXTURES
+from tests.conftest import ARGENTINA, FIXTURES
 from tests.test_territories import SAMPLE
 from tests.test_tiles import tile_xy
 
@@ -52,7 +52,7 @@ def firms_transport() -> httpx.MockTransport:
 
 @pytest.fixture
 def pipeline(session, thresholds):
-    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5)
+    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5, ARGENTINA)
     session.commit()
     with httpx.Client(transport=firms_transport()) as client:
         runs = ingest_firms(session, client, KEY, thresholds, NOW)
@@ -178,6 +178,7 @@ def test_field_created_after_ingestion_gets_the_active_fire(pipeline, session, t
             ],
         },
         section_tolerance_m=5,
+        allowed_area=ARGENTINA,
     )
     session.commit()
     assess_active_fire_events(session, thresholds["field_risk"], VERSION, NOW)

@@ -9,7 +9,7 @@ from app.services.territories import (
     list_territories,
     load_feature_collection,
 )
-from tests.conftest import BACKEND
+from tests.conftest import ARGENTINA, BACKEND
 
 SAMPLE = BACKEND.parent / "data" / "aoi" / "larroque_sample_fields.geojson"
 
@@ -22,7 +22,7 @@ def rect(w, s, e, n):
 def loaded(session, thresholds):
     collection = json.loads(SAMPLE.read_text())
     tolerance = thresholds["territories"]["section_tolerance_m"]
-    created = load_feature_collection(session, "default", collection, tolerance)
+    created = load_feature_collection(session, "default", collection, tolerance, ARGENTINA)
     session.commit()
     return created
 
@@ -42,6 +42,7 @@ def test_sample_file_loads_fields_sections_and_tags(loaded, session, thresholds)
         "default",
         json.loads(SAMPLE.read_text()),
         thresholds["territories"]["section_tolerance_m"],
+        ARGENTINA,
     )
     assert again == []
 
@@ -72,6 +73,7 @@ def test_section_outside_its_field_is_rejected(loaded, session):
             geometry=rect(-59.0, -32.9, -58.99, -32.89),
             parent_id=field.id,
             section_tolerance_m=5,
+            allowed_area=ARGENTINA,
         )
 
 
@@ -85,6 +87,7 @@ def test_section_cannot_contain_sections(loaded, session):
             geometry=rect(-59.15, -32.995, -59.14, -32.99),
             parent_id=section.id,
             section_tolerance_m=5,
+            allowed_area=ARGENTINA,
         )
 
 
@@ -99,5 +102,33 @@ def test_section_cannot_contain_sections(loaded, session):
 def test_invalid_geometries_are_rejected(session, geometry):
     with pytest.raises(TerritoryError):
         create_territory(
-            session, owner="default", name="Bad", geometry=geometry, section_tolerance_m=5
+            session,
+            owner="default",
+            name="Bad",
+            geometry=geometry,
+            section_tolerance_m=5,
+            allowed_area=ARGENTINA,
         )
+
+
+def test_fields_must_be_inside_argentina(session):
+    # Fray Bentos, Uruguay, across the river from Gualeguaychú.
+    with pytest.raises(TerritoryError) as error:
+        create_territory(
+            session,
+            owner="default",
+            name="Across the river",
+            geometry=rect(-58.32, -33.13, -58.30, -33.11),
+            section_tolerance_m=5,
+            allowed_area=ARGENTINA,
+        )
+    assert error.value.code == "outside_country"
+    near_border = create_territory(
+        session,
+        owner="default",
+        name="Gualeguaychú riverside",
+        geometry=rect(-58.46, -33.02, -58.44, -33.00),
+        section_tolerance_m=5,
+        allowed_area=ARGENTINA,
+    )
+    assert near_border.hectares > 0

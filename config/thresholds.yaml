@@ -10,6 +10,9 @@ region:
 territories:
   # A section may stick out of its field by this much, to absorb drawing and simplification error.
   section_tolerance_m: 5
+  # Fields must lie inside this boundary, give or take the tolerance.
+  allowed_area: data/boundaries/argentina.geojson
+  allowed_area_tolerance_m: 1000
 
 firms:
   # FIRMS Landsat detections only cover the US and Canada.

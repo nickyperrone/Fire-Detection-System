@@ -9,9 +9,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from alembic import command
+from app.boundaries import allowed_area
 from app.models import Base
 
 BACKEND = Path(__file__).resolve().parents[1]
+ARGENTINA = allowed_area("data/boundaries/argentina.geojson", 1000)
 FIXTURES = Path(__file__).parent / "fixtures"
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",

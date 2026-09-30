@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 from geoalchemy2 import Geography, WKTElement
 from shapely.geometry import MultiPolygon, Polygon, shape
+from shapely.prepared import PreparedGeometry
 from sqlalchemy import cast, delete, func, select
 from sqlalchemy.orm import Session
 
@@ -9,28 +10,39 @@ from app.models import Tag, Territory, TerritoryKind, TerritoryTag
 
 
 class TerritoryError(ValueError):
-    """Invalid geometry, hierarchy or tag supplied by the user."""
+    """Invalid geometry, hierarchy or tag supplied by the user.
+
+    `code` is stable and translated by the frontend; the message is for logs and the CLI.
+    """
+
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
 
 
 def parse_tag(label: str) -> tuple[str, str | None]:
     key, _, value = label.strip().partition(":")
     if not key:
-        raise TerritoryError(f"empty tag: {label!r}")
+        raise TerritoryError("empty_tag", f"empty tag: {label!r}")
     return key.strip(), (value.strip() or None)
 
 
-def to_multipolygon_wkt(geometry: dict) -> str:
+def to_multipolygon(geometry: dict) -> MultiPolygon:
     try:
         geom = shape(geometry)
     except (KeyError, TypeError, ValueError) as exc:
-        raise TerritoryError(f"invalid GeoJSON geometry: {exc}") from exc
+        raise TerritoryError("invalid_geometry", f"invalid GeoJSON geometry: {exc}") from exc
     if isinstance(geom, Polygon):
         geom = MultiPolygon([geom])
     if not isinstance(geom, MultiPolygon):
-        raise TerritoryError(f"a territory must be a Polygon or MultiPolygon, got {geom.geom_type}")
+        raise TerritoryError(
+            "not_a_polygon", f"a territory must be a Polygon or MultiPolygon, got {geom.geom_type}"
+        )
     if not geom.is_valid:
-        raise TerritoryError("the polygon is not valid (self-intersecting or open ring)")
-    return geom.wkt
+        raise TerritoryError(
+            "invalid_polygon", "the polygon is not valid (self-intersecting or open ring)"
+        )
+    return geom
 
 
 def create_territory(
@@ -43,15 +55,19 @@ def create_territory(
     tags: Sequence[str] = (),
     attributes: dict | None = None,
     section_tolerance_m: float,
+    allowed_area: PreparedGeometry,
 ) -> Territory:
-    geom = WKTElement(to_multipolygon_wkt(geometry), srid=4326)
+    polygon = to_multipolygon(geometry)
+    if not allowed_area.covers(polygon):
+        raise TerritoryError("outside_country", "fields can only be drawn inside Argentina")
+    geom = WKTElement(polygon.wkt, srid=4326)
     parent = None
     if parent_id is not None:
         parent = session.get(Territory, parent_id)
         if parent is None or parent.owner != owner:
-            raise TerritoryError(f"field {parent_id} does not exist")
+            raise TerritoryError("parent_not_found", f"field {parent_id} does not exist")
         if parent.kind != TerritoryKind.FIELD:
-            raise TerritoryError("sections can only be created inside a field")
+            raise TerritoryError("parent_not_field", "sections can only be created inside a field")
         _check_inside(session, geom, parent, section_tolerance_m)
 
     territory = Territory(
@@ -83,7 +99,7 @@ def _check_inside(
         ).where(Territory.id == parent.id)
     )
     if not covered:
-        raise TerritoryError(f"the section is not inside field {parent.name!r}")
+        raise TerritoryError("outside_parent", f"the section is not inside field {parent.name!r}")
 
 
 def set_tags(session: Session, territory: Territory, labels: Sequence[str]) -> None:
@@ -129,7 +145,11 @@ def list_territories(session: Session, owner: str, tags: Sequence[str] = ()) -> 
 
 
 def load_feature_collection(
-    session: Session, owner: str, collection: dict, section_tolerance_m: float
+    session: Session,
+    owner: str,
+    collection: dict,
+    section_tolerance_m: float,
+    allowed_area: PreparedGeometry,
 ) -> list[Territory]:
     """Load fields, then sections (matched to their field by the `parent` name).
 
@@ -151,7 +171,8 @@ def load_feature_collection(
         parent = by_name.get(props["parent"]) if props.get("parent") else None
         if props.get("parent") and parent is None:
             raise TerritoryError(
-                f"section {props['name']!r} refers to unknown field {props['parent']!r}"
+                "parent_not_found",
+                f"section {props['name']!r} refers to unknown field {props['parent']!r}",
             )
         if _exists(session, owner, props["name"], parent):
             continue
@@ -166,6 +187,7 @@ def load_feature_collection(
                 k: v for k, v in props.items() if k not in {"name", "kind", "parent", "tags"}
             },
             section_tolerance_m=section_tolerance_m,
+            allowed_area=allowed_area,
         )
         if parent is None:
             by_name[territory.name] = territory

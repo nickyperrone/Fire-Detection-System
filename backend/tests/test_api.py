@@ -52,6 +52,11 @@ def test_invalid_geometry_is_a_422_with_the_reason(client):
     )
     assert response.status_code == 422
     assert "Polygon" in response.json()["detail"]
+    assert response.json()["code"] == "not_a_polygon"
+    outside = client.post(
+        "/territories", json={"name": "Madrid", "geometry": rect(-3.71, 40.41, -3.70, 40.42)}
+    )
+    assert (outside.status_code, outside.json()["code"]) == (422, "outside_country")
 
 
 def test_unknown_territory_is_404(client):
