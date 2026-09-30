@@ -1,0 +1,207 @@
+import type {
+  ExpressionSpecification,
+  Map as MapLibreMap,
+  StyleSpecification,
+} from "maplibre-gl";
+
+import { tileUrl } from "@/api/client";
+import { TONE_HEX } from "@/lib/status";
+
+export type Basemap = "dark" | "light" | "satellite";
+
+export const BASEMAPS: Basemap[] = ["dark", "light", "satellite"];
+
+const CARTO_GLYPHS = "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf";
+const LABEL_FONT = ["Montserrat Medium"];
+
+const SATELLITE_STYLE: StyleSpecification = {
+  version: 8,
+  glyphs: CARTO_GLYPHS,
+  sources: {
+    imagery: {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+    },
+  },
+  layers: [{ id: "imagery", type: "raster", source: "imagery" }],
+};
+
+export function styleFor(basemap: Basemap): string | StyleSpecification {
+  if (basemap === "satellite") return SATELLITE_STYLE;
+  return basemap === "light"
+    ? "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+    : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+}
+
+export const TERRITORY_LAYERS = ["section-fill", "field-fill"] as const;
+export const FIRE_LAYER = "fire-core";
+export const FIRE_HALO_LAYER = "fire-halo";
+
+const toneColor: ExpressionSpecification = [
+  "match",
+  ["coalesce", ["feature-state", "tone"], "unknown"],
+  "critical",
+  TONE_HEX.critical,
+  "high",
+  TONE_HEX.high,
+  "watch",
+  TONE_HEX.watch,
+  "ok",
+  TONE_HEX.ok,
+  TONE_HEX.unknown,
+];
+
+function fillOpacity(base: number): ExpressionSpecification {
+  return [
+    "case",
+    ["boolean", ["feature-state", "selected"], false],
+    base + 0.1,
+    ["boolean", ["feature-state", "dimmed"], false],
+    base / 4,
+    base,
+  ];
+}
+
+const isCluster: ExpressionSpecification = ["has", "event_count"];
+
+/** Adds our sources and layers on top of the current basemap. Called again after every style change. */
+export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
+  map.addSource("territories", {
+    type: "vector",
+    tiles: [tileUrl("territories", territoriesVersion)],
+    maxzoom: 16,
+  });
+  map.addSource("fires", { type: "vector", tiles: [tileUrl("fire_events")], maxzoom: 14 });
+  map.addSource("observations", {
+    type: "vector",
+    tiles: [tileUrl("observations")],
+    minzoom: 11,
+    maxzoom: 14,
+  });
+
+  const byKind = (kind: string): ExpressionSpecification => ["==", ["get", "kind"], kind];
+  map.addLayer({
+    id: "field-fill",
+    type: "fill",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("FIELD"),
+    paint: { "fill-color": toneColor, "fill-opacity": fillOpacity(0.18) },
+  });
+  map.addLayer({
+    id: "section-fill",
+    type: "fill",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("SECTION"),
+    paint: { "fill-color": toneColor, "fill-opacity": fillOpacity(0.12) },
+  });
+  map.addLayer({
+    id: "field-line",
+    type: "line",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("FIELD"),
+    paint: {
+      "line-color": toneColor,
+      "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 3.5, 2],
+    },
+  });
+  map.addLayer({
+    id: "section-line",
+    type: "line",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("SECTION"),
+    paint: { "line-color": toneColor, "line-width": 1.2, "line-dasharray": [2, 2] },
+  });
+  const labelPaint = { "text-color": "#f3f6fa", "text-halo-color": "#0b0e13", "text-halo-width": 1.4 };
+  // Field names while the field is small on screen, lot names once the lots are readable.
+  map.addLayer({
+    id: "field-label",
+    type: "symbol",
+    source: "territories",
+    "source-layer": "territory_labels",
+    filter: byKind("FIELD"),
+    minzoom: 10,
+    maxzoom: 13,
+    layout: { "text-field": ["get", "name"], "text-font": LABEL_FONT, "text-size": 13 },
+    paint: labelPaint,
+  });
+  map.addLayer({
+    id: "section-label",
+    type: "symbol",
+    source: "territories",
+    "source-layer": "territory_labels",
+    filter: byKind("SECTION"),
+    minzoom: 13,
+    layout: { "text-field": ["get", "name"], "text-font": LABEL_FONT, "text-size": 12 },
+    paint: labelPaint,
+  });
+
+  map.addLayer({
+    id: "observation-dot",
+    type: "circle",
+    source: "observations",
+    "source-layer": "observations",
+    paint: {
+      "circle-radius": 3,
+      "circle-color": "#ffd166",
+      "circle-stroke-color": "#0b0e13",
+      "circle-stroke-width": 1,
+    },
+  });
+  map.addLayer({
+    id: FIRE_HALO_LAYER,
+    type: "circle",
+    source: "fires",
+    "source-layer": "fire_events",
+    paint: {
+      "circle-radius": ["case", isCluster, 22, 14],
+      "circle-color": "#ff5a1f",
+      "circle-opacity": 0.25,
+      "circle-blur": 0.6,
+    },
+  });
+  map.addLayer({
+    id: FIRE_LAYER,
+    type: "circle",
+    source: "fires",
+    "source-layer": "fire_events",
+    paint: {
+      "circle-radius": [
+        "case",
+        isCluster,
+        ["interpolate", ["linear"], ["get", "event_count"], 1, 8, 10, 13, 50, 18],
+        6,
+      ],
+      "circle-color": [
+        "case",
+        ["any", ["==", ["get", "confidence"], "high"], ["to-boolean", ["get", "any_high_confidence"]]],
+        "#ff3b1f",
+        "#ff9f43",
+      ],
+      "circle-stroke-color": "#fff4e6",
+      "circle-stroke-width": 1.5,
+    },
+  });
+  map.addLayer({
+    id: "fire-count",
+    type: "symbol",
+    source: "fires",
+    "source-layer": "fire_events",
+    filter: ["all", isCluster, [">", ["get", "event_count"], 1]],
+    layout: {
+      "text-field": ["to-string", ["get", "event_count"]],
+      "text-font": LABEL_FONT,
+      "text-size": 11,
+      "text-allow-overlap": true,
+    },
+    paint: { "text-color": "#ffffff" },
+  });
+}

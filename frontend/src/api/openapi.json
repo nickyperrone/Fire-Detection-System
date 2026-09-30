@@ -1,0 +1,1452 @@
+{
+  "components": {
+    "schemas": {
+      "AnomalyAnswerOut": {
+        "properties": {
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data_quality",
+          "message"
+        ],
+        "title": "AnomalyAnswerOut",
+        "type": "object"
+      },
+      "DataQuality": {
+        "enum": [
+          "GOOD",
+          "PARTIAL",
+          "STALE",
+          "CLOUD_OBSCURED",
+          "NO_DATA"
+        ],
+        "title": "DataQuality",
+        "type": "string"
+      },
+      "FireAnswerOut": {
+        "properties": {
+          "acquired_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acquired At"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "fire_event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fire Event Id"
+          },
+          "last_read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Read At"
+          },
+          "other_fires": {
+            "title": "Other Fires",
+            "type": "integer"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "sensors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensors",
+            "type": "array"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data_quality",
+          "last_read_at",
+          "severity",
+          "distance_m",
+          "direction",
+          "sensors",
+          "confidence",
+          "acquired_at",
+          "received_at",
+          "fire_event_id",
+          "other_fires"
+        ],
+        "title": "FireAnswerOut",
+        "type": "object"
+      },
+      "FireEventOut": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "first_detected_at": {
+            "format": "date-time",
+            "title": "First Detected At",
+            "type": "string"
+          },
+          "geometry": {
+            "additionalProperties": true,
+            "title": "Geometry",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_detected_at": {
+            "format": "date-time",
+            "title": "Last Detected At",
+            "type": "string"
+          },
+          "max_frp_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Frp Mw"
+          },
+          "observation_count": {
+            "title": "Observation Count",
+            "type": "integer"
+          },
+          "processing_version": {
+            "title": "Processing Version",
+            "type": "string"
+          },
+          "sensors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sensors",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FireEventStatus"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "first_detected_at",
+          "last_detected_at",
+          "observation_count",
+          "confidence",
+          "max_frp_mw",
+          "sensors",
+          "processing_version",
+          "geometry"
+        ],
+        "title": "FireEventOut",
+        "type": "object"
+      },
+      "FireEventStatus": {
+        "enum": [
+          "ACTIVE",
+          "STALE",
+          "CLOSED"
+        ],
+        "title": "FireEventStatus",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "database": {
+            "title": "Database",
+            "type": "boolean"
+          },
+          "fire_data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "processing_version": {
+            "title": "Processing Version",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceStatusOut"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "database",
+          "processing_version",
+          "fire_data_quality",
+          "sources"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "Layer": {
+        "enum": [
+          "territories",
+          "fire_events",
+          "observations"
+        ],
+        "title": "Layer",
+        "type": "string"
+      },
+      "PortfolioEntryOut": {
+        "properties": {
+          "anomaly": {
+            "$ref": "#/components/schemas/AnomalyAnswerOut"
+          },
+          "fire": {
+            "$ref": "#/components/schemas/FireAnswerOut"
+          },
+          "hectares": {
+            "title": "Hectares",
+            "type": "number"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TerritoryKind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "spray": {
+            "$ref": "#/components/schemas/SprayAnswerOut"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "territory_id": {
+            "title": "Territory Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "territory_id",
+          "name",
+          "kind",
+          "parent_id",
+          "hectares",
+          "tags",
+          "fire",
+          "spray",
+          "anomaly"
+        ],
+        "title": "PortfolioEntryOut",
+        "type": "object"
+      },
+      "RiskEventOut": {
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          },
+          "factors": {
+            "additionalProperties": true,
+            "title": "Factors",
+            "type": "object"
+          },
+          "fire_event_id": {
+            "title": "Fire Event Id",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "processing_version": {
+            "title": "Processing Version",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RiskStatus"
+          },
+          "territory_id": {
+            "title": "Territory Id",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "territory_id",
+          "fire_event_id",
+          "severity",
+          "distance_m",
+          "direction",
+          "status",
+          "factors",
+          "processing_version",
+          "updated_at"
+        ],
+        "title": "RiskEventOut",
+        "type": "object"
+      },
+      "RiskStatus": {
+        "enum": [
+          "NEW",
+          "SEEN",
+          "RESOLVED"
+        ],
+        "title": "RiskStatus",
+        "type": "string"
+      },
+      "RiskStatusIn": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RiskStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "RiskStatusIn",
+        "type": "object"
+      },
+      "RuleStatus": {
+        "enum": [
+          "PASS",
+          "CAUTION",
+          "FAIL",
+          "UNKNOWN"
+        ],
+        "title": "RuleStatus",
+        "type": "string"
+      },
+      "Severity": {
+        "enum": [
+          "CRITICAL",
+          "VERY_HIGH",
+          "HIGH",
+          "WATCH"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "SourceStatusOut": {
+        "properties": {
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Status"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "product",
+          "last_run_at",
+          "last_run_status",
+          "last_success_at",
+          "last_error"
+        ],
+        "title": "SourceStatusOut",
+        "type": "object"
+      },
+      "SprayAnswerOut": {
+        "properties": {
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "drift_toward": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drift Toward"
+          },
+          "next_favorable": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Favorable"
+          },
+          "profile": {
+            "title": "Profile",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SprayStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "valid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid At"
+          }
+        },
+        "required": [
+          "data_quality",
+          "profile",
+          "status",
+          "valid_at",
+          "reasons",
+          "drift_toward",
+          "next_favorable"
+        ],
+        "title": "SprayAnswerOut",
+        "type": "object"
+      },
+      "SprayHourOut": {
+        "properties": {
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "forecast_fetched_at": {
+            "format": "date-time",
+            "title": "Forecast Fetched At",
+            "type": "string"
+          },
+          "processing_version": {
+            "title": "Processing Version",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/SprayRuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SprayStatus"
+          },
+          "valid_at": {
+            "format": "date-time",
+            "title": "Valid At",
+            "type": "string"
+          },
+          "weather": {
+            "additionalProperties": true,
+            "title": "Weather",
+            "type": "object"
+          }
+        },
+        "required": [
+          "valid_at",
+          "status",
+          "data_quality",
+          "rules",
+          "weather",
+          "forecast_fetched_at",
+          "processing_version"
+        ],
+        "title": "SprayHourOut",
+        "type": "object"
+      },
+      "SprayRuleOut": {
+        "properties": {
+          "estimated": {
+            "title": "Estimated",
+            "type": "boolean"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RuleStatus"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "rule",
+          "status",
+          "value",
+          "unit",
+          "message",
+          "estimated"
+        ],
+        "title": "SprayRuleOut",
+        "type": "object"
+      },
+      "SprayStatus": {
+        "enum": [
+          "FAVORABLE",
+          "CAUTION",
+          "UNFAVORABLE"
+        ],
+        "title": "SprayStatus",
+        "type": "string"
+      },
+      "TagsIn": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "title": "TagsIn",
+        "type": "object"
+      },
+      "TerritoryIn": {
+        "properties": {
+          "geometry": {
+            "additionalProperties": true,
+            "description": "GeoJSON Polygon or MultiPolygon, EPSG:4326",
+            "title": "Geometry",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Field id, to create a section",
+            "title": "Parent Id"
+          },
+          "tags": {
+            "description": "key:value or plain labels",
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "geometry"
+        ],
+        "title": "TerritoryIn",
+        "type": "object"
+      },
+      "TerritoryKind": {
+        "enum": [
+          "FIELD",
+          "SECTION"
+        ],
+        "title": "TerritoryKind",
+        "type": "string"
+      },
+      "TerritoryOut": {
+        "properties": {
+          "geometry": {
+            "additionalProperties": true,
+            "title": "Geometry",
+            "type": "object"
+          },
+          "hectares": {
+            "title": "Hectares",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TerritoryKind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "parent_id",
+          "hectares",
+          "tags",
+          "geometry"
+        ],
+        "title": "TerritoryOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Fire, spraying conditions and field anomalies per field and section.",
+    "title": "Field Watch API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/fire-events": {
+      "get": {
+        "operationId": "fire_events_fire_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FireEventStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "ACTIVE",
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FireEventOut"
+                  },
+                  "title": "Response Fire Events Fire Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fire Events",
+        "tags": [
+          "fires"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/portfolio": {
+      "get": {
+        "operationId": "portfolio_portfolio_get",
+        "parameters": [
+          {
+            "description": "key:value; every tag must match",
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "key:value; every tag must match",
+              "title": "Tag"
+            }
+          },
+          {
+            "in": "query",
+            "name": "profile",
+            "required": false,
+            "schema": {
+              "default": "default",
+              "title": "Profile",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortfolioEntryOut"
+                  },
+                  "title": "Response Portfolio Portfolio Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/risk-events/{risk_id}": {
+      "patch": {
+        "operationId": "update_risk_status_risk_events__risk_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "risk_id",
+            "required": true,
+            "schema": {
+              "title": "Risk Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskStatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Risk Status",
+        "tags": [
+          "fires"
+        ]
+      }
+    },
+    "/territories": {
+      "get": {
+        "operationId": "list__territories_get",
+        "parameters": [
+          {
+            "description": "key:value; every tag must match",
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "key:value; every tag must match",
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TerritoryOut"
+                  },
+                  "title": "Response List  Territories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List ",
+        "tags": [
+          "territories"
+        ]
+      },
+      "post": {
+        "operationId": "create_territories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerritoryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerritoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}": {
+      "delete": {
+        "operationId": "delete_territories__territory_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete",
+        "tags": [
+          "territories"
+        ]
+      },
+      "get": {
+        "operationId": "get_territories__territory_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerritoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/risk-events": {
+      "get": {
+        "operationId": "risk_events_territories__territory_id__risk_events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskEventOut"
+                  },
+                  "title": "Response Risk Events Territories  Territory Id  Risk Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Risk Events",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/spray-conditions": {
+      "get": {
+        "operationId": "spray_conditions_territories__territory_id__spray_conditions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "profile",
+            "required": false,
+            "schema": {
+              "default": "default",
+              "title": "Profile",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SprayHourOut"
+                  },
+                  "title": "Response Spray Conditions Territories  Territory Id  Spray Conditions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Spray Conditions",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/tags": {
+      "put": {
+        "operationId": "replace_tags_territories__territory_id__tags_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerritoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replace Tags",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/tiles/{layer}/{z}/{x}/{y}.pbf": {
+      "get": {
+        "operationId": "tile_tiles__layer___z___x___y__pbf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Layer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "z",
+            "required": true,
+            "schema": {
+              "maximum": 22,
+              "minimum": 0,
+              "title": "Z",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "x",
+            "required": true,
+            "schema": {
+              "minimum": 0,
+              "title": "X",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "y",
+            "required": true,
+            "schema": {
+              "minimum": 0,
+              "title": "Y",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tile",
+        "tags": [
+          "tiles"
+        ]
+      }
+    }
+  }
+}

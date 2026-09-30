@@ -5,6 +5,7 @@ TAG ?=
 
 setup:
 	cd backend && uv sync
+	cd frontend && npm install
 	$(MAKE) db migrate
 
 db:
@@ -36,3 +37,14 @@ test:
 
 lint:
 	$(BACKEND) ruff check . && $(BACKEND) ruff format --check .
+
+.PHONY: codegen web web-check
+codegen:
+	$(BACKEND) python -m app.export_openapi > ../frontend/src/api/openapi.json
+	cd frontend && npx openapi-typescript src/api/openapi.json -o src/api/schema.d.ts
+
+web:
+	cd frontend && npm run dev
+
+web-check:
+	cd frontend && npx tsc --noEmit && npm run lint && npx vitest run
