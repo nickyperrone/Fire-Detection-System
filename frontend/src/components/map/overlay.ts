@@ -41,18 +41,15 @@ export function styleFor(basemap: Basemap): string | StyleSpecification {
 export const TERRITORY_LAYERS = ["section-fill", "field-fill"] as const;
 export const FIRE_LAYER = "fire-core";
 export const FIRE_HALO_LAYER = "fire-halo";
+export const LIGHTNING_LAYER = "lightning-ring";
 
 const toneColor: ExpressionSpecification = [
   "match",
   ["coalesce", ["feature-state", "tone"], "unknown"],
-  "critical",
-  TONE_HEX.critical,
-  "high",
-  TONE_HEX.high,
-  "watch",
-  TONE_HEX.watch,
-  "ok",
-  TONE_HEX.ok,
+  "bad",
+  TONE_HEX.bad,
+  "good",
+  TONE_HEX.good,
   TONE_HEX.unknown,
 ];
 
@@ -83,13 +80,22 @@ const lineOpacity: ExpressionSpecification = [
 const isCluster: ExpressionSpecification = ["has", "event_count"];
 
 /** Adds our sources and layers on top of the current basemap. Called again after every style change. */
-export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
+export function addOverlay(
+  map: MapLibreMap,
+  territoriesVersion: number,
+  lightningVersion: number,
+): void {
   map.addSource("territories", {
     type: "vector",
     tiles: [tileUrl("territories", territoriesVersion)],
     maxzoom: 16,
   });
   map.addSource("fires", { type: "vector", tiles: [tileUrl("fire_events")], maxzoom: 14 });
+  map.addSource("lightning", {
+    type: "vector",
+    tiles: [tileUrl("lightning", lightningVersion)],
+    maxzoom: 14,
+  });
   map.addSource("observations", {
     type: "vector",
     tiles: [tileUrl("observations")],
@@ -170,9 +176,23 @@ export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
     "source-layer": "observations",
     paint: {
       "circle-radius": 3,
-      "circle-color": "#ffd166",
+      "circle-color": TONE_HEX.bad,
       "circle-stroke-color": "#0b0e13",
       "circle-stroke-width": 1,
+    },
+  });
+  // Lightning as red rings, so they read apart from fires (filled dots); older flashes fade.
+  map.addLayer({
+    id: LIGHTNING_LAYER,
+    type: "circle",
+    source: "lightning",
+    "source-layer": "lightning",
+    paint: {
+      "circle-radius": 5,
+      "circle-color": "rgba(0,0,0,0)",
+      "circle-stroke-color": TONE_HEX.bad,
+      "circle-stroke-width": 2,
+      "circle-stroke-opacity": ["interpolate", ["linear"], ["get", "age_minutes"], 0, 1, 60, 0.2],
     },
   });
   map.addLayer({
@@ -182,7 +202,7 @@ export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
     "source-layer": "fire_events",
     paint: {
       "circle-radius": ["case", isCluster, 22, 14],
-      "circle-color": "#ff5a1f",
+      "circle-color": TONE_HEX.bad,
       "circle-opacity": 0.25,
       "circle-blur": 0.6,
     },
@@ -199,11 +219,13 @@ export function addOverlay(map: MapLibreMap, territoriesVersion: number): void {
         ["interpolate", ["linear"], ["get", "event_count"], 1, 8, 10, 13, 50, 18],
         6,
       ],
-      "circle-color": [
+      "circle-color": TONE_HEX.bad,
+      // Lower confidence is paler, still red: the text says how sure it is.
+      "circle-opacity": [
         "case",
         ["any", ["==", ["get", "confidence"], "high"], ["to-boolean", ["get", "any_high_confidence"]]],
-        "#ff3b1f",
-        "#ff9f43",
+        1,
+        0.65,
       ],
       "circle-stroke-color": "#fff4e6",
       "circle-stroke-width": 1.5,

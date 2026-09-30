@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FireAnswer, SprayAnswer } from "../api/client";
-import { fireTone, sprayTone } from "./status";
+import { fireTone, sprayStatusTone, sprayTone } from "./status";
 
 const noFire: FireAnswer = {
   data_quality: "GOOD",
@@ -19,16 +19,16 @@ const noFire: FireAnswer = {
 
 describe("fire tone", () => {
   it("is green only when the sources were read", () => {
-    expect(fireTone(noFire)).toBe("ok");
-    expect(fireTone({ ...noFire, data_quality: "PARTIAL" })).toBe("ok");
+    expect(fireTone(noFire)).toBe("good");
+    expect(fireTone({ ...noFire, data_quality: "PARTIAL" })).toBe("good");
     expect(fireTone({ ...noFire, data_quality: "NO_DATA" })).toBe("unknown");
     expect(fireTone({ ...noFire, data_quality: "STALE" })).toBe("unknown");
   });
 
-  it("follows severity", () => {
-    expect(fireTone({ ...noFire, severity: "CRITICAL" })).toBe("critical");
-    expect(fireTone({ ...noFire, severity: "VERY_HIGH" })).toBe("high");
-    expect(fireTone({ ...noFire, severity: "WATCH" })).toBe("watch");
+  it("is red for any fire", () => {
+    // Any fire in the bands is red; how close it is goes in the text.
+    expect(fireTone({ ...noFire, severity: "CRITICAL" })).toBe("bad");
+    expect(fireTone({ ...noFire, severity: "WATCH" })).toBe("bad");
   });
 });
 
@@ -43,8 +43,9 @@ describe("spray tone", () => {
     next_favorable: null,
   };
   it("maps status and hides stale forecasts", () => {
-    expect(sprayTone(spray)).toBe("watch");
-    expect(sprayTone({ ...spray, status: "UNFAVORABLE" })).toBe("critical");
+    expect(sprayTone(spray)).toBe("bad");
+    expect(sprayTone({ ...spray, status: "UNFAVORABLE" })).toBe("bad");
+    expect(sprayStatusTone("FAVORABLE")).toBe("good");
     expect(sprayTone({ ...spray, data_quality: "STALE" })).toBe("unknown");
   });
 });

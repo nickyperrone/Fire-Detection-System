@@ -8,10 +8,9 @@
   --color-line: #2a313c;
   --color-muted: #8b95a5;
   --color-accent: #22d3ee;
-  --color-critical: #ef4444;
-  --color-high: #f97316;
-  --color-watch: #f5b300;
-  --color-ok: #22c55e;
+  /* Status colors (docs/06-goes.md#colors): red wrong, green fine, gray no data. */
+  --color-bad: #ef4444;
+  --color-good: #22c55e;
   --color-unknown: #6b7280;
 }
 
@@ -34,4 +33,12 @@ body {
 
 .maplibregl-ctrl-attrib {
   font-size: 10px;
+}
+
+/* Horizontal chip rows scroll with a swipe or the trackpad; the bar itself is noise. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -4,6 +4,7 @@ type Schemas = components["schemas"];
 export type PortfolioEntry = Schemas["PortfolioEntryOut"];
 export type FireAnswer = Schemas["FireAnswerOut"];
 export type SprayAnswer = Schemas["SprayAnswerOut"];
+export type LightningAnswer = Schemas["LightningAnswerOut"];
 export type Territory = Schemas["TerritoryOut"];
 export type TerritoryIn = Schemas["TerritoryIn"];
 export type RiskEvent = Schemas["RiskEventOut"];
@@ -17,6 +18,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** Stable code for validation errors (e.g. "outside_country"), translated by the UI. */
+    readonly code: string | null = null,
   ) {
     super(message);
   }
@@ -30,7 +33,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const detail = typeof body?.detail === "string" ? body.detail : response.statusText;
-    throw new ApiError(response.status, detail);
+    throw new ApiError(response.status, detail, typeof body?.code === "string" ? body.code : null);
   }
   return (response.status === 204 ? undefined : await response.json()) as T;
 }

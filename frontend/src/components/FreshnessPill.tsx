@@ -32,7 +32,7 @@ export function FreshnessPill() {
 function Pill({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <div className="glass inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs text-slate-200">
-      <SatelliteIcon className={`size-3.5 shrink-0 ${ok ? "text-ok" : "text-unknown"}`} />
+      <SatelliteIcon className={`size-3.5 shrink-0 ${ok ? "text-good" : "text-unknown"}`} />
       <span className="truncate">{children}</span>
     </div>
   );

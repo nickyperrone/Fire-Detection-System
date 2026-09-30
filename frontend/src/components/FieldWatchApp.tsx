@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PortfolioEntry, Territory } from "@/api/client";
 import { usePortfolio, useTerritories } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { fireTone } from "@/lib/status";
+import { hazardTone } from "@/lib/status";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
@@ -78,7 +78,7 @@ export function FieldWatchApp() {
       (everything.data ?? []).map((e) => [
         e.territory_id,
         {
-          tone: fireTone(e.fire),
+          tone: hazardTone(e.fire, e.lightning),
           dimmed: narrowed && !shown.has(e.territory_id),
           picked: url.picked.includes(e.territory_id),
         },
@@ -222,7 +222,7 @@ export function FieldWatchApp() {
             contentKey={String(url.selectedId ?? "portfolio")}
           >
             {everything.isError ? (
-              <p className="text-sm text-critical">{t.app.apiDown}</p>
+              <p className="text-sm text-bad">{t.app.apiDown}</p>
             ) : selected ? (
               <FieldDetail
                 entry={selected}

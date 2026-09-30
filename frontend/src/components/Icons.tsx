@@ -31,6 +31,12 @@ export const SprayIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const BoltIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+  </Icon>
+);
+
 export const LayersIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="m12 3 9 5-9 5-9-5 9-5Z" />

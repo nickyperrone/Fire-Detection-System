@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { Territory } from "@/api/client";
+import { ApiError, type Territory } from "@/api/client";
 import { useCreateTerritory } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatHectares } from "@/i18n/text";
@@ -74,7 +74,7 @@ export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: P
             onDone={onDone}
           />
         ) : drawing.tooSmall ? (
-          <p className="mt-1 text-sm text-watch">{t.draw.tooSmall}</p>
+          <p className="mt-1 text-sm text-bad">{t.draw.tooSmall}</p>
         ) : (
           <p className="mt-1 text-sm text-slate-300">
             {hint} {t.draw.zoomHint}
@@ -172,7 +172,14 @@ function SaveFieldForm({ drawing, fields, parentId, onParentChange, onDone }: Fo
           {t.draw.more}
         </button>
       )}
-      {create.error && <p className="text-sm text-critical">{t.draw.saveFailed(create.error.message)}</p>}
+      {create.error && (
+        <p className="text-sm text-bad">
+          {(create.error instanceof ApiError &&
+            create.error.code &&
+            t.draw.errors[create.error.code]) ||
+            t.draw.saveFailed(create.error.message)}
+        </p>
+      )}
     </form>
   );
 }

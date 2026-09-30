@@ -78,8 +78,20 @@ const en = {
     rainChance: (pct: string, h: number) => `${pct} chance of rain in the next ${h} h`,
     inversionRisk: "Possible temperature inversion (estimated: calm, clear night or early morning)",
   },
+  lightning: {
+    label: "Lightning",
+    none: "No lightning",
+    count: (n: number) => (n === 1 ? "1 lightning flash" : `${n} lightning flashes`),
+    sentence: (n: number, distance: string, minutes: number) =>
+      `${n === 1 ? "1 flash" : `${n} flashes`} within 10 km in the last ${minutes} min, the nearest ${distance} away`,
+    noneSentence: (minutes: number) => `No lightning within 10 km in the last ${minutes} min`,
+    noData: "No lightning data",
+    last: (age: string) => `Last one ${age}`,
+    why: "Lightning is the main natural cause of fires: watch the field for smoke in the next hours.",
+  },
   sections: {
     fire: "Fire",
+    lightning: "Lightning",
     spray: "Spraying, next 48 h",
     unusual: "Something unusual",
     unusualSoon:
@@ -118,7 +130,7 @@ const en = {
   buttons: {
     layers: "Map layers",
     locate: "Go to my location",
-    addField: "Field",
+    addField: "Add field",
     addFieldLabel: "Draw a new field",
     language: "Language",
   },
@@ -146,6 +158,11 @@ const en = {
     ownField: "No, it is a field of its own",
     tags: "Tags, separated by commas",
     saveFailed: (detail: string) => `Could not save: ${detail}`,
+    errors: {
+      outside_country: "Fields can only be drawn inside Argentina.",
+      outside_parent: "The lot must be inside its field.",
+      invalid_polygon: "The outline crosses itself. Start over and go around once.",
+    } as Record<string, string>,
   },
 };
 
@@ -221,8 +238,20 @@ const es: Messages = {
     inversionRisk:
       "Posible inversión térmica (estimada: calma y cielo despejado, de noche o temprano)",
   },
+  lightning: {
+    label: "Rayos",
+    none: "Sin rayos",
+    count: (n) => (n === 1 ? "1 rayo" : `${n} rayos`),
+    sentence: (n, distance, minutes) =>
+      `${n === 1 ? "1 rayo" : `${n} rayos`} a menos de 10 km en los últimos ${minutes} min, el más cercano a ${distance}`,
+    noneSentence: (minutes) => `Sin rayos a menos de 10 km en los últimos ${minutes} min`,
+    noData: "Sin datos de rayos",
+    last: (age) => `El último ${age}`,
+    why: "Los rayos son la principal causa natural de incendios: mirá si aparece humo en las próximas horas.",
+  },
   sections: {
     fire: "Fuego",
+    lightning: "Rayos",
     spray: "Pulverización, próximas 48 h",
     unusual: "Algo raro en el campo",
     unusualSoon:
@@ -260,7 +289,7 @@ const es: Messages = {
   buttons: {
     layers: "Capas del mapa",
     locate: "Ir a mi ubicación",
-    addField: "Campo",
+    addField: "Agregar campo",
     addFieldLabel: "Dibujar un campo nuevo",
     language: "Idioma",
   },
@@ -288,6 +317,11 @@ const es: Messages = {
     ownField: "No, es un campo propio",
     tags: "Etiquetas, separadas por comas",
     saveFailed: (detail) => `No se pudo guardar: ${detail}`,
+    errors: {
+      outside_country: "Solo se pueden dibujar campos dentro de Argentina.",
+      outside_parent: "El lote tiene que estar dentro de su campo.",
+      invalid_polygon: "El borde se cruza a sí mismo. Empezá de nuevo y dá una sola vuelta.",
+    },
   },
 };
 

@@ -3,16 +3,24 @@
 import type { PortfolioEntry } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { Messages } from "@/i18n/messages";
-import { fireLabel, fireSentence, localTime, ruleSentence, sprayLabel } from "@/i18n/text";
+import {
+  fireLabel,
+  fireSentence,
+  formatDistance,
+  localTime,
+  ruleSentence,
+  sprayLabel,
+} from "@/i18n/text";
 import { fireTone, sprayTone } from "@/lib/status";
 
-import { FlameIcon, SprayIcon } from "./Icons";
+import { BoltIcon, FlameIcon, SprayIcon } from "./Icons";
 import { StatusChip } from "./StatusChip";
 
 /** The most useful single sentence about a field: a fire first, then why not to spray. */
 export function headline(t: Messages, entry: PortfolioEntry): string {
-  const { fire, spray } = entry;
+  const { fire, spray, lightning } = entry;
   if (fire.severity || fire.data_quality === "NO_DATA") return fireSentence(t, fire);
+  if (lightning.flashes > 0) return lightningSentence(t, entry);
   if (!spray.status) return t.sprayText.noForecast;
   if (spray.status === "FAVORABLE") return t.sprayText.allPass;
   const window = spray.next_favorable;
@@ -20,7 +28,17 @@ export function headline(t: Messages, entry: PortfolioEntry): string {
   return spray.problems[0] ? `${ruleSentence(t, spray.problems[0])} · ${next}` : next;
 }
 
-/** Two chips, fire and spraying, in the same order and colors everywhere. */
+export function lightningSentence(t: Messages, entry: PortfolioEntry): string {
+  const { lightning } = entry;
+  if (lightning.flashes === 0) return t.lightning.noneSentence(lightning.window_minutes);
+  return t.lightning.sentence(
+    lightning.flashes,
+    formatDistance(t, lightning.nearest_m),
+    lightning.window_minutes,
+  );
+}
+
+/** Fire and spraying chips, plus a lightning chip only when there is lightning nearby. */
 export function FieldChips({ entry }: { entry: PortfolioEntry }) {
   const { t } = useLocale();
   return (
@@ -31,6 +49,11 @@ export function FieldChips({ entry }: { entry: PortfolioEntry }) {
       <StatusChip tone={sprayTone(entry.spray)} icon={<SprayIcon className="size-3.5" />}>
         {sprayLabel(t, entry.spray)}
       </StatusChip>
+      {entry.lightning.flashes > 0 && (
+        <StatusChip tone="bad" icon={<BoltIcon className="size-3.5" />}>
+          {t.lightning.count(entry.lightning.flashes)}
+        </StatusChip>
+      )}
     </div>
   );
 }

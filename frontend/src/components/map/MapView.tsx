@@ -25,6 +25,17 @@ import {
   TERRITORY_LAYERS,
 } from "./overlay";
 
+// West, south, east, north: Argentina plus about 3 degrees around it.
+const ARGENTINA_BOUNDS: [[number, number], [number, number]] = [
+  [-77, -57],
+  [-50, -19],
+];
+
+/** Changes once a minute, so the lightning tile URL (and the browser cache) turns over. */
+function lightningVersion(): number {
+  return Math.floor(Date.now() / 60_000);
+}
+
 // Copied there by scripts/copy-maplibre-worker.mjs.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -61,6 +72,9 @@ export function MapView(props: Props) {
     const { basemap, initialCamera, onReady } = latest.current;
     const map = new MapLibreMap({
       container: container.current!,
+      // Fields can only be in Argentina; the map stays around it (with room for the Delta and
+      // neighbors' fires near the border).
+      maxBounds: ARGENTINA_BOUNDS,
       style: styleFor(basemap),
       center: [initialCamera.lon, initialCamera.lat],
       zoom: initialCamera.zoom,
@@ -78,7 +92,7 @@ export function MapView(props: Props) {
     map.keyboard.disableRotation();
 
     map.on("style.load", () => {
-      addOverlay(map, latest.current.territoriesVersion);
+      addOverlay(map, latest.current.territoriesVersion, lightningVersion());
       applyTerritoryStates(map, latest.current.territoryStates, latest.current.selectedId);
     });
     map.on("click", (event) => handleClick(map, event, latest.current));
@@ -91,9 +105,16 @@ export function MapView(props: Props) {
       latest.current.onCameraChange({ lat: center.lat, lon: center.lng, zoom: map.getZoom() });
     });
     const stopPulse = pulseFires(map);
+    // New flashes arrive every 20 s; ask for fresh lightning tiles once a minute.
+    const lightningTimer = window.setInterval(() => {
+      map
+        .getSource<VectorTileSource>("lightning")
+        ?.setTiles([tileUrl("lightning", lightningVersion())]);
+    }, 60_000);
     onReady(map);
     return () => {
       stopPulse();
+      window.clearInterval(lightningTimer);
       onReady(null);
       map.remove();
       mapRef.current = null;

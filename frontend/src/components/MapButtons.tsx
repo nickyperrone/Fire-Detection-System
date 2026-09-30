@@ -47,11 +47,15 @@ export function MapButtons({ basemap, onBasemap, onLocate, onAddField }: Props) 
       </button>
       <button
         aria-label={t.buttons.addFieldLabel}
+        title={t.buttons.addFieldLabel}
         onClick={onAddField}
-        className="flex h-12 items-center gap-1.5 rounded-full bg-accent pl-3.5 pr-4 font-semibold text-slate-950 shadow-lg shadow-black/40"
+        className="group flex h-12 items-center rounded-full bg-accent px-3.5 font-semibold text-slate-950 shadow-lg shadow-black/40"
       >
         <PlusIcon />
-        {t.buttons.addField}
+        {/* The label slides out on hover or focus; on touch screens the icon is enough. */}
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:ml-1.5 group-hover:max-w-40 group-focus-visible:ml-1.5 group-focus-visible:max-w-40">
+          {t.buttons.addField}
+        </span>
       </button>
     </div>
   );

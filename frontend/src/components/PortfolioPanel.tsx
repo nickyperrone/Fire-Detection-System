@@ -31,7 +31,7 @@ export function PortfolioPanel(props: Props) {
 
   return (
     <div>
-      <h2 className={`text-lg font-semibold ${withFire ? "text-high" : ""}`}>
+      <h2 className={`text-lg font-semibold ${withFire ? "text-bad" : ""}`}>
         {withFire ? t.portfolio.withFire(withFire) : t.portfolio.allQuiet(fields.length)}
       </h2>
       <p className="text-sm text-muted">
@@ -42,7 +42,7 @@ export function PortfolioPanel(props: Props) {
       {picked.length > 0 && <SelectionBar {...props} />}
 
       {!onlyPicked && props.allTags.length > 0 && (
-        <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
           {props.allTags.map((tag) => {
             const active = props.activeTags.includes(tag);
             return (

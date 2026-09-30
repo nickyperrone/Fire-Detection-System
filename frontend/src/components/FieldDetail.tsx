@@ -12,17 +12,15 @@ import {
   localTime,
   ruleSentence,
 } from "@/i18n/text";
-import { fireTone, sprayTone, type Tone } from "@/lib/status";
+import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
-import { FieldChips } from "./FieldSummary";
-import { CloseIcon, FlameIcon, SprayIcon } from "./Icons";
+import { FieldChips, lightningSentence } from "./FieldSummary";
+import { BoltIcon, CloseIcon, FlameIcon, SprayIcon } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
 
 const TONE_TEXT: Record<Tone, string> = {
-  critical: "text-critical",
-  high: "text-high",
-  watch: "text-watch",
-  ok: "text-ok",
+  bad: "text-bad",
+  good: "text-good",
   unknown: "text-slate-300",
 };
 
@@ -87,6 +85,21 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
       </section>
 
       <section>
+        <SectionTitle icon={<BoltIcon className="size-4" />}>{t.sections.lightning}</SectionTitle>
+        <p className={`font-medium ${TONE_TEXT[lightningTone(entry.lightning)]}`}>
+          {lightningTone(entry.lightning) === "unknown"
+            ? t.lightning.noData
+            : lightningSentence(t, entry)}
+        </p>
+        {entry.lightning.flashes > 0 && (
+          <div className="mt-1 space-y-0.5 text-sm text-slate-300">
+            <p>{t.lightning.last(formatAge(t, entry.lightning.last_at))}</p>
+            <p className="text-slate-400">{t.lightning.why}</p>
+          </div>
+        )}
+      </section>
+
+      <section>
         <SectionTitle icon={<SprayIcon className="size-4" />}>{t.sections.spray}</SectionTitle>
         {spray.status ? (
           <div className="mb-3 space-y-0.5">
@@ -127,7 +140,7 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
             remove.mutate(entry.territory_id, { onSuccess: onClose });
           }
         }}
-        className="text-sm text-critical/80 hover:text-critical"
+        className="text-sm text-bad/80 hover:text-bad"
       >
         {isField ? t.detail.deleteField : t.detail.deleteLot}
       </button>
