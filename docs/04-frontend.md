@@ -31,9 +31,10 @@ more than two taps.
   - peek: the selected field and its three answers, or the portfolio summary ("2 fields need attention");
   - half: the portfolio list, worst first, with tag chips to filter;
   - full: field detail (fire history, 48 h spray timeline, sources and timestamps).
-- **Status colors are the same everywhere** (map fill, chips, list): `CRITICAL`/`UNFAVORABLE` red,
-  `VERY_HIGH`/`HIGH` orange, `WATCH`/`CAUTION` amber, `FAVORABLE` and no detections green,
-  `NO_DATA`/`STALE` gray with a dashed outline. Color is never the only signal: every chip has text.
+- **Two status colors, the same everywhere** (map fill, chips, list, timeline): red when something
+  is wrong (any fire severity, `UNFAVORABLE` and `CAUTION` spraying, lightning nearby), green when
+  all is fine, gray with a dashed outline for `NO_DATA`/`STALE`. How serious it is goes in the text
+  ("Very close", "Caution"), never in extra colors.
 - **Spray timeline**: a horizontal strip of 48 hourly cells colored by status; tapping a cell shows
   the rule that failed. The next favorable window is labeled on the strip.
 - **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update

@@ -22,9 +22,28 @@ firms:
 
 correlation:
   rule: spatiotemporal_v1
-  max_distance_m: 1000
+  # By source of the new observation: GOES pixels are about 2 x 3 km over Entre Ríos.
+  max_distance_m:
+    firms: 1000
+    goes: 3000
   max_time_gap_hours: 24
   stale_after_hours: 48
+
+goes:
+  bucket: noaa-goes19
+  fire_product: ABI-L2-FDCF
+  lightning_product: GLM-L2-LCFA
+  # Codes of the ABI fire mask; 30-35 are the same classes after the temporal filter.
+  fire_mask_confidence:
+    high: [10, 11, 13, 30, 31, 33]
+    nominal: [12, 14, 32, 34]
+    low: [15, 35]
+  min_confidence: nominal
+
+lightning:
+  radius_m: 10000
+  window_minutes: 60
+  keep_days: 7
 
 field_risk:
   # Ordered from closest to farthest; distance 0 means the fire intersects the territory.
@@ -62,4 +81,6 @@ data_quality:
 worker:
   # FIRMS allows 5,000 requests per 10 minutes per key; one run makes 4.
   fire_interval_minutes: 5
+  goes_fire_interval_minutes: 5
+  lightning_interval_minutes: 1
   weather_interval_minutes: 60

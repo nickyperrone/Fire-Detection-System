@@ -26,8 +26,10 @@ All values below are defaults in [`config/thresholds.yaml`](../config/thresholds
 
 Rule `spatiotemporal_v1`, applied to observations without a fire event, oldest first:
 
-1. Candidates are fire events with status `ACTIVE` whose geometry is within `max_distance_m`
-   (1,000 m) of the observation and whose last detection is within `max_time_gap_hours` (24 h).
+1. Candidates are fire events with status `ACTIVE` whose geometry is within `max_distance_m` of
+   the observation and whose last detection is within `max_time_gap_hours` (24 h). The distance
+   depends on the source of the observation: 1,000 m for FIRMS, 3,000 m for GOES, whose pixels
+   are about 2 × 3 km here ([06-goes](06-goes.md)).
 2. If there are candidates, the observation joins the nearest one. The event hull, last detection,
    observation count, confirming sensors, maximum confidence and maximum FRP are updated.
 3. If there are none, a new fire event starts with this observation.
