@@ -56,7 +56,7 @@ class SprayAnswer:
 @dataclass
 class AnomalyAnswer:
     data_quality: DataQuality = DataQuality.NO_DATA
-    message: str = "imagery analysis starts in Phase 1"
+    message: str = "vegetation and water change detection is not available yet"
 
 
 @dataclass

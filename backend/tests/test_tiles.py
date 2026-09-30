@@ -43,6 +43,18 @@ def test_territory_tile_carries_ids_and_names_only(client):
     assert {"La Esperanza", "Lote 1 - Soy", "Lote 2 - Corn"} <= names
     assert all(isinstance(f["id"], int) for f in features)
     assert set(features[0]["properties"]) <= {"name", "kind", "parent_id"}
+    anchors = [
+        f["properties"]["name"]
+        for tile_x in (x - 1, x)
+        for f in mapbox_vector_tile.decode(
+            client.get(f"/tiles/territories/12/{tile_x}/{y}.pbf").content
+        )["territory_labels"]["features"]
+        if all(0 <= c < 4096 for c in f["geometry"]["coordinates"])
+    ]
+    # Label points near an edge are repeated in the neighbor's buffer, but each anchor lies
+    # inside exactly one tile, even for La Esperanza, whose center is on the tile edge.
+    for name in ("La Esperanza", "Lote 1 - Soy", "Lote 2 - Corn"):
+        assert anchors.count(name) == 1
 
 
 def test_empty_tile_is_204(client):

@@ -25,9 +25,12 @@ def tile_width_m(z: int) -> float:
     return WEB_MERCATOR_WIDTH_M / 2**z
 
 
+# Polygons are clipped per tile, so labels come as a separate point layer with one point per
+# territory; otherwise a field split by a tile edge gets one label per piece. Points near an edge
+# go into both tiles (within the buffer) and MapLibre keeps a single copy.
 TERRITORIES_SQL = text("""
-    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
-    SELECT ST_AsMVT(mvt, 'territories', :extent, 'geom', 'id') FROM (
+    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
+    shapes AS (
         SELECT t.id, t.name, t.kind, t.parent_id,
                ST_AsMVTGeom(
                    ST_SimplifyPreserveTopology(ST_Transform(t.geom, 3857), :tolerance_m),
@@ -35,8 +38,22 @@ TERRITORIES_SQL = text("""
                ) AS geom
         FROM territory t, bounds
         WHERE t.owner = :owner AND ST_Intersects(t.geom, ST_Transform(bounds.env, 4326))
-    ) AS mvt
-    WHERE geom IS NOT NULL
+    ),
+    labels AS (
+        SELECT t.id, t.name, t.kind,
+               ST_AsMVTGeom(
+                   ST_Transform(ST_PointOnSurface(t.geom), 3857), bounds.env, :extent, :buffer
+               ) AS geom
+        FROM territory t, bounds
+        WHERE t.owner = :owner
+          AND ST_Intersects(
+              ST_Transform(ST_PointOnSurface(t.geom), 3857), ST_Expand(bounds.env, :buffer_m)
+          )
+    )
+    SELECT (SELECT ST_AsMVT(shapes, 'territories', :extent, 'geom', 'id')
+            FROM shapes WHERE geom IS NOT NULL)
+        || (SELECT ST_AsMVT(labels, 'territory_labels', :extent, 'geom', 'id')
+            FROM labels WHERE geom IS NOT NULL)
 """)
 
 FIRE_EVENTS_SQL = text("""
@@ -94,7 +111,11 @@ def build_tile(session: Session, layer: Layer, z: int, x: int, y: int, owner: st
     if layer == Layer.TERRITORIES:
         # About one screen pixel on a 512 px tile: invisible, but zoomed-out tiles get much smaller.
         statement = TERRITORIES_SQL
-        params |= {"owner": owner, "tolerance_m": tile_width_m(z) / 512}
+        params |= {
+            "owner": owner,
+            "tolerance_m": tile_width_m(z) / 512,
+            "buffer_m": tile_width_m(z) * BUFFER / EXTENT,
+        }
     elif layer == Layer.FIRE_EVENTS and z < CLUSTER_BELOW_ZOOM:
         statement = FIRE_CLUSTERS_SQL
         params["cell_m"] = tile_width_m(z) / CLUSTER_CELLS_PER_TILE

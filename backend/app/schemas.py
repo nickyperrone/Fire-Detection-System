@@ -10,6 +10,7 @@ from app.models import (
     SprayStatus,
     TerritoryKind,
 )
+from app.services.spray_rules import RuleStatus
 
 
 class TerritoryIn(BaseModel):
@@ -104,11 +105,20 @@ class PortfolioEntryOut(BaseModel):
     anomaly: AnomalyAnswerOut
 
 
+class SprayRuleOut(BaseModel):
+    rule: str
+    status: RuleStatus
+    value: float | None
+    unit: str
+    message: str
+    estimated: bool
+
+
 class SprayHourOut(BaseModel):
     valid_at: datetime
     status: SprayStatus
     data_quality: DataQuality
-    rules: list[dict]
+    rules: list[SprayRuleOut]
     weather: dict
     forecast_fetched_at: datetime
     processing_version: str
