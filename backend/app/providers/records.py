@@ -44,3 +44,13 @@ class PointForecast:
     longitude: float
     hours: list[HourlyWeather]
     sunrises: list[datetime]
+
+
+@dataclass(frozen=True)
+class LightningFlash:
+    native_id: str
+    observed_at: datetime
+    latitude: float
+    longitude: float
+    energy_j: float
+    area_m2: float

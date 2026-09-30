@@ -143,17 +143,21 @@ def test_fire_data_quality(pipeline, session, thresholds):
 
 def test_zoomed_out_fire_tile_clusters_events_and_zoomed_in_shows_them(pipeline, session):
     x, y = tile_xy(-59.0, -33.0, 5)
-    clusters = mapbox_vector_tile.decode(build_tile(session, Layer.FIRE_EVENTS, 5, x, y, "default"))
+    clusters = mapbox_vector_tile.decode(
+        build_tile(session, Layer.FIRE_EVENTS, 5, x, y, "default", NOW)
+    )
     features = clusters["fire_events"]["features"]
     assert sum(f["properties"]["event_count"] for f in features) == 3
     assert len(features) < 3
     x, y = tile_xy(-59.021, -32.943, 12)
-    events = mapbox_vector_tile.decode(build_tile(session, Layer.FIRE_EVENTS, 12, x, y, "default"))
+    events = mapbox_vector_tile.decode(
+        build_tile(session, Layer.FIRE_EVENTS, 12, x, y, "default", NOW)
+    )
     (main,) = events["fire_events"]["features"]
     assert main["properties"]["sensors"] == "VIIRS NOAA-21, MODIS Aqua"
-    observations = build_tile(session, Layer.OBSERVATIONS, 12, x, y, "default")
+    observations = build_tile(session, Layer.OBSERVATIONS, 12, x, y, "default", NOW)
     assert len(mapbox_vector_tile.decode(observations)["observations"]["features"]) == 3
-    assert build_tile(session, Layer.OBSERVATIONS, 8, 0, 0, "default") == b""
+    assert build_tile(session, Layer.OBSERVATIONS, 8, 0, 0, "default", NOW) == b""
 
 
 def test_field_created_after_ingestion_gets_the_active_fire(pipeline, session, thresholds):

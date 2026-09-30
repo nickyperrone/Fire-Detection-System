@@ -10,7 +10,12 @@ from app.config import get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.models import DataQuality
-from app.services.pipeline import run_fire_pipeline, run_spray_pipeline
+from app.services.pipeline import (
+    run_fire_pipeline,
+    run_goes_fire_pipeline,
+    run_lightning_pipeline,
+    run_spray_pipeline,
+)
 from app.services.portfolio import FireAnswer, PortfolioEntry, SprayAnswer, build_portfolio
 from app.services.territories import load_feature_collection
 
@@ -93,8 +98,9 @@ def main() -> None:
     load = commands.add_parser("load-territories", help="load fields and sections from GeoJSON")
     load.add_argument("path", type=Path)
     commands.add_parser("ingest-fires", help="read FIRMS and derive fire events and field risk")
+    commands.add_parser("ingest-goes", help="read new GOES-19 fire scans and lightning files")
     commands.add_parser("update-spray", help="read the forecast and assess spraying conditions")
-    commands.add_parser("run-once", help="ingest-fires and update-spray")
+    commands.add_parser("run-once", help="ingest-fires, ingest-goes and update-spray")
     portfolio = commands.add_parser("portfolio", help="every field and section with its answers")
     portfolio.add_argument("--tag", action="append", default=[], help="key:value, repeatable")
     args = parser.parse_args()
@@ -113,6 +119,9 @@ def main() -> None:
             print(f"loaded {len(created)} territories")
         if args.command in ("ingest-fires", "run-once"):
             print(json.dumps(run_fire_pipeline(session, client, settings, thresholds), indent=2))
+        if args.command in ("ingest-goes", "run-once"):
+            for pipeline in (run_goes_fire_pipeline, run_lightning_pipeline):
+                print(json.dumps(pipeline(session, client, thresholds), indent=2, default=str))
         if args.command in ("update-spray", "run-once"):
             print(json.dumps(run_spray_pipeline(session, client, thresholds), indent=2))
         if args.command == "portfolio":

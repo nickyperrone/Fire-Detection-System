@@ -17,15 +17,17 @@ router = APIRouter(tags=["health"])
 def health(session: SessionDep):
     thresholds = get_thresholds()
     session.execute(text("SELECT 1"))
-    statuses = source_statuses(session, "firms", thresholds["firms"]["products"])
+    goes = thresholds["goes"]
+    fire_statuses = source_statuses(session, "firms", thresholds["firms"]["products"])
+    fire_statuses += source_statuses(session, "goes", [goes["fire_product"]])
+    statuses = fire_statuses + source_statuses(session, "goes", [goes["lightning_product"]])
     statuses += source_statuses(session, "open_meteo", ["forecast"])
-    firms_statuses = [s for s in statuses if s.provider == "firms"]
     return HealthOut(
         database=True,
         processing_version=processing_version(thresholds),
         fire_data_quality=fire_quality(
-            firms_statuses, thresholds["data_quality"]["fire_stale_after_hours"], datetime.now(UTC)
+            fire_statuses, thresholds["data_quality"]["fire_stale_after_hours"], datetime.now(UTC)
         ),
-        latest_pass=asdict(newest) if (newest := latest_pass(session, "firms")) else None,
+        latest_pass=asdict(newest) if (newest := latest_pass(session)) else None,
         sources=[asdict(s) for s in statuses],
     )

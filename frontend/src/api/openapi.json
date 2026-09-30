@@ -314,10 +314,58 @@
         "enum": [
           "territories",
           "fire_events",
-          "observations"
+          "observations",
+          "lightning"
         ],
         "title": "Layer",
         "type": "string"
+      },
+      "LightningAnswerOut": {
+        "properties": {
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "flashes": {
+            "title": "Flashes",
+            "type": "integer"
+          },
+          "last_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last At"
+          },
+          "nearest_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nearest M"
+          },
+          "window_minutes": {
+            "title": "Window Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data_quality",
+          "window_minutes",
+          "flashes",
+          "nearest_m",
+          "last_at"
+        ],
+        "title": "LightningAnswerOut",
+        "type": "object"
       },
       "PortfolioEntryOut": {
         "properties": {
@@ -333,6 +381,9 @@
           },
           "kind": {
             "$ref": "#/components/schemas/TerritoryKind"
+          },
+          "lightning": {
+            "$ref": "#/components/schemas/LightningAnswerOut"
           },
           "name": {
             "title": "Name",
@@ -373,6 +424,7 @@
           "tags",
           "fire",
           "spray",
+          "lightning",
           "anomaly"
         ],
         "title": "PortfolioEntryOut",

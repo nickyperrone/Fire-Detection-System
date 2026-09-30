@@ -88,6 +88,14 @@ class SprayAnswerOut(BaseModel):
     next_favorable: tuple[datetime, datetime] | None
 
 
+class LightningAnswerOut(BaseModel):
+    data_quality: DataQuality
+    window_minutes: int
+    flashes: int
+    nearest_m: float | None
+    last_at: datetime | None
+
+
 class AnomalyAnswerOut(BaseModel):
     data_quality: DataQuality
 
@@ -101,6 +109,7 @@ class PortfolioEntryOut(BaseModel):
     tags: list[str]
     fire: FireAnswerOut
     spray: SprayAnswerOut
+    lightning: LightningAnswerOut
     anomaly: AnomalyAnswerOut
 
 

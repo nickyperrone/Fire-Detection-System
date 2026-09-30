@@ -1,5 +1,6 @@
 """Mapbox Vector Tiles built in PostGIS (docs/04-frontend.md#progressive-map-loading)."""
 
+from datetime import datetime, timedelta
 from enum import StrEnum
 
 from sqlalchemy import text
@@ -19,6 +20,7 @@ class Layer(StrEnum):
     TERRITORIES = "territories"
     FIRE_EVENTS = "fire_events"
     OBSERVATIONS = "observations"
+    LIGHTNING = "lightning"
 
 
 def tile_width_m(z: int) -> float:
@@ -106,7 +108,28 @@ OBSERVATIONS_SQL = text("""
 """)
 
 
-def build_tile(session: Session, layer: Layer, z: int, x: int, y: int, owner: str) -> bytes:
+LIGHTNING_SQL = text("""
+    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
+    SELECT ST_AsMVT(mvt, 'lightning', :extent, 'geom') FROM (
+        SELECT round(EXTRACT(EPOCH FROM (:now - f.observed_at)) / 60)::int AS age_minutes,
+               ST_AsMVTGeom(ST_Transform(f.geom, 3857), bounds.env, :extent, :buffer, true) AS geom
+        FROM lightning_flash f, bounds
+        WHERE f.observed_at >= :since AND ST_Intersects(f.geom, ST_Transform(bounds.env, 4326))
+    ) AS mvt
+    WHERE geom IS NOT NULL
+""")
+
+
+def build_tile(
+    session: Session,
+    layer: Layer,
+    z: int,
+    x: int,
+    y: int,
+    owner: str,
+    now: datetime,
+    lightning_window_minutes: int = 60,
+) -> bytes:
     params = {"z": z, "x": x, "y": y, "extent": EXTENT, "buffer": BUFFER}
     if layer == Layer.TERRITORIES:
         # About one screen pixel on a 512 px tile: invisible, but zoomed-out tiles get much smaller.
@@ -121,6 +144,9 @@ def build_tile(session: Session, layer: Layer, z: int, x: int, y: int, owner: st
         params["cell_m"] = tile_width_m(z) / CLUSTER_CELLS_PER_TILE
     elif layer == Layer.FIRE_EVENTS:
         statement = FIRE_EVENTS_SQL
+    elif layer == Layer.LIGHTNING:
+        statement = LIGHTNING_SQL
+        params |= {"now": now, "since": now - timedelta(minutes=lightning_window_minutes)}
     elif z >= OBSERVATIONS_FROM_ZOOM:
         statement = OBSERVATIONS_SQL
     else:

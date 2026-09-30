@@ -52,7 +52,8 @@ def correlate(session: Session, config: dict, version: str, now: datetime) -> se
             CANDIDATES_SQL,
             {
                 "observation_id": observation.id,
-                "max_distance_m": config["max_distance_m"],
+                # Per source: a GOES pixel is much larger than a VIIRS one (docs/06-goes.md).
+                "max_distance_m": config["max_distance_m"][observation.source],
                 "max_gap_h": config["max_time_gap_hours"],
             },
         ).all()
@@ -119,7 +120,17 @@ def _extend(
     session.execute(
         update(FireEvent)
         .where(FireEvent.id == event.id)
-        .values(geom=func.ST_ConvexHull(func.ST_Collect(FireEvent.geom, observation.geom)))
+        .values(
+            # Read the point from the stored row: the in-memory attribute may be WKB or text.
+            geom=func.ST_ConvexHull(
+                func.ST_Collect(
+                    FireEvent.geom,
+                    select(Observation.geom)
+                    .where(Observation.id == observation.id)
+                    .scalar_subquery(),
+                )
+            )
+        )
     )
     session.refresh(event, ["geom"])
 

@@ -84,15 +84,13 @@ class LatestPass:
     ingested_at: datetime
 
 
-def latest_pass(session: Session, source: str) -> LatestPass | None:
-    """The newest satellite pass we hold data from. FIRMS only lists passes with detections,
-    so this is the latest pass that saw a fire somewhere in the region."""
-    newest = session.scalar(
-        select(Observation)
-        .where(Observation.source == source)
-        .order_by(Observation.acquired_at.desc())
-        .limit(1)
-    )
+def latest_pass(session: Session, source: str | None = None) -> LatestPass | None:
+    """The newest satellite pass we hold data from, of one source or of all. Sources only list
+    passes with detections, so this is the latest pass that saw a fire somewhere in the region."""
+    query = select(Observation).order_by(Observation.acquired_at.desc()).limit(1)
+    if source is not None:
+        query = query.where(Observation.source == source)
+    newest = session.scalar(query)
     if newest is None:
         return None
     return LatestPass(newest.sensor, newest.satellite, newest.acquired_at, newest.ingested_at)

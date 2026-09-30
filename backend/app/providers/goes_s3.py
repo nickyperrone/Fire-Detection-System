@@ -1,0 +1,57 @@
+"""Listing and downloading GOES files from NOAA's public S3 bucket (no credentials)."""
+
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
+
+import httpx
+
+S3_NAMESPACE = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
+
+
+def bucket_url(bucket: str) -> str:
+    return f"https://{bucket}.s3.amazonaws.com"
+
+
+def hour_prefixes(product: str, now: datetime) -> list[str]:
+    """The previous and the current hour: a file can be published after its hour ends."""
+    return [f"{product}/{t:%Y/%j/%H}/" for t in (now - timedelta(hours=1), now)]
+
+
+def list_keys(client: httpx.Client, bucket: str, prefix: str) -> list[str]:
+    keys: list[str] = []
+    params = {"list-type": "2", "prefix": prefix}
+    while True:
+        response = client.get(bucket_url(bucket), params=params, timeout=30)
+        response.raise_for_status()
+        root = ET.fromstring(response.content)
+        keys += [k.text for k in root.findall("s3:Contents/s3:Key", S3_NAMESPACE) if k.text]
+        token = root.find("s3:NextContinuationToken", S3_NAMESPACE)
+        if token is None or not token.text:
+            return keys
+        params["continuation-token"] = token.text
+
+
+def new_keys(
+    client: httpx.Client,
+    bucket: str,
+    product: str,
+    now: datetime,
+    cursor: str | None,
+    first_run: int,
+) -> list[str]:
+    """Keys after the cursor, oldest first. Key names start with the scan time, so they sort.
+
+    Without a cursor only the newest `first_run` files are taken, not two hours of backlog.
+    """
+    keys = sorted(
+        k for prefix in hour_prefixes(product, now) for k in list_keys(client, bucket, prefix)
+    )
+    if cursor is None:
+        return keys[-first_run:]
+    return [k for k in keys if k > cursor]
+
+
+def download(client: httpx.Client, bucket: str, key: str) -> bytes:
+    response = client.get(f"{bucket_url(bucket)}/{key}", timeout=60)
+    response.raise_for_status()
+    return response.content

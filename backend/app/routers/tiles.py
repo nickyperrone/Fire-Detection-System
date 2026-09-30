@@ -1,7 +1,9 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Path, Response
 
+from app.config import get_thresholds
 from app.routers.dependencies import SessionDep, SettingsDep
 from app.services.tiles import Layer, build_tile
 
@@ -14,6 +16,8 @@ CACHE_CONTROL = {
     Layer.TERRITORIES: "private, max-age=60",
     Layer.FIRE_EVENTS: "public, max-age=300",
     Layer.OBSERVATIONS: "public, max-age=300",
+    # New flashes arrive every 20 seconds.
+    Layer.LIGHTNING: "public, max-age=30",
 }
 
 
@@ -28,7 +32,8 @@ def tile(
 ):
     if x >= 2**z or y >= 2**z:
         raise HTTPException(404, "tile outside the zoom level")
-    content = build_tile(session, layer, z, x, y, settings.owner)
+    window = get_thresholds()["lightning"]["window_minutes"]
+    content = build_tile(session, layer, z, x, y, settings.owner, datetime.now(UTC), window)
     headers = {"Cache-Control": CACHE_CONTROL[layer]}
     if not content:
         return Response(status_code=204, headers=headers)

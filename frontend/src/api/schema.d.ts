@@ -284,7 +284,19 @@ export interface components {
          * Layer
          * @enum {string}
          */
-        Layer: "territories" | "fire_events" | "observations";
+        Layer: "territories" | "fire_events" | "observations" | "lightning";
+        /** LightningAnswerOut */
+        LightningAnswerOut: {
+            data_quality: components["schemas"]["DataQuality"];
+            /** Flashes */
+            flashes: number;
+            /** Last At */
+            last_at: string | null;
+            /** Nearest M */
+            nearest_m: number | null;
+            /** Window Minutes */
+            window_minutes: number;
+        };
         /** PortfolioEntryOut */
         PortfolioEntryOut: {
             anomaly: components["schemas"]["AnomalyAnswerOut"];
@@ -292,6 +304,7 @@ export interface components {
             /** Hectares */
             hectares: number;
             kind: components["schemas"]["TerritoryKind"];
+            lightning: components["schemas"]["LightningAnswerOut"];
             /** Name */
             name: string;
             /** Parent Id */

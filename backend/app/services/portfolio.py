@@ -23,6 +23,7 @@ from app.models import (
 )
 from app.services.data_quality import fire_quality, source_statuses, spray_quality
 from app.services.field_risk import SEVERITY_RANK, compass
+from app.services.lightning import NearbyLightning, nearby_lightning
 from app.services.spray_rules import drift_direction
 from app.services.territories import list_territories
 
@@ -55,6 +56,15 @@ class SprayAnswer:
 
 
 @dataclass
+class LightningAnswer:
+    data_quality: DataQuality
+    window_minutes: int
+    flashes: int = 0
+    nearest_m: float | None = None
+    last_at: datetime | None = None
+
+
+@dataclass
 class AnomalyAnswer:
     data_quality: DataQuality = DataQuality.NO_DATA
     message: str = "vegetation and water change detection is not available yet"
@@ -65,6 +75,7 @@ class PortfolioEntry:
     territory: Territory
     fire: FireAnswer
     spray: SprayAnswer
+    lightning: LightningAnswer
     anomaly: AnomalyAnswer
 
 
@@ -79,8 +90,16 @@ def build_portfolio(
     territories = list_territories(session, owner, tags)
     ids = [t.id for t in territories]
     quality = thresholds["data_quality"]
+    goes = thresholds["goes"]
     statuses = source_statuses(session, "firms", thresholds["firms"]["products"])
+    statuses += source_statuses(session, "goes", [goes["fire_product"]])
     fire_dq = fire_quality(statuses, quality["fire_stale_after_hours"], now)
+    lightning_dq = fire_quality(
+        source_statuses(session, "goes", [goes["lightning_product"]]),
+        quality["lightning_stale_after_minutes"] / 60,
+        now,
+    )
+    lightning = nearby_lightning(session, ids, thresholds["lightning"], now)
     reads = [s.last_success_at for s in statuses if s.last_success_at is not None]
     last_read_at = max(reads) if reads else None
     risks = _open_risks(session, ids)
@@ -91,11 +110,25 @@ def build_portfolio(
             territory=t,
             fire=_fire_answer(risks.get(t.id, []), received, fire_dq, last_read_at),
             spray=_spray_answer(assessments.get(t.id, []), profile, quality, now),
+            lightning=_lightning_answer(
+                lightning.get(t.id), lightning_dq, thresholds["lightning"]["window_minutes"]
+            ),
             anomaly=AnomalyAnswer(),
         )
         for t in territories
     ]
     return _worst_first(entries)
+
+
+def _lightning_answer(
+    nearby: NearbyLightning | None, dq: DataQuality, window_minutes: int
+) -> LightningAnswer:
+    answer = LightningAnswer(data_quality=dq, window_minutes=window_minutes)
+    if nearby:
+        answer.flashes = nearby.flashes
+        answer.nearest_m = nearby.nearest_m
+        answer.last_at = nearby.last_at
+    return answer
 
 
 def _open_risks(session: Session, ids: list[int]) -> dict[int, list[FieldRiskEvent]]:

@@ -258,3 +258,18 @@ class IngestionRun(Base):
     fetched: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     inserted: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     error: Mapped[str | None] = mapped_column(String(2000))
+    # File-based providers (GOES): the last object key processed, so the next run continues there.
+    cursor: Mapped[str | None] = mapped_column(String(300))
+
+
+class LightningFlash(Base):
+    __tablename__ = "lightning_flash"
+    __table_args__ = (Index("ix_lightning_flash_geom", "geom", postgresql_using="gist"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    native_id: Mapped[str] = mapped_column(String(60), unique=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    geom = mapped_column(Geometry("POINT", srid=4326, spatial_index=False), nullable=False)
+    energy_j: Mapped[float] = mapped_column(Float)
+    area_m2: Mapped[float] = mapped_column(Float)

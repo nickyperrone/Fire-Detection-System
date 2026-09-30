@@ -31,6 +31,7 @@ def portfolio(
             tags=sorted(tag.label for tag in e.territory.tags),
             fire=asdict(e.fire),
             spray=asdict(e.spray),
+            lightning=asdict(e.lightning),
             anomaly=asdict(e.anomaly),
         )
         for e in entries

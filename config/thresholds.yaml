@@ -77,6 +77,8 @@ spray:
 data_quality:
   fire_stale_after_hours: 12
   weather_stale_after_hours: 3
+  # GLM publishes every 20 s; 10 minutes without a file means the feed stopped.
+  lightning_stale_after_minutes: 10
 
 worker:
   # FIRMS allows 5,000 requests per 10 minutes per key; one run makes 4.
