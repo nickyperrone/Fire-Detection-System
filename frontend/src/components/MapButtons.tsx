@@ -11,7 +11,6 @@ type Props = {
   onBasemap: (basemap: Basemap) => void;
   onLocate: () => void;
   onAddField: () => void;
-  drawing: boolean;
 };
 
 function RoundButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -23,12 +22,12 @@ function RoundButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   );
 }
 
-export function MapButtons({ basemap, onBasemap, onLocate, onAddField, drawing }: Props) {
+export function MapButtons({ basemap, onBasemap, onLocate, onAddField }: Props) {
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex flex-col items-end gap-3">
       <div className="relative">
-        <RoundButton aria-label="Map layers" onClick={() => setMenu((m) => !m)} disabled={drawing}>
+        <RoundButton aria-label="Map layers" onClick={() => setMenu((m) => !m)}>
           ◧
         </RoundButton>
         {menu && (
@@ -54,7 +53,6 @@ export function MapButtons({ basemap, onBasemap, onLocate, onAddField, drawing }
       <RoundButton
         aria-label="Draw a new field"
         onClick={onAddField}
-        disabled={drawing}
         className="!bg-accent !text-slate-950 text-2xl font-semibold"
       >
         +
