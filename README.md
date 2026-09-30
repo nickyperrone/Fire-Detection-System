@@ -7,13 +7,13 @@ Satellite monitoring for the fields of a crop-spraying contractor around Larroqu
 spraying conditions favorable, and is something unusual happening in the field. Every answer shows
 its sources, their timestamps and whether the field could actually be observed.
 
-- **Status:** Phase 0 (technical spike). Fire and spray answers work from the CLI and the API.
-  Field anomalies and the map UI come in Phase 1. See the [roadmap](docs/01-product.md#roadmap).
+- **Status:** Phase 1 in progress. Fire and spray answers work in the map, the API and the CLI.
+  Field anomalies from Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
 
-Requirements: Docker, Python 3.12 with [uv](https://docs.astral.sh/uv/), and make.
+Requirements: Docker, Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22 or later, and make.
 
 ```bash
 git clone https://github.com/nickyperrone/Fire-Detection-System.git
@@ -22,20 +22,24 @@ cp .env.example .env      # then set FIRMS_MAP_KEY
 make setup                # installs dependencies, starts PostGIS, runs migrations
 make seed                 # loads the sample fields, sections and tags near Larroque
 make run-once             # reads FIRMS and Open-Meteo once and derives everything
-make portfolio            # prints every field and section with its answers
+make api                  # API on http://localhost:8000
+make web                  # in a second terminal: the map on http://localhost:3000
 ```
 
 - `FIRMS_MAP_KEY` is free: request it at https://firms.modaps.eosdis.nasa.gov/api/map_key/. Without
   it the fire answer shows `NO_DATA` and the spray answer still works (Open-Meteo needs no key).
-- `make portfolio TAG=crop:soy` filters by tag.
-- `make api` serves the API on http://localhost:8000 (docs at `/docs`). `make worker` runs the
-  scheduled worker (FIRMS every 15 min, weather every 60 min).
+- `make portfolio` prints every field and section with its answers in the terminal;
+  `make portfolio TAG=crop:soy` filters by tag.
+- Next.js forwards `/api` to the API, so there is nothing else to configure.
+- API docs are at http://localhost:8000/docs. `make worker` runs the scheduled worker (FIRMS
+  every 15 min, weather every 60 min).
 - `docker compose up --build` runs the database, API and worker together.
 - The `postgis/postgis` image is amd64 only. On Apple Silicon Docker runs it under emulation, which
   works but makes the first start take about a minute.
 - Real fields go in `data/aoi/private/`, which is not committed: field outlines are private data.
 
-Other commands: `make test` (unit and PostGIS integration tests), `make lint`, `make migration m="..."`.
+Other commands: `make test` (backend tests), `make web-check` (frontend types, lint and tests),
+`make codegen` (regenerate the frontend API types), `make lint`, `make migration m="..."`.
 
 ## Example output
 
@@ -45,11 +49,11 @@ Other commands: `make test` (unit and PostGIS integration tests), `make lint`, `
 Campo Norte (311 ha)    client:Maria Gomez  crop:wheat  to-spray-this-week  zone:larroque-nw
   Fire   WATCH       Possible fire 8.7 km E · VIIRS NOAA-21, MODIS Aqua · high · acquired 4 h ago, received 12 min ago
   Spray  UNFAVORABLE gusts 23 km/h > 20 · drift toward N · next favorable Wed 01:00–02:00
-  Weird  NO_DATA     imagery analysis starts in Phase 1
+  Weird  NO_DATA     vegetation and water change detection is not available yet
 La Esperanza / Lote 1 - Soy (194 ha)    crop:soy  to-spray-this-week
   Fire   HIGH        Possible fire 3.9 km NE · VIIRS NOAA-21, MODIS Aqua · high · acquired 4 h ago, received 12 min ago
   Spray  CAUTION     gusts 18 km/h (caution from 17) · drift toward N · next favorable Wed 01:00–02:00
-  Weird  NO_DATA     imagery analysis starts in Phase 1
+  Weird  NO_DATA     vegetation and water change detection is not available yet
 ```
 
 Without a FIRMS key the fire line says `NO_DATA  no fire data: FIRMS has not been read successfully`,
@@ -121,7 +125,9 @@ the tests against a PostGIS service container, and a Docker image build.
 | `data/aoi/` | Sample fields, sections and tags near Larroque (GeoJSON) |
 | `backend/app/providers/` | FIRMS and Open-Meteo clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray conditions, data quality, portfolio |
-| `backend/app/routers/` | FastAPI endpoints (HTTP only) |
+| `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
+| `frontend/src/components/` | Map, bottom sheet, portfolio, field detail, drawing |
+| `frontend/src/api/` | API client, TanStack Query hooks, generated types |
 | `.github/workflows/` | CI |

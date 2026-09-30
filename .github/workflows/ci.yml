@@ -44,6 +44,30 @@ jobs:
       - name: Tests
         run: uv run pytest -q
 
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - name: API types match the backend
+        run: |
+          (cd backend && uv sync --frozen)
+          make codegen
+          git diff --exit-code frontend/src/api
+      - name: Types, lint and tests
+        working-directory: frontend
+        run: npm run typecheck && npm run lint && npm test
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
   image:
     runs-on: ubuntu-latest
     steps:
