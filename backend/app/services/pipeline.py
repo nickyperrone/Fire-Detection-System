@@ -6,7 +6,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.services.field_risk import assess_fire_events
+from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.spray_conditions import assess_spray
@@ -20,7 +20,8 @@ def run_fire_pipeline(
     version = processing_version(thresholds)
     runs = ingest_firms(session, client, settings.firms_map_key, thresholds, now)
     changed = correlate(session, thresholds["correlation"], version, now)
-    touched = assess_fire_events(session, changed, thresholds["field_risk"], version, now)
+    # All active events, not only the changed ones: fields created since the last run need them too.
+    touched = assess_active_fire_events(session, thresholds["field_risk"], version, now)
     return {
         "runs": [(r.product, r.status.value, r.fetched, r.inserted, r.error) for r in runs],
         "fire_events_changed": len(changed),

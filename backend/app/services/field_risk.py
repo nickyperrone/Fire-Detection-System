@@ -38,6 +38,14 @@ def compass(bearing_deg: float | None) -> str | None:
     return COMPASS[round(bearing_deg / 45) % 8]
 
 
+def assess_active_fire_events(session: Session, config: dict, version: str, now: datetime) -> int:
+    """Every active fire against every territory, so new and edited fields are included."""
+    ids = set(
+        session.scalars(select(FireEvent.id).where(FireEvent.status == FireEventStatus.ACTIVE))
+    )
+    return assess_fire_events(session, ids, config, version, now)
+
+
 def assess_fire_events(
     session: Session, fire_event_ids: set[int], config: dict, version: str, now: datetime
 ) -> int:

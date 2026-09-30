@@ -7,10 +7,11 @@ from app.config import Settings, get_thresholds
 from app.models import Territory
 from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
 from app.schemas import RiskEventOut, SprayHourOut, TagsIn, TerritoryIn, TerritoryOut
-from app.services.field_risk import compass
+from app.services.field_risk import assess_active_fire_events, compass
 from app.services.fire_events import geojson, list_risk_events
 from app.services.spray_conditions import list_spray_hours
 from app.services.territories import create_territory, get_territory, list_territories, set_tags
+from app.versioning import processing_version
 
 router = APIRouter(prefix="/territories", tags=["territories"])
 
@@ -59,6 +60,11 @@ def create(
         section_tolerance_m=get_thresholds()["territories"]["section_tolerance_m"],
     )
     session.commit()
+    # A new field near a fire that is already active gets its answer now, not after the next ingest.
+    thresholds = get_thresholds()
+    assess_active_fire_events(
+        session, thresholds["field_risk"], processing_version(thresholds), datetime.now(UTC)
+    )
     return territory_out(territory)
 
 

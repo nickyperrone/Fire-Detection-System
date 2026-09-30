@@ -19,10 +19,10 @@ from app.models import (
     Territory,
 )
 from app.services.data_quality import fire_quality, source_statuses
-from app.services.field_risk import assess_fire_events
+from app.services.field_risk import assess_active_fire_events, assess_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
-from app.services.territories import load_feature_collection
+from app.services.territories import create_territory, load_feature_collection
 from app.services.tiles import Layer, build_tile
 from tests.conftest import FIXTURES
 from tests.test_territories import SAMPLE
@@ -154,3 +154,28 @@ def test_zoomed_out_fire_tile_clusters_events_and_zoomed_in_shows_them(pipeline,
     observations = build_tile(session, Layer.OBSERVATIONS, 12, x, y, "default")
     assert len(mapbox_vector_tile.decode(observations)["observations"]["features"]) == 3
     assert build_tile(session, Layer.OBSERVATIONS, 8, 0, 0, "default") == b""
+
+
+def test_field_created_after_ingestion_gets_the_active_fire(pipeline, session, thresholds):
+    field = create_territory(
+        session,
+        owner="default",
+        name="New neighbor",
+        geometry={
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [-59.03, -32.95],
+                    [-59.025, -32.95],
+                    [-59.025, -32.945],
+                    [-59.03, -32.945],
+                    [-59.03, -32.95],
+                ]
+            ],
+        },
+        section_tolerance_m=5,
+    )
+    session.commit()
+    assess_active_fire_events(session, thresholds["field_risk"], VERSION, NOW)
+    risk = session.scalar(select(FieldRiskEvent).where(FieldRiskEvent.territory_id == field.id))
+    assert risk.severity == Severity.VERY_HIGH
