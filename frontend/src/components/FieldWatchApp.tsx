@@ -1,7 +1,7 @@
 "use client";
 
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { PortfolioEntry, Territory } from "@/api/client";
 import { usePortfolio, useTerritories } from "@/api/queries";
@@ -99,6 +99,15 @@ export function FieldWatchApp() {
     },
     [map],
   );
+
+  // First visit without a camera in the link: frame every field instead of a fixed point.
+  const framedOnce = useRef(false);
+  useEffect(() => {
+    const all = territories.data ?? [];
+    if (framedOnce.current || url.linkHasCamera || !map || all.length === 0) return;
+    framedOnce.current = true;
+    frame(all.filter((t) => t.kind === "FIELD"));
+  }, [map, territories.data, url.linkHasCamera, frame]);
 
   const open = useCallback(
     (id: number | null) => {

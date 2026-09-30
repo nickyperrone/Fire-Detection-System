@@ -62,12 +62,17 @@ export function MapView(props: Props) {
       center: [initialCamera.lon, initialCamera.lat],
       zoom: initialCamera.zoom,
       attributionControl: false,
+      // Always north-up and flat, like a paper map of the fields: no gesture or key can
+      // rotate or tilt it.
       dragRotate: false,
       pitchWithRotate: false,
+      touchPitch: false,
+      maxPitch: 0,
     });
     mapRef.current = map;
     map.addControl(new AttributionControl({ compact: true }), "bottom-left");
     map.touchZoomRotate.disableRotation();
+    map.keyboard.disableRotation();
 
     map.on("style.load", () => {
       addOverlay(map, latest.current.territoriesVersion);

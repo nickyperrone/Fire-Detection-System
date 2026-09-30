@@ -47,6 +47,7 @@ export function useUrlState() {
   const basemap = basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
   // Read once: afterwards the map owns the camera and only writes it back.
   const initialCamera = useMemo(() => parseCamera(params.get("v")), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const linkHasCamera = useMemo(() => params.has("v"), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = useCallback((changes: Changes) => {
     const next = new URLSearchParams(window.location.search);
@@ -59,5 +60,5 @@ export function useUrlState() {
     window.history.replaceState(null, "", `?${next}`);
   }, []);
 
-  return { selectedId, tags, picked, onlyPicked, basemap, initialCamera, update };
+  return { selectedId, tags, picked, onlyPicked, basemap, initialCamera, linkHasCamera, update };
 }
