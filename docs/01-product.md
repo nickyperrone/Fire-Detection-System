@@ -57,9 +57,9 @@ ingested (explore mode). Explore mode sends no notifications. Alerts need a logi
 |---|---|
 | 0 — Spike | Sample fields near Larroque, FIRMS ingestion, fire events, field risk, spray conditions, portfolio in the CLI and API |
 | 1 — Imagery and map | Sentinel-2 acquisitions, NDVI/NDRE/NDWI/NBR per field, change detection against each field's own baseline, before/after images; map UI with vector tiles and explore mode ([04-frontend](04-frontend.md)) |
-| 2 — Forecast, YOLO and GOES | Fire forecast per field for 24–72 h ([05-fire-forecast](05-fire-forecast.md)); smoke and fire detection on Sentinel-2 and GOES tiles; inference in the worker |
-| 3 — MVP | Login, alert rules and spray profiles in the UI, email alerts for logged-in users with fields, history, seen/resolved |
-| 4 — Risk and deploy | Wind-aware fire risk, historical baselines, AWS deploy, drone photo upload |
+| 2 — Speed, history and forecast | GOES-19 fire detection every 10 min (hours earlier than FIRMS for Argentina) and GOES-19 GLM lightning every 20 s, the main natural cause of fires; fire history per field (detections within 10 km in the last 10 years, from the FIRMS archive); fire forecast per field for 24–72 h ([05-fire-forecast](05-fire-forecast.md)); smoke and fire detection with YOLO on Sentinel-2 and GOES tiles |
+| 3 — MVP | Login, alert rules and spray profiles in the UI, email alerts for logged-in users with fields, history, seen/resolved; fire and smoke reports from users with a photo, shown as unconfirmed until a satellite or another user confirms them |
+| 4 — Risk and deploy | Fire spread direction and speed from wind, fuel and slope; wind-aware field risk; AWS deploy; drone photo upload |
 
 ## Phase 0 user stories
 

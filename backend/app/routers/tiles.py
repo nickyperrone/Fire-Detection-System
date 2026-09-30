@@ -8,7 +8,7 @@ from app.services.tiles import Layer, build_tile
 router = APIRouter(tags=["tiles"])
 
 MVT_MEDIA_TYPE = "application/vnd.mapbox-vector-tile"
-# Fires change with each ingestion (every 15 min). Fields change only when the user edits them,
+# Fires change with each ingestion (every 5 min). Fields change only when the user edits them,
 # and the frontend adds a version parameter to the tile URL after every edit.
 CACHE_CONTROL = {
     Layer.TERRITORIES: "private, max-age=60",

@@ -60,5 +60,6 @@ data_quality:
   weather_stale_after_hours: 3
 
 worker:
-  fire_interval_minutes: 15
+  # FIRMS allows 5,000 requests per 10 minutes per key; one run makes 4.
+  fire_interval_minutes: 5
   weather_interval_minutes: 60

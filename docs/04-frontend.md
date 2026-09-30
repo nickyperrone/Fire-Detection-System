@@ -44,8 +44,13 @@ more than two taps.
   satellite basemaps in the layers button; satellite is what a contractor uses to recognize a field.
   One accent color, large type for the three answers, system font stack. Smooth camera moves
   (`flyTo`) when selecting a field, like a navigation app.
-- **Data freshness is always visible**: a small pill under the search bar says when fires were last
-  read ("Fires read 6 min ago"), and turns gray with the reason when the source is `STALE` or failing.
+- **Data freshness is always visible**: a small pill under the search bar names the most recent
+  satellite pass processed and when we last checked ("Last pass VIIRS NOAA-21 · 2 h ago · checked
+  3 min ago"). The two times differ because FIRMS publishes passes over Argentina hours later; the
+  pill turns gray with the reason when the source is `STALE` or failing.
+- **Language**: a small ES/EN switch in the top bar. Spanish by default for Argentine browsers. The
+  choice is kept in the browser. The API returns codes and numbers, never sentences, so every text
+  the user reads is translated in the frontend.
 
 ## Progressive map loading
 

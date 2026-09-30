@@ -32,7 +32,7 @@ make web                  # in a second terminal: the map on http://localhost:30
   `make portfolio TAG=crop:soy` filters by tag.
 - Next.js forwards `/api` to the API, so there is nothing else to configure.
 - API docs are at http://localhost:8000/docs. `make worker` runs the scheduled worker (FIRMS
-  every 15 min, weather every 60 min).
+  every 5 min, weather every 60 min).
 - `docker compose up --build` runs the database, API and worker together.
 - The `postgis/postgis` image is amd64 only. On Apple Silicon Docker runs it under emulation, which
   works but makes the first start take about a minute.

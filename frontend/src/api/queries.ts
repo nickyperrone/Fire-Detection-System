@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, type TerritoryIn } from "./client";
 
-// Fires are ingested every 15 minutes and the forecast every hour; polling faster adds nothing.
-const FIVE_MINUTES = 5 * 60 * 1000;
+// The worker reads fires every 5 minutes; polling at half that shows a new pass within minutes.
+const REFRESH_MS = 2.5 * 60 * 1000;
 
 export function usePortfolio(tags: string[]) {
   return useQuery({
     queryKey: ["portfolio", tags],
     queryFn: () => api.portfolio(tags),
-    refetchInterval: FIVE_MINUTES,
+    refetchInterval: REFRESH_MS,
   });
 }
 
@@ -34,7 +34,7 @@ export function useSprayConditions(id: number | null) {
 }
 
 export function useHealth() {
-  return useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: FIVE_MINUTES });
+  return useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: REFRESH_MS });
 }
 
 function useInvalidateTerritories() {
