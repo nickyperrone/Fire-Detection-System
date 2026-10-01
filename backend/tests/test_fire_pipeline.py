@@ -102,8 +102,15 @@ def test_one_fire_near_several_territories_gives_one_risk_event_each(pipeline, s
     risks = session.scalars(select(FieldRiskEvent)).all()
     assert len({r.fire_event_id for r in risks}) == 1
     by_name = {session.get(Territory, r.territory_id).name: r for r in risks}
-    assert set(by_name) == {"La Esperanza", "Lote 1 - Soy", "Lote 2 - Corn", "Campo Norte"}
+    assert set(by_name) == {
+        "La Esperanza",
+        "Lote 1 - Soy",
+        "Lote 2 - Corn",
+        "Campo Norte",
+        "Casa (prueba)",
+    }
     assert by_name["Lote 2 - Corn"].severity == Severity.HIGH
+    assert by_name["Casa (prueba)"].severity == Severity.WATCH  # about 7.7 km away
     assert by_name["Campo Norte"].severity == Severity.WATCH
     assert by_name["Lote 2 - Corn"].distance_m < by_name["Lote 1 - Soy"].distance_m
     assert by_name["La Esperanza"].factors["sensor_count"] == 2

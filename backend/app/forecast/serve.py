@@ -209,9 +209,12 @@ def issue_forecast(
     now = datetime.now(UTC)
     probabilities = {}
     cell_rows = []
-    for h, bundle in models.items():
+    previous = np.zeros(len(cells))
+    for h, bundle in sorted(models.items()):
         raw = bundle["model"].predict_proba(X)[:, 1]
-        probabilities[h] = bundle["calibration"].predict(raw)
+        # A fire within 2 days is also a fire within 3: separately calibrated models can break
+        # that by a little, so each horizon is at least the one before it.
+        probabilities[h] = previous = np.maximum(bundle["calibration"].predict(raw), previous)
         order = feature_order(bundle)
         model_version = f"hgb-{bundle['trained_at'][:10]}"
         for i, (row, col) in enumerate(cells):

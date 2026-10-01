@@ -28,7 +28,7 @@ def loaded(session, thresholds):
 
 
 def test_sample_file_loads_fields_sections_and_tags(loaded, session, thresholds):
-    assert len(loaded) == 7
+    assert len(loaded) == 8  # three fields, four lots and the test field at the house
     esperanza = next(t for t in loaded if t.name == "La Esperanza")
     assert esperanza.kind == TerritoryKind.FIELD
     assert sorted(s.name for s in esperanza.sections) == ["Lote 1 - Soy", "Lote 2 - Corn"]
