@@ -39,6 +39,18 @@ more than two taps.
   the rule that failed. The next favorable window is labeled on the strip.
 - **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update
   live, then name and tags. A drawn field can be split into sections the same way.
+- **Editing a field's outline**: the field card has **Edit outline**, which opens draw mode with two
+  pencils, **Add** and **Remove**. With either one the user draws a piece with the usual tools
+  (Parcel, Trace, Corners; a hand-drawn piece is fitted to the property lines too) and the card
+  shows the area the field will have ("+12 ha · 401 ha"). Saving joins the piece to the field or
+  cuts it out (`PATCH /territories/{id}/outline`); the same request with `preview: true` answers
+  without saving, so the card shows the result and any problem before the user saves. The server
+  checks the result as it checks a new field, and also:
+  - removing must leave something, and the piece must overlap the field (`nothing_left`,
+    `no_overlap`); adding a piece already inside it changes nothing (`no_change`);
+  - a lot must stay inside its field, and a field must keep its lots inside it (`cuts_lots`).
+  Hectares are recomputed and the field's fire risk is assessed again at once: a fire that is no
+  longer near the field leaves its list. Spray and forecast answers follow on their next hourly run.
 - **Provenance in one tap**: every fire answer opens a card with sensors, confidence, "acquired 2 h ago ·
   received 5 min ago", and the processing version.
 - **Visual style**: dark basemap by default (fires and colors read better, less glare), with light and
