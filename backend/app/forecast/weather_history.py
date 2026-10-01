@@ -54,10 +54,15 @@ def fetch_point(
     longitude: float,
     start: date,
     end: date,
-    cache_dir: Path,
+    cache_dir: Path | None,
 ) -> DailyWeather:
-    cache = cache_dir / f"{latitude:.2f}_{longitude:.2f}_{start:%Y%m%d}_{end:%Y%m%d}.json"
-    if cache.exists():
+    """`cache_dir` None: no cache, for recent days that POWER is still filling in."""
+    cache = (
+        cache_dir / f"{latitude:.2f}_{longitude:.2f}_{start:%Y%m%d}_{end:%Y%m%d}.json"
+        if cache_dir
+        else None
+    )
+    if cache and cache.exists():
         payload = json.loads(cache.read_text())
     else:
         response = client.get(
@@ -75,8 +80,9 @@ def fetch_point(
         )
         response.raise_for_status()
         payload = response.json()
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        cache.write_text(json.dumps(payload))
+        if cache:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text(json.dumps(payload))
         time.sleep(PAUSE_SECONDS)
     return parse_point(payload, latitude, longitude, start, end)
 
