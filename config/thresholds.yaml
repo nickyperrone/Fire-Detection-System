@@ -26,6 +26,17 @@ static_sources:
   grid_degrees: 0.005
   radius_m: 1000
 
+cadastre:
+  # docs/08-cadastre.md. Parcels load per zoom-13 tile, on first view.
+  tile_zoom: 13
+  refresh_days: 90
+  sources:
+    - province: Entre Ríos
+      bbox: [-60.85, -34.1, -57.75, -30.1]
+      wfs_url: https://geoserver.ater.gob.ar/geoserver/sit_catastro/ows
+      layer: sit_catastro:vwm_parcelario_base
+      page_size: 1000
+
 firms:
   # FIRMS Landsat detections only cover the US and Canada.
   products: [VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT, VIIRS_SNPP_NRT, MODIS_NRT]
