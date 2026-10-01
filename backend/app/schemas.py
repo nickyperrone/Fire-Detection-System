@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -21,6 +22,12 @@ class TerritoryIn(BaseModel):
     cadastre: dict | None = Field(
         None, description="The parcel the outline came from (province, department, partida, plano)"
     )
+
+
+class OutlineIn(BaseModel):
+    operation: Literal["add", "remove"]
+    geometry: dict = Field(description="GeoJSON Polygon of the piece, EPSG:4326")
+    preview: bool = Field(False, description="Answer with the result without saving it")
 
 
 class TagsIn(BaseModel):

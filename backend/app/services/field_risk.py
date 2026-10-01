@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from app.models import FieldRiskEvent, FireEvent, FireEventStatus, RiskStatus, Severity
@@ -44,6 +44,23 @@ def assess_active_fire_events(session: Session, config: dict, version: str, now:
         session.scalars(select(FireEvent.id).where(FireEvent.status == FireEventStatus.ACTIVE))
     )
     return assess_fire_events(session, ids, config, version, now)
+
+
+def reassess_territory(
+    session: Session, territory_id: int, config: dict, version: str, now: datetime
+) -> None:
+    """After an outline edit: every active fire again, and none that is no longer in range."""
+    assess_active_fire_events(session, config, version, now)
+    session.execute(
+        delete(FieldRiskEvent).where(
+            FieldRiskEvent.territory_id == territory_id,
+            FieldRiskEvent.updated_at < now,
+            FieldRiskEvent.fire_event_id.in_(
+                select(FireEvent.id).where(FireEvent.status == FireEventStatus.ACTIVE)
+            ),
+        )
+    )
+    session.commit()
 
 
 def assess_fire_events(

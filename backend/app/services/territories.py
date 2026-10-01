@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from geoalchemy2 import Geography, WKTElement
+from geoalchemy2.shape import to_shape
 from shapely.geometry import MultiPolygon, Polygon, shape
 from shapely.prepared import PreparedGeometry
 from sqlalchemy import cast, delete, func, select
@@ -83,6 +84,62 @@ def create_territory(
     session.flush()
     set_tags(session, territory, tags)
     return territory
+
+
+# Below this, an edit is a slip of the finger along the edge, not a change of the field.
+MIN_CHANGE_HA = 0.01
+
+
+def edit_outline(
+    session: Session,
+    territory: Territory,
+    *,
+    operation: str,
+    piece: dict,
+    section_tolerance_m: float,
+    allowed_area: PreparedGeometry,
+) -> None:
+    """Join `piece` to the outline ("add") or cut it out ("remove"), checked like a new field."""
+    current = to_shape(territory.geom)
+    cut = to_multipolygon(piece)
+    if operation == "remove" and not current.intersects(cut):
+        raise TerritoryError("no_overlap", "the piece to remove does not touch the field")
+    result = current.union(cut) if operation == "add" else current.difference(cut)
+    # Cutting along an edge can leave lines or points next to the polygons, or nothing at all.
+    pieces = getattr(result, "geoms", [result])
+    parts = [g for g in pieces if isinstance(g, Polygon) and not g.is_empty]
+    if not parts:
+        raise TerritoryError("nothing_left", "removing the piece leaves nothing of the field")
+    polygon = MultiPolygon(parts)
+    if not allowed_area.covers(polygon):
+        raise TerritoryError("outside_country", "fields can only be drawn inside Argentina")
+    geom = WKTElement(polygon.wkt, srid=4326)
+    hectares = session.scalar(select(func.ST_Area(cast(geom, Geography)) / 10_000))
+    if abs(hectares - territory.hectares) < MIN_CHANGE_HA:
+        raise TerritoryError("no_change", "the piece does not change the field")
+    if territory.parent is not None:
+        _check_inside(session, geom, territory.parent, section_tolerance_m)
+    else:
+        _check_lots_inside(session, geom, territory, section_tolerance_m)
+    territory.geom = geom
+    territory.hectares = hectares
+    session.flush()
+
+
+def _check_lots_inside(
+    session: Session, geom: WKTElement, field: Territory, tolerance_m: float
+) -> None:
+    outside = session.scalar(
+        select(func.count()).where(
+            Territory.parent_id == field.id,
+            ~func.ST_CoveredBy(
+                cast(Territory.geom, Geography),
+                func.ST_Buffer(cast(geom, Geography), tolerance_m),
+            ),
+        )
+    )
+    if outside:
+        raise TerritoryError("cuts_lots", f"{outside} lots of {field.name!r} would be left outside")
 
 
 def _check_inside(

@@ -10,17 +10,24 @@ from app.models import Territory
 from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
 from app.schemas import (
     FireHistoryOut,
+    OutlineIn,
     RiskEventOut,
     SprayHourOut,
     TagsIn,
     TerritoryIn,
     TerritoryOut,
 )
-from app.services.field_risk import assess_active_fire_events, compass
+from app.services.field_risk import assess_active_fire_events, compass, reassess_territory
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
 from app.services.spray_conditions import list_spray_hours
-from app.services.territories import create_territory, get_territory, list_territories, set_tags
+from app.services.territories import (
+    create_territory,
+    edit_outline,
+    get_territory,
+    list_territories,
+    set_tags,
+)
 from app.versioning import processing_version
 
 router = APIRouter(prefix="/territories", tags=["territories"])
@@ -98,6 +105,39 @@ def delete(
 ):
     session.delete(owned(session, settings, territory_id))
     session.commit()
+
+
+@router.patch("/{territory_id}/outline", response_model=TerritoryOut)
+def change_outline(
+    session: SessionDep,
+    settings: SettingsDep,
+    territory_id: int,
+    body: OutlineIn,
+):
+    territory = owned(session, settings, territory_id)
+    config = get_thresholds()["territories"]
+    edit_outline(
+        session,
+        territory,
+        operation=body.operation,
+        piece=body.geometry,
+        section_tolerance_m=config["section_tolerance_m"],
+        allowed_area=allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
+    )
+    result = territory_out(territory)
+    if body.preview:
+        session.rollback()
+        return result
+    session.commit()
+    thresholds = get_thresholds()
+    reassess_territory(
+        session,
+        territory.id,
+        thresholds["field_risk"],
+        processing_version(thresholds),
+        datetime.now(UTC),
+    )
+    return result
 
 
 @router.put("/{territory_id}/tags", response_model=TerritoryOut)
