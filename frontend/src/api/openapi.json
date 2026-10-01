@@ -502,7 +502,8 @@
           "fire_events",
           "observations",
           "lightning",
-          "risk"
+          "risk",
+          "parcels"
         ],
         "title": "Layer",
         "type": "string"
@@ -1187,6 +1188,64 @@
         "summary": "Boundary",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/cadastre/parcel": {
+      "get": {
+        "description": "The official parcel at a point, to draw a field from it (docs/08-cadastre.md).",
+        "operationId": "parcel_cadastre_parcel_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lat",
+            "required": true,
+            "schema": {
+              "maximum": 90,
+              "minimum": -90,
+              "title": "Lat",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lon",
+            "required": true,
+            "schema": {
+              "maximum": 180,
+              "minimum": -180,
+              "title": "Lon",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Parcel Cadastre Parcel Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Parcel",
+        "tags": [
+          "cadastre"
         ]
       }
     },

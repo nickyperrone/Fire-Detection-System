@@ -22,6 +22,7 @@ class Layer(StrEnum):
     OBSERVATIONS = "observations"
     LIGHTNING = "lightning"
     RISK = "risk"
+    PARCELS = "parcels"
 
 
 def tile_width_m(z: int) -> float:
@@ -140,6 +141,20 @@ RISK_SQL = text("""
 """)
 
 
+PARCELS_SQL = text("""
+    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
+    SELECT ST_AsMVT(mvt, 'parcels', :extent, 'geom') FROM (
+        SELECT p.partida, p.plano,
+               ST_AsMVTGeom(ST_Transform(p.geom, 3857), bounds.env, :extent, :buffer, true) AS geom
+        FROM cadastral_parcel p, bounds
+        WHERE ST_Intersects(p.geom, ST_Transform(bounds.env, 4326))
+    ) AS mvt
+    WHERE geom IS NOT NULL
+""")
+# Property lines below this zoom would be a solid mesh (docs/08-cadastre.md).
+PARCELS_FROM_ZOOM = 13
+
+
 def build_tile(
     session: Session,
     layer: Layer,
@@ -168,6 +183,10 @@ def build_tile(
     elif layer == Layer.RISK and forecast_grid:
         statement = RISK_SQL
         params |= dict(zip(("west", "south", "cell"), forecast_grid, strict=True))
+    elif layer == Layer.PARCELS:
+        if z < PARCELS_FROM_ZOOM:
+            return b""
+        statement = PARCELS_SQL
     elif layer == Layer.LIGHTNING:
         statement = LIGHTNING_SQL
         params |= {"now": now, "since": now - timedelta(minutes=lightning_window_minutes)}

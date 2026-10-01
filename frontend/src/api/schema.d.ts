@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cadastre/parcel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Parcel
+         * @description The official parcel at a point, to draw a field from it (docs/08-cadastre.md).
+         */
+        get: operations["parcel_cadastre_parcel_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fire-events": {
         parameters: {
             query?: never;
@@ -385,7 +405,7 @@ export interface components {
          * Layer
          * @enum {string}
          */
-        Layer: "territories" | "fire_events" | "observations" | "lightning" | "risk";
+        Layer: "territories" | "fire_events" | "observations" | "lightning" | "risk" | "parcels";
         /** LightningAnswerOut */
         LightningAnswerOut: {
             data_quality: components["schemas"]["DataQuality"];
@@ -635,6 +655,40 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    parcel_cadastre_parcel_get: {
+        parameters: {
+            query: {
+                lat: number;
+                lon: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

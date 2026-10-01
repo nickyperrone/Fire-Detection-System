@@ -370,3 +370,35 @@ class StaticSource(Base):
     geom = mapped_column(Geometry("POINT", srid=4326, spatial_index=False), nullable=False)
     detections: Mapped[int] = mapped_column(Integer)
     last_seen: Mapped[date] = mapped_column(Date)
+
+
+class CadastralParcel(Base):
+    """An official parcel from a provincial cadastre, cached on first view (docs/08-cadastre.md)."""
+
+    __tablename__ = "cadastral_parcel"
+    __table_args__ = (
+        UniqueConstraint("province", "department", "partida"),
+        Index("ix_cadastral_parcel_geom", "geom", postgresql_using="gist"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    province: Mapped[str] = mapped_column(String(60))
+    department: Mapped[int] = mapped_column(Integer)
+    partida: Mapped[int] = mapped_column(BigInteger)
+    plano: Mapped[int | None] = mapped_column(BigInteger)
+    status: Mapped[str | None] = mapped_column(String(100))
+    geom = mapped_column(Geometry("MULTIPOLYGON", srid=4326, spatial_index=False), nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class CadastralTile(Base):
+    """A web-map tile whose parcels are cached, and when they were fetched."""
+
+    __tablename__ = "cadastral_tile"
+
+    province: Mapped[str] = mapped_column(String(60), primary_key=True)
+    z: Mapped[int] = mapped_column(Integer, primary_key=True)
+    x: Mapped[int] = mapped_column(Integer, primary_key=True)
+    y: Mapped[int] = mapped_column(Integer, primary_key=True)
+    parcels: Mapped[int] = mapped_column(Integer)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

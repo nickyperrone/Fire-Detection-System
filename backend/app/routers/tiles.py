@@ -1,10 +1,12 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, HTTPException, Path, Response
 
 from app.config import get_thresholds
 from app.routers.dependencies import SessionDep, SettingsDep
+from app.services.cadastre import ensure_tile
 from app.services.tiles import Layer, build_tile
 
 router = APIRouter(tags=["tiles"])
@@ -20,6 +22,8 @@ CACHE_CONTROL = {
     Layer.LIGHTNING: "public, max-age=30",
     # The forecast is reissued every hour.
     Layer.RISK: "public, max-age=600",
+    # Parcels change in months, not hours.
+    Layer.PARCELS: "public, max-age=86400",
 }
 
 
@@ -35,6 +39,10 @@ def tile(
     if x >= 2**z or y >= 2**z:
         raise HTTPException(404, "tile outside the zoom level")
     thresholds = get_thresholds()
+    if layer == Layer.PARCELS:
+        # First view of an area fetches its parcels from the province; then they are cached.
+        with httpx.Client() as client:
+            ensure_tile(session, client, thresholds["cadastre"], z, x, y)
     west, south = thresholds["region"]["bbox"][:2]
     content = build_tile(
         session,
