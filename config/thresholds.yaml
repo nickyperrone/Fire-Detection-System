@@ -75,6 +75,29 @@ forecast:
   rain_day_mm: 5
   model_dir: data/models
   report: docs/reports/fire-forecast.md
+  radius_m: 10000
+  # Next-day probability for a field; first cut (docs/05-fire-forecast.md#bands-and-factors).
+  bands:
+    - {band: VERY_HIGH, from: 0.35}
+    - {band: HIGH, from: 0.15}
+    - {band: MODERATE, from: 0.05}
+    - {band: LOW, from: 0.0}
+  factors:
+    dry_air_rh_pct: 35
+    no_rain_days: 10
+    hot_c: 32
+    high_fwi: 20
+    recent_cell_fire_days: 30
+    burning_month_rate: 1.0
+  live_weather:
+    open_meteo_url: https://api.open-meteo.com/v1/forecast
+    past_days: 30
+    bias_min_days: 7
+  recent_fires:
+    api_url: https://firms.modaps.eosdis.nasa.gov/api/area/csv/{key}/{product}/{bbox}/{days}/{date}
+    standard_product: VIIRS_SNPP_SP
+    near_real_time_product: VIIRS_SNPP_NRT
+    days_per_request: 5
 
 field_risk:
   # Ordered from closest to farthest; distance 0 means the fire intersects the territory.
@@ -116,4 +139,5 @@ worker:
   fire_interval_minutes: 5
   goes_fire_interval_minutes: 5
   lightning_interval_minutes: 1
+  forecast_interval_minutes: 60
   weather_interval_minutes: 60

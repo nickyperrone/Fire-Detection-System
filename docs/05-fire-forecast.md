@@ -78,6 +78,55 @@ Delta burns every year and shares weather with it.
   1,100 rows, milliseconds) and stores the probabilities; the API reads them. The FWI codes are
   stored per weather point, so each day adds one day of FWI instead of recomputing ten years.
 
+## Live data
+
+The model was trained on NASA POWER weather and the S-NPP archive. In production the same
+features are built from sources that are as fresh as possible, spliced so the model sees the same
+kind of numbers it was trained on.
+
+**Weather (`weather_day`, one row per weather point and day).**
+
+| Days | Source | Why |
+|---|---|---|
+| Up to the last day POWER has (a few days ago) | NASA POWER | Same reanalysis as training |
+| From there to today | Open-Meteo, hourly, one request for all points | POWER publishes with a delay; Open-Meteo has today |
+
+- Open-Meteo hours are turned into the training variables: maximum temperature, humidity at the
+  hour of the maximum, mean wind, rain sum, by local day.
+- Bias: for each point and variable (temperature, humidity, wind), the mean difference between
+  POWER and Open-Meteo over the days both have (last 30 days, at least 7) is added to the
+  Open-Meteo values. Rain is not corrected. Without it the FWI would jump where the sources meet.
+- When POWER publishes a day, its row replaces the Open-Meteo row and the FWI is recomputed from
+  that day on. The FWI codes are stored per day, so a run only recomputes the days that changed.
+- The first run starts the FWI on 2015-01-01 from the cached training weather, so the drought
+  codes carry ten years of memory, not a cold start.
+
+**Fires.** The archive ends in 2024. `historical_detection` is topped up with S-NPP detections from
+the FIRMS area API (the same sensor as training): standard processing where it exists, near real
+time for the last months, and every day the last five days. The forecast reads fire history only
+from this table, so live alerts and forecast features never mix.
+
+**Schedule.** Every hour the worker refreshes the weather and issues the forecast for every cell
+(about 1,300 rows, milliseconds), then for every field. The API only reads stored results.
+
+## Bands and factors
+
+| Band | Next-day probability within 10 km |
+|---|---|
+| `LOW` | under 5 % |
+| `MODERATE` | 5–15 % |
+| `HIGH` | 15–35 % |
+| `VERY_HIGH` | 35 % or more |
+
+The bands are in `config/thresholds.yaml` (`forecast.bands`) and are a first cut, to be reviewed
+with a season of use. Factors are plain conditions read from the same features, shown when they
+hold, ordered by the model's feature importance: fire around in the last 7 days, fire in the cell
+in the last 30 days, dry air (humidity under 35 %), 10 or more days without rain, heat (32 °C or
+more), FWI 20 or more, and a month that usually burns here.
+
+In the UI the forecast is red from `MODERATE` up and green at `LOW` (the red and green rule of
+[06-goes](06-goes.md#colors)); the band name says how high.
+
 ## Code
 
 - `backend/app/forecast/`: `fwi.py` (Fire Weather Index), `weather_history.py` (NASA POWER),
