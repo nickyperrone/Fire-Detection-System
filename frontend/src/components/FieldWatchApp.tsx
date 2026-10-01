@@ -55,18 +55,22 @@ export function FieldWatchApp() {
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [snap, setSnap] = useState<Snap>("peek");
   const [drawingActive, setDrawingActive] = useState(false);
+  // The field whose outline is being edited; drawing then makes a piece to add or remove.
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [tilesVersion, setTilesVersion] = useState(0);
 
   const everything = usePortfolio([]);
   const filtered = usePortfolio(url.tags);
   const territories = useTerritories();
   const boundary = useBoundary();
-  const drawing = useFieldDrawing(map, drawingActive);
 
   const territoryById = useMemo(
     () => new Map((territories.data ?? []).map((t) => [t.id, t])),
     [territories.data],
   );
+  const editing = editingId !== null ? territoryById.get(editingId) : undefined;
+  const drawingOn = drawingActive || editing !== undefined;
+  const drawing = useFieldDrawing(map, drawingOn);
   const allTags = useMemo(
     () => [...new Set((territories.data ?? []).flatMap((t) => t.tags))].sort(),
     [territories.data],
@@ -198,6 +202,7 @@ export function FieldWatchApp() {
 
   const finishDrawing = (created: Territory | null) => {
     setDrawingActive(false);
+    setEditingId(null);
     if (!created) return;
     setTilesVersion((v) => v + 1);
     url.update({ f: String(created.id) });
@@ -215,20 +220,21 @@ export function FieldWatchApp() {
         territoryStates={territoryStates}
         territoriesVersion={tilesVersion}
         selectedId={url.selectedId}
-        interactive={!drawingActive}
+        interactive={!drawingOn}
         onSelect={onMapSelect}
         onCameraChange={onCameraChange}
         onReady={setMap}
         messages={t}
         showRisk={url.showRisk}
-        showParcels={url.showParcels || drawingActive}
+        showParcels={url.showParcels || drawingOn}
         boundary={boundary.data ?? null}
-        grayOutside={drawingActive}
+        grayOutside={drawingOn}
       />
 
-      {drawingActive ? (
+      {drawingOn ? (
         <DrawFieldOverlay
           drawing={drawing}
+          editing={editing ?? null}
           fields={fields}
           defaultParentId={
             selected?.kind === "FIELD" ? selected.territory_id : null
@@ -281,6 +287,7 @@ export function FieldWatchApp() {
                     : null
                 }
                 onClose={() => open(null)}
+                onEditOutline={() => setEditingId(selected.territory_id)}
               />
             ) : hasFields || url.tags.length ? (
               <PortfolioPanel

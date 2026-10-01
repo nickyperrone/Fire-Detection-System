@@ -17,6 +17,7 @@ export type DataQuality = Schemas["DataQuality"];
 export type Severity = Schemas["Severity"];
 export type SprayStatus = Schemas["SprayStatus"];
 export type Snap = Schemas["SnapOut"];
+export type OutlineIn = Schemas["OutlineIn"];
 
 export class ApiError extends Error {
   constructor(
@@ -60,6 +61,11 @@ export const api = {
   createTerritory: (body: TerritoryIn) =>
     request<Territory>("/territories", {
       method: "POST",
+      body: JSON.stringify(body),
+    }),
+  editOutline: (id: number, body: OutlineIn) =>
+    request<Territory>(`/territories/${id}/outline`, {
+      method: "PATCH",
       body: JSON.stringify(body),
     }),
   deleteTerritory: (id: number) =>

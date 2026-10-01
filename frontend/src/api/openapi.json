@@ -555,6 +555,36 @@
         "title": "LightningAnswerOut",
         "type": "object"
       },
+      "OutlineIn": {
+        "properties": {
+          "geometry": {
+            "additionalProperties": true,
+            "description": "GeoJSON Polygon of the piece, EPSG:4326",
+            "title": "Geometry",
+            "type": "object"
+          },
+          "operation": {
+            "enum": [
+              "add",
+              "remove"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "preview": {
+            "default": false,
+            "description": "Answer with the result without saving it",
+            "title": "Preview",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "operation",
+          "geometry"
+        ],
+        "title": "OutlineIn",
+        "type": "object"
+      },
       "PortfolioEntryOut": {
         "properties": {
           "anomaly": {
@@ -1745,6 +1775,58 @@
           }
         },
         "summary": "Fire History",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/outline": {
+      "patch": {
+        "operationId": "change_outline_territories__territory_id__outline_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutlineIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerritoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Outline",
         "tags": [
           "territories"
         ]

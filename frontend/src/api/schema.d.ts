@@ -185,6 +185,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/territories/{territory_id}/outline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change Outline */
+        patch: operations["change_outline_territories__territory_id__outline_patch"];
+        trace?: never;
+    };
     "/territories/{territory_id}/risk-events": {
         parameters: {
             query?: never;
@@ -437,6 +454,27 @@ export interface components {
             nearest_m: number | null;
             /** Window Minutes */
             window_minutes: number;
+        };
+        /** OutlineIn */
+        OutlineIn: {
+            /**
+             * Geometry
+             * @description GeoJSON Polygon of the piece, EPSG:4326
+             */
+            geometry: {
+                [key: string]: unknown;
+            };
+            /**
+             * Operation
+             * @enum {string}
+             */
+            operation: "add" | "remove";
+            /**
+             * Preview
+             * @description Answer with the result without saving it
+             * @default false
+             */
+            preview: boolean;
         };
         /** PortfolioEntryOut */
         PortfolioEntryOut: {
@@ -1039,6 +1077,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FireHistoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_outline_territories__territory_id__outline_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutlineIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerritoryOut"];
                 };
             };
             /** @description Validation Error */

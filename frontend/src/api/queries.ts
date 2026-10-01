@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, type TerritoryIn } from "./client";
+import { api, type OutlineIn, type TerritoryIn } from "./client";
 
 // The worker reads fires every 5 minutes; polling at half that shows a new pass within minutes.
 const REFRESH_MS = 2.5 * 60 * 1000;
@@ -72,6 +72,38 @@ export function useCreateTerritory() {
   return useMutation({
     mutationFn: (body: TerritoryIn) => api.createTerritory(body),
     onSuccess: invalidate,
+  });
+}
+
+/** The field as it would be after the edit, with any problem, before saving it. */
+export function useOutlinePreview(
+  id: number,
+  operation: OutlineIn["operation"],
+  piece: Record<string, unknown> | null,
+) {
+  return useQuery({
+    queryKey: ["outline-preview", id, operation, piece],
+    queryFn: () =>
+      api.editOutline(id, {
+        operation,
+        geometry: piece!,
+        preview: true,
+      }),
+    enabled: piece !== null,
+    retry: false,
+  });
+}
+
+export function useEditOutline() {
+  const client = useQueryClient();
+  const invalidate = useInvalidateTerritories();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: OutlineIn }) =>
+      api.editOutline(id, body),
+    onSuccess: (_, { id }) => {
+      invalidate();
+      client.invalidateQueries({ queryKey: ["risk-events", id] });
+    },
   });
 }
 

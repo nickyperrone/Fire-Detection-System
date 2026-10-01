@@ -179,6 +179,7 @@ const en = {
     field: "Field",
     lotOf: (field: string) => `Lot of ${field}`,
     close: "Close",
+    editOutline: "Edit outline",
     deleteField: "Delete field",
     deleteLot: "Delete lot",
     confirmDelete: (name: string, withLots: boolean) =>
@@ -264,7 +265,28 @@ const en = {
       outside_parent: "The lot must be inside its field.",
       invalid_polygon:
         "The outline crosses itself. Start over and go around once.",
+      no_overlap: "That piece does not touch the field.",
+      nothing_left: "That would remove the whole field.",
+      no_change: "That piece is already part of the field.",
+      cuts_lots: "That would leave part of a lot outside the field.",
     } as Record<string, string>,
+  },
+  edit: {
+    title: (name: string) => `Edit ${name}`,
+    pencils: "Add or remove",
+    add: "Add",
+    remove: "Remove",
+    hints: {
+      add: "Draw the piece to add.",
+      remove: "Draw the piece to cut out.",
+    } as Record<"add" | "remove", string>,
+    checking: "Checking the new outline…",
+    result: (name: string, hectares: string) =>
+      `${name} will have ${hectares}.`,
+    save: {
+      add: "Add to the field",
+      remove: "Remove from the field",
+    } as Record<"add" | "remove", string>,
   },
 };
 
@@ -434,6 +456,7 @@ const es: Messages = {
     field: "Campo",
     lotOf: (field) => `Lote de ${field}`,
     close: "Cerrar",
+    editOutline: "Editar borde",
     deleteField: "Borrar campo",
     deleteLot: "Borrar lote",
     confirmDelete: (name, withLots) =>
@@ -520,7 +543,24 @@ const es: Messages = {
       outside_parent: "El lote tiene que estar dentro de su campo.",
       invalid_polygon:
         "El borde se cruza a sí mismo. Empezá de nuevo y dá una sola vuelta.",
+      no_overlap: "Ese pedazo no toca el campo.",
+      nothing_left: "Así se borraría el campo entero.",
+      no_change: "Ese pedazo ya es parte del campo.",
+      cuts_lots: "Así quedaría parte de un lote fuera del campo.",
     },
+  },
+  edit: {
+    title: (name) => `Editar ${name}`,
+    pencils: "Agregar o quitar",
+    add: "Agregar",
+    remove: "Quitar",
+    hints: {
+      add: "Dibujá el pedazo a agregar.",
+      remove: "Dibujá el pedazo a sacar.",
+    },
+    checking: "Revisando el borde nuevo…",
+    result: (name, hectares) => `${name} va a quedar con ${hectares}.`,
+    save: { add: "Agregar al campo", remove: "Quitar del campo" },
   },
 };
 

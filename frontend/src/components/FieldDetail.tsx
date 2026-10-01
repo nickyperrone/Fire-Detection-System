@@ -27,6 +27,7 @@ import {
   FlameIcon,
   ForecastIcon,
   HistoryIcon,
+  PencilPlusIcon,
   SprayIcon,
 } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
@@ -41,9 +42,15 @@ type Props = {
   entry: PortfolioEntry;
   parentName: string | null;
   onClose: () => void;
+  onEditOutline: () => void;
 };
 
-export function FieldDetail({ entry, parentName, onClose }: Props) {
+export function FieldDetail({
+  entry,
+  parentName,
+  onClose,
+  onEditOutline,
+}: Props) {
   const { t } = useLocale();
   const risks = useRiskEvents(entry.territory_id);
   const hours = useSprayConditions(entry.territory_id);
@@ -66,6 +73,13 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
           <div className="mt-2">
             <FieldChips entry={entry} />
           </div>
+          <button
+            onClick={onEditOutline}
+            className="mt-2 flex items-center gap-1.5 text-sm font-medium text-accent"
+          >
+            <PencilPlusIcon className="size-4" />
+            {t.detail.editOutline}
+          </button>
         </div>
         <button
           onClick={onClose}

@@ -100,3 +100,17 @@ export const CheckIcon = (p: IconProps) => (
     <path d="m5 12 5 5 9-10" />
   </Icon>
 );
+
+export const PencilPlusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20l1-4.5L15 5.5l3.5 3.5-10 10L4 20Z" />
+    <path d="M18 14v6M15 17h6" />
+  </Icon>
+);
+
+export const PencilMinusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20l1-4.5L15 5.5l3.5 3.5-10 10L4 20Z" />
+    <path d="M15 17h6" />
+  </Icon>
+);
