@@ -60,6 +60,22 @@ history:
   radius_m: 10000
   cache_dir: data/cache/firms-archive
 
+forecast:
+  # docs/05-fire-forecast.md
+  cell_degrees: 0.1
+  weather_degrees: 0.5
+  weather_url: https://power.larc.nasa.gov/api/temporal/daily/point
+  weather_cache_dir: data/cache/nasa-power
+  first_year: 2015
+  last_year: 2024
+  train_years: [2015, 2021]
+  validation_years: [2022, 2023]
+  test_years: [2024, 2024]
+  horizons_days: [1, 2, 3]
+  rain_day_mm: 5
+  model_dir: data/models
+  report: docs/reports/fire-forecast.md
+
 field_risk:
   # Ordered from closest to farthest; distance 0 means the fire intersects the territory.
   bands:

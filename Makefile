@@ -23,6 +23,9 @@ seed:
 history:
 	$(BACKEND) python -m app.cli load-history
 
+forecast-train:
+	$(BACKEND) python -m app.forecast.train
+
 run-once:
 	$(BACKEND) python -m app.cli run-once
 
