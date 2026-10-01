@@ -240,6 +240,15 @@ const en = {
     },
     fromParcel: (partida: number, plano: number | null) =>
       `Parcel ${partida}${plano ? `, plan ${plano}` : ""}.`,
+    fitting: "Fitting it to the property lines…",
+    fitted: {
+      parcels: (n: number) =>
+        n === 1 ? "Fitted to 1 parcel." : `Fitted to ${n} parcels.`,
+      edges: () => "Edges moved onto the nearby property lines.",
+    } as Record<"parcels" | "edges", (parcels: number) => string>,
+    yourDrawing: "Your drawing, as you made it.",
+    useMine: "Use my drawing",
+    fitAgain: "Fit to property lines",
     adjust: "Drag the points on the map to fit the edge exactly.",
     namePlaceholder: "Name, e.g. La Esperanza",
     name: "Name",
@@ -487,6 +496,15 @@ const es: Messages = {
     },
     fromParcel: (partida, plano) =>
       `Partida ${partida}${plano ? `, plano ${plano}` : ""}.`,
+    fitting: "Ajustando a las líneas de propiedad…",
+    fitted: {
+      parcels: (n) =>
+        n === 1 ? "Ajustado a 1 parcela." : `Ajustado a ${n} parcelas.`,
+      edges: () => "Bordes llevados a las líneas de propiedad cercanas.",
+    },
+    yourDrawing: "Tu dibujo, tal como lo hiciste.",
+    useMine: "Volver a mi dibujo",
+    fitAgain: "Ajustar a las líneas",
     adjust: "Arrastrá los puntos en el mapa para ajustar el borde.",
     namePlaceholder: "Nombre, por ejemplo La Esperanza",
     name: "Nombre",

@@ -16,6 +16,7 @@ export type ForecastDay = Schemas["ForecastDayOut"];
 export type DataQuality = Schemas["DataQuality"];
 export type Severity = Schemas["Severity"];
 export type SprayStatus = Schemas["SprayStatus"];
+export type Snap = Schemas["SnapOut"];
 
 export class ApiError extends Error {
   constructor(
@@ -76,6 +77,11 @@ export const api = {
     request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
       "/boundary",
     ),
+  snap: (geometry: GeoJSON.Polygon) =>
+    request<Snap>("/cadastre/snap", {
+      method: "POST",
+      body: JSON.stringify({ geometry }),
+    }),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),
 };

@@ -728,6 +728,50 @@
         "title": "Severity",
         "type": "string"
       },
+      "SnapIn": {
+        "properties": {
+          "geometry": {
+            "additionalProperties": true,
+            "description": "GeoJSON Polygon drawn by hand, EPSG:4326",
+            "title": "Geometry",
+            "type": "object"
+          }
+        },
+        "required": [
+          "geometry"
+        ],
+        "title": "SnapIn",
+        "type": "object"
+      },
+      "SnapOut": {
+        "properties": {
+          "geometry": {
+            "additionalProperties": true,
+            "title": "Geometry",
+            "type": "object"
+          },
+          "method": {
+            "description": "parcels, edges or none",
+            "title": "Method",
+            "type": "string"
+          },
+          "parcels": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Parcels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "method",
+          "geometry",
+          "parcels"
+        ],
+        "title": "SnapOut",
+        "type": "object"
+      },
       "SourceStatusOut": {
         "properties": {
           "last_error": {
@@ -1257,6 +1301,48 @@
           }
         },
         "summary": "Parcel",
+        "tags": [
+          "cadastre"
+        ]
+      }
+    },
+    "/cadastre/snap": {
+      "post": {
+        "description": "A hand-drawn outline fitted to the property lines, or unchanged (docs/08-cadastre.md).",
+        "operationId": "snap_cadastre_snap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snap",
         "tags": [
           "cadastre"
         ]

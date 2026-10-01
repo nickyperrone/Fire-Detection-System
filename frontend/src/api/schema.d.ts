@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cadastre/snap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Snap
+         * @description A hand-drawn outline fitted to the property lines, or unchanged (docs/08-cadastre.md).
+         */
+        post: operations["snap_cadastre_snap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fire-events": {
         parameters: {
             query?: never;
@@ -482,6 +502,32 @@ export interface components {
          * @enum {string}
          */
         Severity: "CRITICAL" | "VERY_HIGH" | "HIGH" | "WATCH";
+        /** SnapIn */
+        SnapIn: {
+            /**
+             * Geometry
+             * @description GeoJSON Polygon drawn by hand, EPSG:4326
+             */
+            geometry: {
+                [key: string]: unknown;
+            };
+        };
+        /** SnapOut */
+        SnapOut: {
+            /** Geometry */
+            geometry: {
+                [key: string]: unknown;
+            };
+            /**
+             * Method
+             * @description parcels, edges or none
+             */
+            method: string;
+            /** Parcels */
+            parcels: {
+                [key: string]: unknown;
+            }[];
+        };
         /** SourceStatusOut */
         SourceStatusOut: {
             /** Last Error */
@@ -687,6 +733,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    snap_cadastre_snap_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapOut"];
                 };
             };
             /** @description Validation Error */

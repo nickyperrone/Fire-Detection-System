@@ -32,6 +32,15 @@ const MODE: Record<DrawTool, string> = {
 
 export type Notice = "too_small" | "no_parcel";
 
+/** A hand-drawn shape fitted to the property lines (docs/08-cadastre.md#in-the-map). */
+export type Fit = {
+  method: "parcels" | "edges";
+  /** Parcels the field became, for the "parcels" method. */
+  parcels: number;
+  /** Whether the map shows the fitted shape (true) or the drawing as it was made. */
+  applied: boolean;
+};
+
 const STYLE = {
   fillColor: "#22d3ee",
   fillOpacity: 0.2,
@@ -52,8 +61,13 @@ export type FieldDrawing = {
   notice: Notice | null;
   /** Looking up the parcel under a tap. */
   searching: boolean;
-  /** The official parcel the shape came from, when the parcel tool was used. */
+  /** The official parcel the shape came from: the one tapped, or the only one it was fitted to. */
   parcel: ParcelInfo | null;
+  /** Asking the server to fit a closed hand-drawn shape to the property lines. */
+  fitting: boolean;
+  fit: Fit | null;
+  /** Switches between the fitted shape and the drawing as it was made. */
+  toggleFit: () => void;
 };
 
 export type ParcelInfo = {
@@ -93,6 +107,19 @@ function outerShape(
       : best,
   );
   return { type: "Polygon", coordinates: [largest[0]] };
+}
+
+/** Puts one version of a fitted shape on the map. Points dragged since are replaced. */
+function showShape(
+  draw: TerraDraw,
+  id: string | number,
+  fitted: boolean,
+  shapes: { drawn: DrawnPolygon; fitted: DrawnPolygon },
+) {
+  // The selection handles belong to the old geometry; reselecting rebuilds them.
+  draw.deselectFeature(id);
+  draw.updateFeatureGeometry(id, fitted ? shapes.fitted : shapes.drawn);
+  draw.selectFeature(id);
 }
 
 function buildDraw(map: MapLibreMap): TerraDraw {
@@ -144,6 +171,14 @@ export function useFieldDrawing(
   const [notice, setNotice] = useState<Notice | null>(null);
   const [searching, setSearching] = useState(false);
   const [parcel, setParcel] = useState<ParcelInfo | null>(null);
+  const [fitting, setFitting] = useState(false);
+  const [fit, setFit] = useState<Fit | null>(null);
+  // Both versions of a fitted shape, so either can be put back.
+  const shapesRef = useRef<{
+    drawn: DrawnPolygon;
+    fitted: DrawnPolygon;
+    parcel: ParcelInfo | null;
+  } | null>(null);
   const drawRef = useRef<TerraDraw | null>(null);
   const closedIdRef = useRef<string | number | null>(null);
   const toolRef = useRef(tool);
@@ -177,6 +212,35 @@ export function useFieldDrawing(
       setNotice(null);
       setPolygon(shape);
       setHectares(area(shape) / 10_000);
+    };
+
+    const fitToPropertyLines = async (
+      id: string | number,
+      drawn: DrawnPolygon,
+    ) => {
+      setFitting(true);
+      try {
+        const result = await api.snap(drawn);
+        // The shape may have been discarded while the server answered.
+        if (closedIdRef.current !== id || result.method === "none") return;
+        const parcels = result.parcels as ParcelInfo[];
+        shapesRef.current = {
+          drawn,
+          fitted: result.geometry as DrawnPolygon,
+          parcel: parcels.length === 1 ? parcels[0] : null,
+        };
+        showShape(draw, id, true, shapesRef.current);
+        setParcel(shapesRef.current.parcel);
+        setFit({
+          method: result.method as Fit["method"],
+          parcels: parcels.length,
+          applied: true,
+        });
+      } catch {
+        // Fitting is a convenience: without it the drawing stays as it was made.
+      } finally {
+        setFitting(false);
+      }
     };
 
     const onTap = async (event: MapMouseEvent) => {
@@ -229,6 +293,7 @@ export function useFieldDrawing(
         draw.updateFeatureGeometry(id, shape);
       }
       close(id, shape);
+      void fitToPropertyLines(id, shape);
     });
     return () => {
       map.off("click", onTap);
@@ -241,6 +306,9 @@ export function useFieldDrawing(
       setHectares(0);
       setParcel(null);
       setNotice(null);
+      setFit(null);
+      setFitting(false);
+      shapesRef.current = null;
     };
   }, [map, active]);
 
@@ -266,6 +334,22 @@ export function useFieldDrawing(
     setHectares(0);
     setNotice(null);
     setParcel(null);
+    setFit(null);
+    shapesRef.current = null;
+  }, []);
+
+  const toggleFit = useCallback(() => {
+    const draw = drawRef.current;
+    const id = closedIdRef.current;
+    const shapes = shapesRef.current;
+    if (!draw || id === null || !shapes) return;
+    setFit((current) => {
+      if (!current) return current;
+      const applied = !current.applied;
+      showShape(draw, id, applied, shapes);
+      setParcel(applied ? shapes.parcel : null);
+      return { ...current, applied };
+    });
   }, []);
 
   return {
@@ -277,5 +361,8 @@ export function useFieldDrawing(
     notice,
     searching,
     parcel,
+    fitting,
+    fit,
+    toggleFit,
   };
 }

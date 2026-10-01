@@ -148,6 +148,25 @@ function SaveFieldForm({
         );
       }}
     >
+      {drawing.fitting && (
+        <p className="text-sm text-slate-300">{t.draw.fitting}</p>
+      )}
+      {drawing.fit && (
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+          <span>
+            {drawing.fit.applied
+              ? t.draw.fitted[drawing.fit.method](drawing.fit.parcels)
+              : t.draw.yourDrawing}
+          </span>
+          <button
+            type="button"
+            onClick={drawing.toggleFit}
+            className="shrink-0 font-medium text-accent"
+          >
+            {drawing.fit.applied ? t.draw.useMine : t.draw.fitAgain}
+          </button>
+        </div>
+      )}
       <p className="text-sm text-slate-300">
         {drawing.parcel &&
           `${t.draw.fromParcel(drawing.parcel.partida, drawing.parcel.plano)} `}
