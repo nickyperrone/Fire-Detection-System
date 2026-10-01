@@ -7,8 +7,10 @@ Satellite monitoring for the fields of a crop-spraying contractor around Larroqu
 spraying conditions favorable, and is something unusual happening in the field. Every answer shows
 its sources, their timestamps and whether the field could actually be observed.
 
-- **Status:** Phase 1 in progress. Fire and spray answers work in the map, the API and the CLI.
-  Field anomalies from Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
+- **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
+  GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
+  fire history per field, and fields drawn on the official property lines. Field anomalies from
+  Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -28,6 +30,9 @@ make web                  # in a second terminal: the map on http://localhost:30
 
 - `FIRMS_MAP_KEY` is free: request it at https://firms.modaps.eosdis.nasa.gov/api/map_key/. Without
   it the fire answer shows `NO_DATA` and the spray answer still works (Open-Meteo needs no key).
+- `make history` loads ten years of FIRMS archive for the fire history; `make forecast-train`
+  trains the forecast and writes its report; `make forecast` issues it once (the worker does it
+  hourly).
 - `make portfolio` prints every field and section with its answers in the terminal;
   `make portfolio TAG=crop:soy` filters by tag.
 - Next.js forwards `/api` to the API, so there is nothing else to configure.
@@ -61,35 +66,206 @@ never "no detections".
 
 ## Architecture
 
+### The whole system
+
 ```mermaid
 flowchart LR
-    FIRMS["NASA FIRMS<br/>VIIRS + MODIS"] --> P["providers/<br/>normalize"]
-    METEO["Open-Meteo"] --> P
-    P --> I["ingestion<br/>idempotent"] --> C["correlation<br/>observations → fire events"] --> R["field risk<br/>fire event × territory"]
-    P --> S["spray conditions<br/>territory × hour"]
-    I & C & R & S --> DB[("PostgreSQL + PostGIS")]
-    DB --> API["FastAPI"]
-    DB --> CLI["CLI portfolio"]
+    subgraph SOURCES["Public sources, no fees"]
+        FIRMS["NASA FIRMS<br/>VIIRS + MODIS"]
+        GOES["GOES-19 on AWS<br/>fire + lightning"]
+        METEO["Open-Meteo<br/>forecast"]
+        POWER["NASA POWER<br/>daily reanalysis"]
+        ATER["ATER Entre Ríos<br/>cadastre WFS"]
+    end
+    subgraph WORKER["Worker: one process, APScheduler"]
+        J1["fires · every 5 min"]
+        J2["GOES fires · every 5 min"]
+        J3["lightning · every 1 min"]
+        J4["weather + spray · hourly"]
+        J5["forecast · hourly"]
+    end
+    DB[("PostgreSQL + PostGIS")]
+    subgraph READ["Read side"]
+        API["FastAPI<br/>JSON answers"]
+        TILES["Vector tiles<br/>ST_AsMVT"]
+        CLI["CLI portfolio"]
+    end
+    WEB["Next.js + MapLibre<br/>phone first"]
+    FIRMS --> J1
+    GOES --> J2 & J3
+    METEO --> J4 & J5
+    POWER --> J5
+    J1 & J2 & J3 & J4 & J5 --> DB
+    ATER -- "on demand,<br/>per map tile" --> API
+    DB --> API & TILES & CLI
+    API & TILES --> WEB
 ```
 
-- **One read per region, not per field.** FIRMS is queried once per sensor for the Entre Ríos and
-  Delta bounding box, and PostGIS matches detections to fields. The number of external calls does
-  not grow with the number of fields.
-- **Observation, fire event and field risk event are separate.** Three satellites seeing the same fire
-  are three observations and one fire event. One fire near fifteen fields is one fire event and
-  fifteen field risk events.
-- **Idempotent ingestion.** A deterministic key per detection makes reprocessing harmless. The raw
-  provider row is kept for traceability.
-- **Two timestamps.** `acquired_at` (satellite pass) and `ingested_at` (when we received it). FIRMS
-  data for Argentina arrives hours after the pass, and the UI says so.
-- **Data quality on every answer:** `GOOD`, `PARTIAL`, `STALE`, `CLOUD_OBSCURED`, `NO_DATA`. "No
-  detections" is only shown when the sources were read.
-- **Processing version on every derived row.** It combines the package version and a hash of
-  `config/thresholds.yaml`, so each historical alert can be traced to the rules that produced it.
-- **Thresholds in config.** Correlation radius, severity bands and spray rules live in
-  [`config/thresholds.yaml`](config/thresholds.yaml).
+- **One read per region, not per field.** Every source is queried once for the Entre Ríos and Delta
+  bounding box, and PostGIS matches the data to fields. Ten fields or ten thousand cost the same
+  number of external calls.
+- **Writes happen in the worker, the API only reads.** No model, download or heavy query sits in
+  the request path; the API answers from stored results.
+- **Thresholds in config.** Correlation radius, severity bands, spray rules, forecast bands and
+  cadastre fitting live in [`config/thresholds.yaml`](config/thresholds.yaml).
+- **Argentina only.** The map shows the whole world, but fires are kept and fields drawn only inside
+  Argentina's boundary.
 
-Full diagrams, the data model and the decision log are in [02-architecture](docs/02-architecture.md).
+### How a satellite detection becomes a field alert
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Sat as Satellite pass
+    participant W as Worker
+    participant DB as PostGIS
+    participant App as Map
+    Sat->>W: FIRMS CSV or GOES file (minutes to hours after the pass)
+    W->>DB: observation, idempotent (dedup key, native id)
+    W->>DB: flag it if it sits on a static heat source (steel plants, flares)
+    W->>DB: join to a fire event (FIRMS 1 km, GOES 3 km, 24 h)
+    W->>DB: field risk event per territory within 10 km
+    App->>DB: portfolio + tiles
+    DB-->>App: "Possible fire 3.9 km NE · acquired 2 h ago · received 5 min ago"
+```
+
+- **Observation, fire event and field risk event are separate.** Three satellites seeing the same
+  fire are three observations and one fire event. One fire near fifteen fields is one fire event and
+  fifteen field risk events.
+- **Severity by distance:** inside the field `CRITICAL`, under 2 km `VERY_HIGH`, under 5 km `HIGH`,
+  under 10 km `WATCH`.
+- **Two timestamps.** `acquired_at` (the pass) and `ingested_at` (when we received it). FIRMS data
+  for Argentina arrives hours after the pass, and the UI says so.
+- **Data quality on every answer:** `GOOD`, `PARTIAL`, `STALE`, `CLOUD_OBSCURED`, `NO_DATA`. "No
+  fires" is only said when the sources were read.
+
+### Data model
+
+```mermaid
+erDiagram
+    TERRITORY ||--o{ TERRITORY : "field has lots"
+    TERRITORY }o--o{ TAG : "tagged"
+    OBSERVATION }o--|| FIRE_EVENT : "linked, with the reason"
+    FIRE_EVENT ||--o{ FIELD_RISK_EVENT : "threatens"
+    TERRITORY ||--o{ FIELD_RISK_EVENT : "is threatened by"
+    TERRITORY ||--o{ SPRAY_ASSESSMENT : "per hour"
+    TERRITORY ||--o{ FIRE_FORECAST : "per horizon"
+    CELL_FORECAST }o--o{ FIRE_FORECAST : "cells within 10 km"
+    STATIC_SOURCE ||--o{ OBSERVATION : "flags"
+    CADASTRAL_PARCEL }o--o{ TERRITORY : "outline from"
+    TERRITORY {
+        multipolygon geom
+        float hectares
+        enum kind "FIELD or SECTION"
+        jsonb attributes "cadastre partida"
+    }
+    OBSERVATION {
+        string dedup_key
+        timestamp acquired_at
+        timestamp ingested_at
+        jsonb raw_payload
+    }
+    FIRE_EVENT {
+        geometry hull
+        enum status "ACTIVE STALE CLOSED"
+        string processing_version
+    }
+    FIELD_RISK_EVENT {
+        enum severity
+        float distance_m
+        enum status "NEW SEEN RESOLVED"
+    }
+```
+
+Every derived row stores a **processing version**: the package version plus a hash of
+`config/thresholds.yaml`, so each past alert can be traced to the rules that produced it.
+
+### Fire forecast
+
+The probability of a satellite fire detection within 10 km of each field in the next 1, 2 and 3
+days ([05-fire-forecast](docs/05-fire-forecast.md)).
+
+```mermaid
+flowchart TB
+    subgraph TRAIN["Training · make forecast-train"]
+        A1["FIRMS S-NPP archive<br/>2015–2024, labels"] --> G["0.1° grid in Argentina<br/>1,293 cells × 3,653 days"]
+        A2["NASA POWER<br/>daily weather"] --> F["Canadian Fire Weather Index<br/>FFMC DMC DC ISI BUI FWI"]
+        F --> G
+        G --> M["Gradient boosted trees<br/>one per horizon"]
+        M --> CAL["Isotonic calibration<br/>2022–2023"]
+        CAL --> EV["Test on 2024<br/>against 3 baselines"]
+    end
+    subgraph LIVE["Every hour"]
+        L1["POWER up to its last day"] --> SPL["Spliced weather<br/>Open-Meteo bias-corrected"]
+        L2["Open-Meteo up to today"] --> SPL
+        SPL --> FWI2["FWI, only days that changed"]
+        L3["Recent S-NPP fires"] --> CELLS
+        FWI2 --> CELLS["Probability per cell"]
+        CELLS --> TERR["Per field: 1 − Π(1 − p)<br/>band + plain factors"]
+    end
+    EV -- "ships only if it beats<br/>every baseline" --> CELLS
+```
+
+Test year 2024, next day. PR-AUC is the honest metric for rare events (the base rate is 0.9 %);
+higher is better.
+
+```mermaid
+xychart-beta
+    title "Next-day PR-AUC on 2024"
+    x-axis ["Model", "Persistence", "Climatology", "FWI alone"]
+    y-axis "PR-AUC" 0 --> 0.13
+    bar [0.118, 0.059, 0.056, 0.015]
+```
+
+| Horizon | Model PR-AUC | Best baseline | Fires caught in the riskiest 5 % of cell-days |
+|---|---|---|---|
+| 1 day | 0.118 | 0.059 | 53 % |
+| 2 days | 0.162 | 0.092 | 46 % |
+| 3 days | 0.193 | 0.121 | 43 % |
+
+The strongest signals are days since the last fire in the cell, fires around in the last week,
+humidity and the cell's usual fire months. The full report is in
+[docs/reports/fire-forecast.md](docs/reports/fire-forecast.md). In the app the forecast is a band
+(`LOW` to `VERY_HIGH`) with the reasons in words ("dry for 18 days", "fires around this week").
+
+### Drawing a field
+
+```mermaid
+stateDiagram-v2
+    [*] --> Tool
+    Tool --> Parcel: tap a parcel
+    Tool --> Hand: trace or tap corners
+    Parcel --> Closed: official outline, tax account kept
+    Hand --> Fitting: shape closes
+    Fitting --> Closed: whole parcels, nearby edges, or as drawn
+    Closed --> Closed: "Use my drawing" / "Fit to property lines"
+    Closed --> Closed: drag points
+    Closed --> Saved: name, lot of, tags
+    Saved --> Editing: Edit outline
+    Editing --> Saved: add or remove a piece
+    Saved --> [*]
+```
+
+- Property lines come from the Entre Ríos cadastre, fetched per 5 × 5 km tile the first time it is
+  viewed and then served from PostGIS ([08-cadastre](docs/08-cadastre.md)).
+- A rough outline around several parcels becomes their exact union; a lot inside a parcel has only
+  its nearby corners and edges moved onto the lines. The original drawing is one tap away.
+- The server checks every field: inside Argentina, a lot inside its field, a field around its lots.
+
+### Map loading by zoom
+
+```mermaid
+flowchart LR
+    Z0["Zoom 0–8<br/>country"] -->|zoom in| Z9["Zoom 9–11<br/>region"] -->|zoom in| Z12["Zoom 12<br/>a town"] -->|zoom in| Z13["Zoom 13+<br/>a few fields"]
+    Z0 --- A0["fires clustered:<br/>count + worst"]
+    Z9 --- A9["each fire event,<br/>simplified outlines"]
+    Z12 --- A12["each observation,<br/>exact outlines"]
+    Z13 --- A13["property lines"]
+```
+
+The map asks only for the vector tiles on screen, shows lower-zoom tiles while closer ones arrive,
+and caches them, like Google Maps. Colors are red when something is wrong and green when all is
+fine, everywhere. The decision log and the stack are in [02-architecture](docs/02-architecture.md).
 
 ## How it is built: spec first
 
@@ -103,21 +279,25 @@ Full diagrams, the data model and the decision log are in [02-architecture](docs
 | [05-fire-forecast](docs/05-fire-forecast.md) | Fire probability per field for 24–72 h: data, model, evaluation |
 | [06-goes](docs/06-goes.md) | GOES-19 fire every 10 minutes, lightning, colors |
 | [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
-| [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos), loaded on demand; draw a field from a parcel |
+| [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos), loaded on demand; drawings fitted to them |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
 the tests against a PostGIS service container, and a Docker image build.
 
 ## Data sources
 
-| Purpose | Source | Phase |
+| Purpose | Source | Status |
 |---|---|---|
-| Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | 0 |
-| Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | 0 |
-| Field imagery, 10 m | Sentinel-2 L2A from the Earth Search STAC catalog | 1 |
-| Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | 1 |
-| Radar through clouds, flooding | Sentinel-1 GRD | 3 |
-| Fire and smoke every 10 min | GOES-19 ABI | 2 |
+| Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | Live |
+| Fire every 10 minutes, lightning | GOES-19 ABI fire product and GLM, NOAA bucket on AWS | Live |
+| Ten years of fire per field, forecast labels | FIRMS yearly archive for Argentina | Live |
+| Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | Live |
+| Daily weather history for the forecast | [NASA POWER](https://power.larc.nasa.gov/) (MERRA-2) | Live |
+| Property lines | ATER Entre Ríos cadastre (WFS) | Live |
+| Argentina's boundary | Natural Earth | Live |
+| Field imagery, 10 m | Sentinel-2 L2A from the Earth Search STAC catalog | Next |
+| Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Planned |
+| Radar through clouds, flooding | Sentinel-1 GRD | Planned |
 
 ## Folders
 
@@ -127,11 +307,13 @@ the tests against a PostGIS service container, and a Docker image build.
 | `config/` | `thresholds.yaml`: every rule parameter |
 | `data/aoi/` | Sample fields, sections and tags near Larroque (GeoJSON) |
 | `data/boundaries/` | Argentina's boundary from Natural Earth (public domain); fields must lie inside |
-| `backend/app/providers/` | FIRMS and Open-Meteo clients that return normalized records |
-| `backend/app/services/` | Ingestion, correlation, field risk, spray conditions, data quality, portfolio |
+| `backend/app/providers/` | FIRMS, GOES, Open-Meteo and cadastre clients that return normalized records |
+| `backend/app/services/` | Ingestion, correlation, field risk, spray, GOES, lightning, history, cadastre, portfolio |
+| `backend/app/forecast/` | Fire Weather Index, training data, model training and live serving |
 | `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
-| `frontend/src/components/` | Map, bottom sheet, portfolio, field detail, drawing |
+| `frontend/src/components/` | Map, bottom sheet, portfolio, field detail, forecast, drawing |
+| `docs/reports/` | Forecast evaluation, regenerated with each retrain |
 | `frontend/src/api/` | API client, TanStack Query hooks, generated types |
 | `.github/workflows/` | CI |
