@@ -225,6 +225,8 @@ def main() -> None:
                 "calibration": r["calibration"],
                 "features": FEATURES,
                 "horizon_days": r["horizon"],
+                # Orders the plain-language factors shown with each forecast.
+                "importance": r["importance"],
                 "trained_at": datetime.now(UTC).isoformat(),
                 "config": config,
             },

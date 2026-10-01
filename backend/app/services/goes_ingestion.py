@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 
 import httpx
 from geoalchemy2 import WKTElement
+from shapely.prepared import PreparedGeometry
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app.boundaries import country_area, inside
 from app.models import IngestionRun, LightningFlash, RunStatus
 from app.providers import goes_s3
 from app.providers.goes_fire import parse_fire_file
@@ -72,19 +74,23 @@ def ingest_goes_fire(
 ) -> IngestionRun:
     goes, bbox = thresholds["goes"], thresholds["region"]["bbox"]
     decimals = thresholds["firms"]["dedup_coordinate_decimals"]
+    area = country_area(thresholds)
 
     def store(content: bytes) -> tuple[int, int]:
         observations = parse_fire_file(
             content, bbox, goes["fire_mask_confidence"], goes["min_confidence"]
         )
-        return len(observations), store_observations(session, observations, now, decimals)
+        return len(observations), store_observations(session, observations, now, decimals, area)
 
     return _ingest_files(
         session, client, goes["fire_product"], FIRST_RUN_FILES["fire"], store, goes["bucket"], now
     )
 
 
-def store_flashes(session: Session, flashes: list[FlashRecord], ingested_at: datetime) -> int:
+def store_flashes(
+    session: Session, flashes: list[FlashRecord], ingested_at: datetime, area: PreparedGeometry
+) -> int:
+    flashes = [f for f in flashes if inside(area, f.latitude, f.longitude)]
     if not flashes:
         return 0
     rows = [
@@ -108,10 +114,11 @@ def ingest_lightning(
     session: Session, client: httpx.Client, thresholds: dict, now: datetime
 ) -> IngestionRun:
     goes, bbox = thresholds["goes"], thresholds["region"]["bbox"]
+    area = country_area(thresholds)
 
     def store(content: bytes) -> tuple[int, int]:
         flashes = parse_lightning_file(content, bbox)
-        return len(flashes), store_flashes(session, flashes, now)
+        return len(flashes), store_flashes(session, flashes, now, area)
 
     run = _ingest_files(
         session,

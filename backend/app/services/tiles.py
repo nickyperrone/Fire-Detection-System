@@ -21,6 +21,7 @@ class Layer(StrEnum):
     FIRE_EVENTS = "fire_events"
     OBSERVATIONS = "observations"
     LIGHTNING = "lightning"
+    RISK = "risk"
 
 
 def tile_width_m(z: int) -> float:
@@ -120,6 +121,25 @@ LIGHTNING_SQL = text("""
 """)
 
 
+# Next-day probability per forecast cell, drawn as the cell's square.
+RISK_SQL = text("""
+    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
+    SELECT ST_AsMVT(mvt, 'risk', :extent, 'geom') FROM (
+        SELECT round(f.probability::numeric, 3)::float AS probability,
+               ST_AsMVTGeom(
+                   ST_Transform(ST_MakeEnvelope(
+                       :west + f.col * :cell, :south + f.row * :cell,
+                       :west + (f.col + 1) * :cell, :south + (f.row + 1) * :cell, 4326
+                   ), 3857),
+                   bounds.env, :extent, :buffer, true
+               ) AS geom
+        FROM cell_forecast f, bounds
+        WHERE f.horizon_days = 1
+    ) AS mvt
+    WHERE geom IS NOT NULL
+""")
+
+
 def build_tile(
     session: Session,
     layer: Layer,
@@ -129,6 +149,7 @@ def build_tile(
     owner: str,
     now: datetime,
     lightning_window_minutes: int = 60,
+    forecast_grid: tuple[float, float, float] | None = None,
 ) -> bytes:
     params = {"z": z, "x": x, "y": y, "extent": EXTENT, "buffer": BUFFER}
     if layer == Layer.TERRITORIES:
@@ -144,6 +165,9 @@ def build_tile(
         params["cell_m"] = tile_width_m(z) / CLUSTER_CELLS_PER_TILE
     elif layer == Layer.FIRE_EVENTS:
         statement = FIRE_EVENTS_SQL
+    elif layer == Layer.RISK and forecast_grid:
+        statement = RISK_SQL
+        params |= dict(zip(("west", "south", "cell"), forecast_grid, strict=True))
     elif layer == Layer.LIGHTNING:
         statement = LIGHTNING_SQL
         params |= {"now": now, "since": now - timedelta(minutes=lightning_window_minutes)}

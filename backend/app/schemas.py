@@ -96,6 +96,25 @@ class LightningAnswerOut(BaseModel):
     last_at: datetime | None
 
 
+class ForecastFactorOut(BaseModel):
+    code: str
+    value: float
+
+
+class ForecastDayOut(BaseModel):
+    horizon_days: int
+    valid_from: date
+    probability: float
+    band: str
+    factors: list[ForecastFactorOut]
+
+
+class ForecastAnswerOut(BaseModel):
+    data_quality: DataQuality
+    issued_at: datetime | None
+    days: list[ForecastDayOut]
+
+
 class AnomalyAnswerOut(BaseModel):
     data_quality: DataQuality
 
@@ -110,6 +129,7 @@ class PortfolioEntryOut(BaseModel):
     fire: FireAnswerOut
     spray: SprayAnswerOut
     lightning: LightningAnswerOut
+    forecast: ForecastAnswerOut
     anomaly: AnomalyAnswerOut
 
 

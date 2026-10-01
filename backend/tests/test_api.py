@@ -1,19 +1,8 @@
 import pytest
-from fastapi.testclient import TestClient
-
-from app.db import get_session
-from app.main import app
 
 
 def rect(w, s, e, n):
     return {"type": "Polygon", "coordinates": [[[w, s], [e, s], [e, n], [w, n], [w, s]]]}
-
-
-@pytest.fixture
-def client(session):
-    app.dependency_overrides[get_session] = lambda: session
-    yield TestClient(app)
-    app.dependency_overrides.clear()
 
 
 def test_create_field_and_section_then_filter_by_tag(client):

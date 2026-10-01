@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 from sqlalchemy import text
 
+from app.boundaries import boundary_geojson
 from app.config import get_thresholds
 from app.routers.dependencies import SessionDep
 from app.schemas import HealthOut
@@ -11,6 +12,12 @@ from app.services.data_quality import fire_quality, latest_pass, source_statuses
 from app.versioning import processing_version
 
 router = APIRouter(tags=["health"])
+
+
+@router.get("/boundary")
+def boundary() -> dict:
+    """Argentina, simplified to about 1 km: the map grays out everything else while drawing."""
+    return boundary_geojson(get_thresholds()["territories"]["allowed_area"], 1000)
 
 
 @router.get("/health", response_model=HealthOut)

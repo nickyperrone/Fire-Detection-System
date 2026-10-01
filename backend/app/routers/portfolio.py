@@ -32,6 +32,7 @@ def portfolio(
             fire=asdict(e.fire),
             spray=asdict(e.spray),
             lightning=asdict(e.lightning),
+            forecast=asdict(e.forecast),
             anomaly=asdict(e.anomaly),
         )
         for e in entries

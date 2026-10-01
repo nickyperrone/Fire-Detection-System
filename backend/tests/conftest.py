@@ -4,12 +4,15 @@ from pathlib import Path
 import pytest
 import yaml
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from alembic import command
 from app.boundaries import allowed_area
+from app.db import get_session
+from app.main import app
 from app.models import Base
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -50,6 +53,14 @@ def session(engine):
         connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     with Session(engine, expire_on_commit=False) as session:
         yield session
+
+
+@pytest.fixture
+def client(session):
+    """The API with its database session swapped for the test one."""
+    app.dependency_overrides[get_session] = lambda: session
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 def pytest_collection_modifyitems(items):

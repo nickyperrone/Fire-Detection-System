@@ -14,6 +14,7 @@ from app.models import DataQuality
 from app.services.fire_history import load_history
 from app.services.pipeline import (
     run_fire_pipeline,
+    run_forecast_pipeline,
     run_goes_fire_pipeline,
     run_lightning_pipeline,
     run_spray_pipeline,
@@ -103,6 +104,7 @@ def main() -> None:
     commands.add_parser("ingest-goes", help="read new GOES-19 fire scans and lightning files")
     commands.add_parser("update-spray", help="read the forecast and assess spraying conditions")
     commands.add_parser("load-history", help="download and load the FIRMS fire archive")
+    commands.add_parser("forecast", help="refresh live weather and issue the fire forecast")
     commands.add_parser("run-once", help="ingest-fires, ingest-goes and update-spray")
     portfolio = commands.add_parser("portfolio", help="every field and section with its answers")
     portfolio.add_argument("--tag", action="append", default=[], help="key:value, repeatable")
@@ -141,6 +143,9 @@ def main() -> None:
             )
             for run in runs:
                 print(run.product, run.status.value, run.fetched, run.inserted, run.error or "")
+        if args.command == "forecast":
+            result = run_forecast_pipeline(session, client, settings, thresholds)
+            print(json.dumps(result, indent=2, default=str))
         if args.command == "portfolio":
             now = datetime.now(UTC)
             entries = build_portfolio(session, settings.owner, thresholds, now, args.tag)

@@ -11,6 +11,7 @@ from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.services.pipeline import (
     run_fire_pipeline,
+    run_forecast_pipeline,
     run_goes_fire_pipeline,
     run_lightning_pipeline,
     run_spray_pipeline,
@@ -46,6 +47,10 @@ def main() -> None:
         (job("goes fire", run_goes_fire_pipeline), intervals["goes_fire_interval_minutes"]),
         (job("lightning", run_lightning_pipeline), intervals["lightning_interval_minutes"]),
         (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"]),
+        (
+            job("forecast", run_forecast_pipeline, with_settings=True),
+            intervals["forecast_interval_minutes"],
+        ),
     ]
     for run, minutes in jobs:
         # next_run_time=now runs each job once at startup instead of waiting a full interval.

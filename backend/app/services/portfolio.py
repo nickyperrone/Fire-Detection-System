@@ -3,7 +3,7 @@
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from app.models import (
     FieldRiskEvent,
     FireEvent,
     FireEventStatus,
+    FireForecast,
     Observation,
     ObservationEventLink,
     RiskStatus,
@@ -65,6 +66,22 @@ class LightningAnswer:
 
 
 @dataclass
+class ForecastDay:
+    horizon_days: int
+    valid_from: date
+    probability: float
+    band: str
+    factors: list[dict]
+
+
+@dataclass
+class ForecastAnswer:
+    data_quality: DataQuality
+    issued_at: datetime | None = None
+    days: list[ForecastDay] = field(default_factory=list)
+
+
+@dataclass
 class AnomalyAnswer:
     data_quality: DataQuality = DataQuality.NO_DATA
     message: str = "vegetation and water change detection is not available yet"
@@ -76,6 +93,7 @@ class PortfolioEntry:
     fire: FireAnswer
     spray: SprayAnswer
     lightning: LightningAnswer
+    forecast: ForecastAnswer
     anomaly: AnomalyAnswer
 
 
@@ -100,6 +118,7 @@ def build_portfolio(
         now,
     )
     lightning = nearby_lightning(session, ids, thresholds["lightning"], now)
+    forecasts = _forecasts(session, ids)
     reads = [s.last_success_at for s in statuses if s.last_success_at is not None]
     last_read_at = max(reads) if reads else None
     risks = _open_risks(session, ids)
@@ -113,11 +132,29 @@ def build_portfolio(
             lightning=_lightning_answer(
                 lightning.get(t.id), lightning_dq, thresholds["lightning"]["window_minutes"]
             ),
+            forecast=forecasts.get(t.id, ForecastAnswer(data_quality=DataQuality.NO_DATA)),
             anomaly=AnomalyAnswer(),
         )
         for t in territories
     ]
     return _worst_first(entries)
+
+
+def _forecasts(session: Session, ids: list[int]) -> dict[int, ForecastAnswer]:
+    rows = session.scalars(
+        select(FireForecast)
+        .where(FireForecast.territory_id.in_(ids))
+        .order_by(FireForecast.horizon_days)
+    ).all()
+    answers: dict[int, ForecastAnswer] = {}
+    for r in rows:
+        answer = answers.setdefault(
+            r.territory_id, ForecastAnswer(data_quality=r.data_quality, issued_at=r.issued_at)
+        )
+        answer.days.append(
+            ForecastDay(r.horizon_days, r.valid_from, r.probability, r.band, r.factors)
+        )
+    return answers
 
 
 def _lightning_answer(

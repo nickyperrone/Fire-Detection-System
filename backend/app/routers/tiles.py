@@ -18,6 +18,8 @@ CACHE_CONTROL = {
     Layer.OBSERVATIONS: "public, max-age=300",
     # New flashes arrive every 20 seconds.
     Layer.LIGHTNING: "public, max-age=30",
+    # The forecast is reissued every hour.
+    Layer.RISK: "public, max-age=600",
 }
 
 
@@ -32,8 +34,19 @@ def tile(
 ):
     if x >= 2**z or y >= 2**z:
         raise HTTPException(404, "tile outside the zoom level")
-    window = get_thresholds()["lightning"]["window_minutes"]
-    content = build_tile(session, layer, z, x, y, settings.owner, datetime.now(UTC), window)
+    thresholds = get_thresholds()
+    west, south = thresholds["region"]["bbox"][:2]
+    content = build_tile(
+        session,
+        layer,
+        z,
+        x,
+        y,
+        settings.owner,
+        datetime.now(UTC),
+        thresholds["lightning"]["window_minutes"],
+        (west, south, thresholds["forecast"]["cell_degrees"]),
+    )
     headers = {"Cache-Control": CACHE_CONTROL[layer]}
     if not content:
         return Response(status_code=204, headers=headers)

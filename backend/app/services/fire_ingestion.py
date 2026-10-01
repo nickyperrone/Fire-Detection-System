@@ -3,9 +3,11 @@ from datetime import datetime
 
 import httpx
 from geoalchemy2 import WKTElement
+from shapely.prepared import PreparedGeometry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app.boundaries import country_area, inside
 from app.models import IngestionRun, Observation, RunStatus
 from app.providers import firms
 from app.providers.records import FireObservation
@@ -23,9 +25,15 @@ def dedup_key(observation: FireObservation, decimals: int) -> str:
 
 
 def store_observations(
-    session: Session, observations: list[FireObservation], ingested_at: datetime, decimals: int
+    session: Session,
+    observations: list[FireObservation],
+    ingested_at: datetime,
+    decimals: int,
+    area: PreparedGeometry,
 ) -> int:
-    """Insert new observations and return how many were new. Duplicates are ignored."""
+    """Insert new observations inside `area` (Argentina) and return how many were new.
+    Duplicates are ignored."""
+    observations = [o for o in observations if inside(area, o.latitude, o.longitude)]
     if not observations:
         return 0
     rows = [
@@ -58,6 +66,7 @@ def ingest_firms(
 ) -> list[IngestionRun]:
     """Read every FIRMS product for the region. A failed product does not stop the rest."""
     config = thresholds["firms"]
+    area = country_area(thresholds)
     runs = []
     for product in config["products"]:
         run = IngestionRun(provider="firms", product=product, started_at=now)
@@ -79,7 +88,7 @@ def ingest_firms(
             run.status = RunStatus.SUCCESS
             run.fetched = len(observations)
             run.inserted = store_observations(
-                session, observations, now, config["dedup_coordinate_decimals"]
+                session, observations, now, config["dedup_coordinate_decimals"], area
             )
         run.finished_at = datetime.now(now.tzinfo)
         session.add(run)

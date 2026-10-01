@@ -1,12 +1,19 @@
 """The scheduled jobs. The worker and the CLI both call these."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import Settings
-from app.models import IngestionRun
+from app.config import REPO_ROOT, Settings
+from app.forecast.dataset import weather_point
+from app.forecast.live_weather import LOCAL_TZ, refresh_weather
+from app.forecast.recent_fires import PROVIDER as RECENT_PROVIDER
+from app.forecast.recent_fires import top_up
+from app.forecast.serve import cells_of, forecast_grid, issue_forecast
+from app.models import IngestionRun, RunStatus
 from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
@@ -49,6 +56,50 @@ def run_goes_fire_pipeline(session: Session, client: httpx.Client, thresholds: d
 
 def run_lightning_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
     return {"runs": [_summary(ingest_lightning(session, client, thresholds, datetime.now(UTC)))]}
+
+
+# The FIRMS archive top-up only changes once a day.
+RECENT_FIRES_EVERY = timedelta(hours=20)
+
+
+def run_forecast_pipeline(
+    session: Session, client: httpx.Client, settings: Settings, thresholds: dict
+) -> dict:
+    """Weather up to today, recent fires topped up (daily), then the forecast for every cell and
+    field (docs/05-fire-forecast.md#live-data)."""
+    config = thresholds["forecast"]
+    today = datetime.now(ZoneInfo(LOCAL_TZ)).date()
+    grid = forecast_grid(
+        tuple(thresholds["region"]["bbox"]),
+        config["cell_degrees"],
+        thresholds["territories"]["allowed_area"],
+    )
+    points = sorted(
+        {weather_point(*grid.center(r, c), config["weather_degrees"]) for r, c in cells_of(grid)}
+    )
+    runs = refresh_weather(session, client, points, config, REPO_ROOT, today)
+    last_top_up = session.scalar(
+        select(IngestionRun.finished_at)
+        .where(IngestionRun.provider == RECENT_PROVIDER, IngestionRun.status == RunStatus.SUCCESS)
+        .order_by(IngestionRun.finished_at.desc())
+        .limit(1)
+    )
+    if last_top_up is None or datetime.now(UTC) - last_top_up > RECENT_FIRES_EVERY:
+        runs.append(
+            top_up(
+                session,
+                client,
+                settings.firms_map_key,
+                config,
+                thresholds["region"]["bbox"],
+                thresholds["firms"]["dedup_coordinate_decimals"],
+                today,
+                thresholds["history"]["keep_types"],
+                thresholds["static_sources"]["radius_m"],
+            )
+        )
+    issued = issue_forecast(session, thresholds, REPO_ROOT, today, processing_version(thresholds))
+    return {"runs": [_summary(r) for r in runs], **issued}
 
 
 def run_spray_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
