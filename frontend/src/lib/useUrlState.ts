@@ -17,11 +17,14 @@ type Changes = Partial<{
   s: string[];
   only: string | null;
   r: string | null;
+  p: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
   const [lat, lon, zoom] = (value ?? "").split(",").map(Number);
-  return [lat, lon, zoom].every(Number.isFinite) && value ? { lat, lon, zoom } : DEFAULT_CAMERA;
+  return [lat, lon, zoom].every(Number.isFinite) && value
+    ? { lat, lon, zoom }
+    : DEFAULT_CAMERA;
 }
 
 export function formatCamera({ lat, lon, zoom }: MapCamera): string {
@@ -40,13 +43,19 @@ export function useUrlState() {
   const tags = useMemo(() => (tagsKey ? tagsKey.split("\n") : []), [tagsKey]);
   const pickedKey = params.getAll("s").join(",");
   const picked = useMemo(
-    () => (pickedKey ? pickedKey.split(",").map(Number).filter(Number.isInteger) : []),
+    () =>
+      pickedKey
+        ? pickedKey.split(",").map(Number).filter(Number.isInteger)
+        : [],
     [pickedKey],
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
   const showRisk = params.get("r") === "1";
+  // Property lines are on unless the link turns them off.
+  const showParcels = params.get("p") !== "0";
   const basemapParam = params.get("b") as Basemap | null;
-  const basemap = basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
+  const basemap =
+    basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
   // Read once: afterwards the map owns the camera and only writes it back.
   const initialCamera = useMemo(() => parseCamera(params.get("v")), []); // eslint-disable-line react-hooks/exhaustive-deps
   const linkHasCamera = useMemo(() => params.has("v"), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,6 +77,7 @@ export function useUrlState() {
     picked,
     onlyPicked,
     showRisk,
+    showParcels,
     basemap,
     initialCamera,
     linkHasCamera,

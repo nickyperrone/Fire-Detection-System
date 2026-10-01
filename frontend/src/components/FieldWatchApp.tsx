@@ -24,9 +24,12 @@ type Bounds = [[number, number], [number, number]];
 
 const LARROQUE: [number, number] = [-59.01, -33.04];
 const OPENING_FLIGHT_MS = 3000;
+const OPENING_PAUSE_MS = 700;
 
 function boundsOf(territories: Territory[]): Bounds | null {
-  const points = territories.flatMap((t) => (t.geometry.coordinates as number[][][][]).flat(2));
+  const points = territories.flatMap((t) =>
+    (t.geometry.coordinates as number[][][][]).flat(2),
+  );
   if (points.length === 0) return null;
   const lons = points.map((p) => p[0]);
   const lats = points.map((p) => p[1]);
@@ -40,7 +43,8 @@ function boundsOf(territories: Territory[]): Bounds | null {
 function withLots(ids: number[], entries: PortfolioEntry[]): Set<number> {
   const picked = new Set(ids);
   for (const e of entries) {
-    if (e.parent_id !== null && picked.has(e.parent_id)) picked.add(e.territory_id);
+    if (e.parent_id !== null && picked.has(e.parent_id))
+      picked.add(e.territory_id);
   }
   return picked;
 }
@@ -73,7 +77,9 @@ export function FieldWatchApp() {
   );
   const listed = useMemo(() => {
     const entries = filtered.data ?? [];
-    return url.onlyPicked ? entries.filter((e) => pickedWithLots.has(e.territory_id)) : entries;
+    return url.onlyPicked
+      ? entries.filter((e) => pickedWithLots.has(e.territory_id))
+      : entries;
   }, [filtered.data, url.onlyPicked, pickedWithLots]);
   const territoryStates = useMemo(() => {
     const shown = new Set(listed.map((e) => e.territory_id));
@@ -89,7 +95,8 @@ export function FieldWatchApp() {
       ]),
     );
   }, [everything.data, listed, url.tags, url.onlyPicked, url.picked]);
-  const selected = everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
+  const selected =
+    everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
 
   const frame = useCallback(
     (targets: Territory[], duration = 900) => {
@@ -112,13 +119,19 @@ export function FieldWatchApp() {
   // for people who ask their system for reduced motion.
   const flewIn = useRef(false);
   useEffect(() => {
-    if (flewIn.current || url.linkHasCamera || !map || !territories.data) return;
+    if (flewIn.current || url.linkHasCamera || !map || !territories.data)
+      return;
     flewIn.current = true;
     const fields = territories.data.filter((t) => t.kind === "FIELD");
-    map.once("idle", () => {
+    const flyIn = () => {
       if (fields.length) frame(fields, OPENING_FLIGHT_MS);
-      else map.flyTo({ center: LARROQUE, zoom: 11, duration: OPENING_FLIGHT_MS });
-    });
+      else
+        map.flyTo({ center: LARROQUE, zoom: 11, duration: OPENING_FLIGHT_MS });
+    };
+    // A short look at the whole country first. "load" has usually fired by the time the fields
+    // arrive, and a missed event would leave the map over Argentina.
+    if (map.loaded()) window.setTimeout(flyIn, OPENING_PAUSE_MS);
+    else map.once("load", () => window.setTimeout(flyIn, OPENING_PAUSE_MS));
   }, [map, territories.data, url.linkHasCamera, frame]);
 
   const open = useCallback(
@@ -136,14 +149,21 @@ export function FieldWatchApp() {
       const next = url.picked.includes(id)
         ? url.picked.filter((p) => p !== id)
         : [...url.picked, id];
-      url.update({ s: next.map(String), only: next.length && url.onlyPicked ? "1" : null });
+      url.update({
+        s: next.map(String),
+        only: next.length && url.onlyPicked ? "1" : null,
+      });
     },
     [url],
   );
 
   const showOnlyPicked = () => {
     url.update({ only: "1", f: null });
-    frame(url.picked.map((id) => territoryById.get(id)).filter((t): t is Territory => !!t));
+    frame(
+      url.picked
+        .map((id) => territoryById.get(id))
+        .filter((t): t is Territory => !!t),
+    );
     setSnap("half");
   };
 
@@ -163,12 +183,17 @@ export function FieldWatchApp() {
 
   const toggleTag = (tag: string) =>
     url.update({
-      tag: url.tags.includes(tag) ? url.tags.filter((t) => t !== tag) : [...url.tags, tag],
+      tag: url.tags.includes(tag)
+        ? url.tags.filter((t) => t !== tag)
+        : [...url.tags, tag],
     });
 
   const locate = () =>
     navigator.geolocation?.getCurrentPosition((position) =>
-      map?.flyTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 13 }),
+      map?.flyTo({
+        center: [position.coords.longitude, position.coords.latitude],
+        zoom: 13,
+      }),
     );
 
   const finishDrawing = (created: Territory | null) => {
@@ -196,6 +221,7 @@ export function FieldWatchApp() {
         onReady={setMap}
         messages={t}
         showRisk={url.showRisk}
+        showParcels={url.showParcels || drawingActive}
         boundary={boundary.data ?? null}
         grayOutside={drawingActive}
       />
@@ -204,14 +230,19 @@ export function FieldWatchApp() {
         <DrawFieldOverlay
           drawing={drawing}
           fields={fields}
-          defaultParentId={selected?.kind === "FIELD" ? selected.territory_id : null}
+          defaultParentId={
+            selected?.kind === "FIELD" ? selected.territory_id : null
+          }
           onDone={finishDrawing}
         />
       ) : (
         <>
           <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-col gap-2 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
             <div className="pointer-events-auto">
-              <SearchBar territories={territories.data ?? []} onPick={(t) => open(t.id)} />
+              <SearchBar
+                territories={territories.data ?? []}
+                onPick={(t) => open(t.id)}
+              />
             </div>
             <div className="pointer-events-auto flex items-center justify-between gap-2">
               <FreshnessPill />
@@ -225,6 +256,10 @@ export function FieldWatchApp() {
               onBasemap={(b) => url.update({ b })}
               showRisk={url.showRisk}
               onToggleRisk={() => url.update({ r: url.showRisk ? null : "1" })}
+              showParcels={url.showParcels}
+              onToggleParcels={() =>
+                url.update({ p: url.showParcels ? "0" : null })
+              }
               onLocate={locate}
               onAddField={() => setDrawingActive(true)}
             />
@@ -241,7 +276,9 @@ export function FieldWatchApp() {
               <FieldDetail
                 entry={selected}
                 parentName={
-                  selected.parent_id ? (territoryById.get(selected.parent_id)?.name ?? null) : null
+                  selected.parent_id
+                    ? (territoryById.get(selected.parent_id)?.name ?? null)
+                    : null
                 }
                 onClose={() => open(null)}
               />
@@ -262,7 +299,9 @@ export function FieldWatchApp() {
             ) : (
               everything.data && (
                 <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">{t.app.exploreTitle}</h2>
+                  <h2 className="text-lg font-semibold">
+                    {t.app.exploreTitle}
+                  </h2>
                   <p className="text-sm text-slate-300">{t.app.exploreBody}</p>
                 </div>
               )

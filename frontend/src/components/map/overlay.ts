@@ -44,6 +44,7 @@ export const FIRE_LAYER = "fire-core";
 export const FIRE_HALO_LAYER = "fire-halo";
 export const LIGHTNING_LAYER = "lightning-ring";
 export const RISK_LAYER = "risk-fill";
+export const PARCELS_LAYER = "parcel-line";
 
 const toneColor: ExpressionSpecification = [
   "match",
@@ -81,14 +82,20 @@ const lineOpacity: ExpressionSpecification = [
 
 const isCluster: ExpressionSpecification = ["has", "event_count"];
 
+export type OverlayOptions = {
+  basemap: Basemap;
+  /** Bumped after a field changes, so its tiles are fetched again. */
+  territoriesVersion: number;
+  lightningVersion: number;
+  riskVersion: number;
+  showRisk: boolean;
+  showParcels: boolean;
+};
+
 /** Adds our sources and layers on top of the current basemap. Called again after every style change. */
-export function addOverlay(
-  map: MapLibreMap,
-  territoriesVersion: number,
-  lightningVersion: number,
-  riskVersion: number,
-  showRisk: boolean,
-): void {
+export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
+  const { territoriesVersion, lightningVersion, riskVersion, showRisk } =
+    options;
   // Below everything else: the risk shading is background, fields and fires sit on top.
   map.addSource("risk", {
     type: "vector",
@@ -116,6 +123,25 @@ export function addOverlay(
         0.5,
       ],
       "fill-antialias": false,
+    },
+  });
+  // Property lines (docs/08-cadastre.md): thin, light on dark and satellite, dark on light.
+  map.addSource("parcels", {
+    type: "vector",
+    tiles: [tileUrl("parcels")],
+    minzoom: 13,
+    maxzoom: 16,
+  });
+  map.addLayer({
+    id: PARCELS_LAYER,
+    type: "line",
+    source: "parcels",
+    "source-layer": "parcels",
+    layout: { visibility: options.showParcels ? "visible" : "none" },
+    paint: {
+      "line-color": options.basemap === "light" ? "#475569" : "#e5e7eb",
+      "line-opacity": 0.6,
+      "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.5, 17, 1.4],
     },
   });
   map.addSource("territories", {

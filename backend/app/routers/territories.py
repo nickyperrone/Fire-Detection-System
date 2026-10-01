@@ -68,6 +68,7 @@ def create(
         geometry=body.geometry,
         parent_id=body.parent_id,
         tags=body.tags,
+        attributes={"cadastre": body.cadastre} if body.cadastre else None,
         section_tolerance_m=config["section_tolerance_m"],
         allowed_area=allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
     )

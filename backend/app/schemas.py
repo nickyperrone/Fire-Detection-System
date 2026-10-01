@@ -18,6 +18,9 @@ class TerritoryIn(BaseModel):
     geometry: dict = Field(description="GeoJSON Polygon or MultiPolygon, EPSG:4326")
     parent_id: int | None = Field(None, description="Field id, to create a section")
     tags: list[str] = Field(default_factory=list, description="key:value or plain labels")
+    cadastre: dict | None = Field(
+        None, description="The parcel the outline came from (province, department, partida, plano)"
+    )
 
 
 class TagsIn(BaseModel):

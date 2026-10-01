@@ -1,7 +1,11 @@
 "use client";
 
 import type { PortfolioEntry } from "@/api/client";
-import { useDeleteTerritory, useRiskEvents, useSprayConditions } from "@/api/queries";
+import {
+  useDeleteTerritory,
+  useRiskEvents,
+  useSprayConditions,
+} from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import {
   direction,
@@ -17,7 +21,14 @@ import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 import { FieldChips, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
 import { ForecastSection } from "./ForecastSection";
-import { BoltIcon, CloseIcon, FlameIcon, ForecastIcon, HistoryIcon, SprayIcon } from "./Icons";
+import {
+  BoltIcon,
+  CloseIcon,
+  FlameIcon,
+  ForecastIcon,
+  HistoryIcon,
+  SprayIcon,
+} from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
 
 const TONE_TEXT: Record<Tone, string> = {
@@ -26,7 +37,11 @@ const TONE_TEXT: Record<Tone, string> = {
   unknown: "text-slate-300",
 };
 
-type Props = { entry: PortfolioEntry; parentName: string | null; onClose: () => void };
+type Props = {
+  entry: PortfolioEntry;
+  parentName: string | null;
+  onClose: () => void;
+};
 
 export function FieldDetail({ entry, parentName, onClose }: Props) {
   const { t } = useLocale();
@@ -40,7 +55,9 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-muted">{parentName ? t.detail.lotOf(parentName) : t.detail.field}</p>
+          <p className="text-xs text-muted">
+            {parentName ? t.detail.lotOf(parentName) : t.detail.field}
+          </p>
           <h2 className="truncate text-xl font-semibold">{entry.name}</h2>
           <p className="text-sm text-muted">
             {formatHectares(t, entry.hectares)}
@@ -50,25 +67,41 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
             <FieldChips entry={entry} />
           </div>
         </div>
-        <button onClick={onClose} aria-label={t.detail.close} className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10">
+        <button
+          onClick={onClose}
+          aria-label={t.detail.close}
+          className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10"
+        >
           <CloseIcon className="size-4" />
         </button>
       </header>
 
       <section>
-        <SectionTitle icon={<FlameIcon className="size-4" />}>{t.sections.fire}</SectionTitle>
-        <p className={`font-medium ${TONE_TEXT[fireTone(fire)]}`}>{fireSentence(t, fire)}</p>
+        <SectionTitle icon={<FlameIcon className="size-4" />}>
+          {t.sections.fire}
+        </SectionTitle>
+        <p className={`font-medium ${TONE_TEXT[fireTone(fire)]}`}>
+          {fireSentence(t, fire)}
+        </p>
         {fire.severity ? (
           <div className="mt-2 space-y-0.5 text-sm text-slate-300">
             <p>
-              {t.fire.seenBy(fire.sensors.join(", "))} · {t.fire.confidence(t.confidence[fire.confidence ?? ""] ?? "")}
+              {t.fire.seenBy(fire.sensors.join(", "))} ·{" "}
+              {t.fire.confidence(t.confidence[fire.confidence ?? ""] ?? "")}
             </p>
-            <p>{t.fire.times(formatAge(t, fire.acquired_at), formatAge(t, fire.received_at))}</p>
+            <p>
+              {t.fire.times(
+                formatAge(t, fire.acquired_at),
+                formatAge(t, fire.received_at),
+              )}
+            </p>
           </div>
         ) : (
           // With NO_DATA or STALE the sentence above already says when satellites were read.
           !["NO_DATA", "STALE"].includes(fire.data_quality) && (
-            <p className="mt-1 text-sm text-slate-400">{t.fire.lastRead(formatAge(t, fire.last_read_at))}</p>
+            <p className="mt-1 text-sm text-slate-400">
+              {t.fire.lastRead(formatAge(t, fire.last_read_at))}
+            </p>
           )
         )}
         {(risks.data?.length ?? 0) > 1 && (
@@ -76,30 +109,41 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
             {risks.data!.map((r) => (
               <li key={r.id} className="flex justify-between">
                 <span>
-                  {t.severity[r.severity]} · {formatDistance(t, r.distance_m)} {direction(t, r.direction)}
+                  {t.severity[r.severity]} · {formatDistance(t, r.distance_m)}{" "}
+                  {direction(t, r.direction)}
                 </span>
               </li>
             ))}
           </ul>
         )}
         {risks.data?.[0] && (
-          <p className="mt-2 text-[11px] text-muted">{t.fire.rulesVersion(risks.data[0].processing_version)}</p>
+          <p className="mt-2 text-[11px] text-muted">
+            {t.fire.rulesVersion(risks.data[0].processing_version)}
+          </p>
         )}
       </section>
 
       <section>
-        <SectionTitle icon={<ForecastIcon className="size-4" />}>{t.forecast.title}</SectionTitle>
+        <SectionTitle icon={<ForecastIcon className="size-4" />}>
+          {t.forecast.title}
+        </SectionTitle>
         <ForecastSection forecast={entry.forecast} />
       </section>
 
       <section>
-        <SectionTitle icon={<HistoryIcon className="size-4" />}>{t.sections.history}</SectionTitle>
+        <SectionTitle icon={<HistoryIcon className="size-4" />}>
+          {t.sections.history}
+        </SectionTitle>
         <FireHistory territoryId={entry.territory_id} />
       </section>
 
       <section>
-        <SectionTitle icon={<BoltIcon className="size-4" />}>{t.sections.lightning}</SectionTitle>
-        <p className={`font-medium ${TONE_TEXT[lightningTone(entry.lightning)]}`}>
+        <SectionTitle icon={<BoltIcon className="size-4" />}>
+          {t.sections.lightning}
+        </SectionTitle>
+        <p
+          className={`font-medium ${TONE_TEXT[lightningTone(entry.lightning)]}`}
+        >
           {lightningTone(entry.lightning) === "unknown"
             ? t.lightning.noData
             : lightningSentence(t, entry)}
@@ -113,7 +157,9 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
       </section>
 
       <section>
-        <SectionTitle icon={<SprayIcon className="size-4" />}>{t.sections.spray}</SectionTitle>
+        <SectionTitle icon={<SprayIcon className="size-4" />}>
+          {t.sections.spray}
+        </SectionTitle>
         {spray.status ? (
           <div className="mb-3 space-y-0.5">
             <p className={`font-medium ${TONE_TEXT[sprayTone(spray)]}`}>
@@ -134,12 +180,16 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
               </p>
             )}
             {spray.drift_toward && (
-              <p className="text-sm text-slate-400">{t.sprayText.driftToward(direction(t, spray.drift_toward))}</p>
+              <p className="text-sm text-slate-400">
+                {t.sprayText.driftToward(direction(t, spray.drift_toward))}
+              </p>
             )}
           </div>
         ) : null}
         <SprayTimeline hours={hours.data ?? []} />
-        <p className="mt-2 text-[11px] leading-4 text-muted">{t.sprayText.disclaimer}</p>
+        <p className="mt-2 text-[11px] leading-4 text-muted">
+          {t.sprayText.disclaimer}
+        </p>
       </section>
 
       <section>
@@ -161,7 +211,13 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
   );
 }
 
-function SectionTitle({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+function SectionTitle({
+  icon,
+  children,
+}: {
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
       {icon}

@@ -15,7 +15,11 @@ function tracedSquare(): number[][] {
   const ring: number[][] = [];
   for (let c = 0; c < 4; c++) {
     const [a, b] = [corners[c], corners[(c + 1) % 4]];
-    for (let i = 0; i < 100; i++) ring.push([a[0] + ((b[0] - a[0]) * i) / 100, a[1] + ((b[1] - a[1]) * i) / 100]);
+    for (let i = 0; i < 100; i++)
+      ring.push([
+        a[0] + ((b[0] - a[0]) * i) / 100,
+        a[1] + ((b[1] - a[1]) * i) / 100,
+      ]);
   }
   ring.push(ring[0]);
   return ring;

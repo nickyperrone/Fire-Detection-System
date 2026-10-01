@@ -1,4 +1,10 @@
-import type { DataQuality, FireAnswer, LightningAnswer, SprayAnswer, SprayStatus } from "../api/client";
+import type {
+  DataQuality,
+  FireAnswer,
+  LightningAnswer,
+  SprayAnswer,
+  SprayStatus,
+} from "../api/client";
 
 /**
  * Two colors for every status (docs/06-goes.md#colors): red when something is wrong, green when
@@ -36,7 +42,10 @@ export function lightningTone(lightning: LightningAnswer): Tone {
 }
 
 /** Low risk is green; from moderate up it is red, and the band name says how high. */
-export function forecastTone(band: string | undefined, dataQuality: DataQuality): Tone {
+export function forecastTone(
+  band: string | undefined,
+  dataQuality: DataQuality,
+): Tone {
   if (!band || dataQuality === "NO_DATA") return "unknown";
   return band === "LOW" ? "good" : "bad";
 }

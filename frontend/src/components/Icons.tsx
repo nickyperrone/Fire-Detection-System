@@ -1,7 +1,10 @@
 /** Line icons drawn at 24 px on a 24 unit grid; they take the text color. */
 type IconProps = { className?: string };
 
-function Icon({ className = "size-5", children }: IconProps & { children: React.ReactNode }) {
+function Icon({
+  className = "size-5",
+  children,
+}: IconProps & { children: React.ReactNode }) {
   return (
     <svg
       viewBox="0 0 24 24"

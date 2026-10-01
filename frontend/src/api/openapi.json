@@ -7,20 +7,12 @@
             "$ref": "#/components/schemas/DataQuality"
           }
         },
-        "required": [
-          "data_quality"
-        ],
+        "required": ["data_quality"],
         "title": "AnomalyAnswerOut",
         "type": "object"
       },
       "DataQuality": {
-        "enum": [
-          "GOOD",
-          "PARTIAL",
-          "STALE",
-          "CLOUD_OBSCURED",
-          "NO_DATA"
-        ],
+        "enum": ["GOOD", "PARTIAL", "STALE", "CLOUD_OBSCURED", "NO_DATA"],
         "title": "DataQuality",
         "type": "string"
       },
@@ -159,10 +151,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "day",
-          "distance_m"
-        ],
+        "required": ["day", "distance_m"],
         "title": "FireDayOut",
         "type": "object"
       },
@@ -237,11 +226,7 @@
         "type": "object"
       },
       "FireEventStatus": {
-        "enum": [
-          "ACTIVE",
-          "STALE",
-          "CLOSED"
-        ],
+        "enum": ["ACTIVE", "STALE", "CLOSED"],
         "title": "FireEventStatus",
         "type": "string"
       },
@@ -349,11 +334,7 @@
             "title": "Issued At"
           }
         },
-        "required": [
-          "data_quality",
-          "issued_at",
-          "days"
-        ],
+        "required": ["data_quality", "issued_at", "days"],
         "title": "ForecastAnswerOut",
         "type": "object"
       },
@@ -405,10 +386,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "code",
-          "value"
-        ],
+        "required": ["code", "value"],
         "title": "ForecastFactorOut",
         "type": "object"
       },
@@ -487,12 +465,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "sensor",
-          "satellite",
-          "acquired_at",
-          "ingested_at"
-        ],
+        "required": ["sensor", "satellite", "acquired_at", "ingested_at"],
         "title": "LatestPassOut",
         "type": "object"
       },
@@ -688,11 +661,7 @@
         "type": "object"
       },
       "RiskStatus": {
-        "enum": [
-          "NEW",
-          "SEEN",
-          "RESOLVED"
-        ],
+        "enum": ["NEW", "SEEN", "RESOLVED"],
         "title": "RiskStatus",
         "type": "string"
       },
@@ -702,29 +671,17 @@
             "$ref": "#/components/schemas/RiskStatus"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "RiskStatusIn",
         "type": "object"
       },
       "RuleStatus": {
-        "enum": [
-          "PASS",
-          "CAUTION",
-          "FAIL",
-          "UNKNOWN"
-        ],
+        "enum": ["PASS", "CAUTION", "FAIL", "UNKNOWN"],
         "title": "RuleStatus",
         "type": "string"
       },
       "Severity": {
-        "enum": [
-          "CRITICAL",
-          "VERY_HIGH",
-          "HIGH",
-          "WATCH"
-        ],
+        "enum": ["CRITICAL", "VERY_HIGH", "HIGH", "WATCH"],
         "title": "Severity",
         "type": "string"
       },
@@ -981,21 +938,12 @@
             "title": "Window H"
           }
         },
-        "required": [
-          "rule",
-          "status",
-          "value",
-          "unit"
-        ],
+        "required": ["rule", "status", "value", "unit"],
         "title": "SprayRuleOut",
         "type": "object"
       },
       "SprayStatus": {
-        "enum": [
-          "FAVORABLE",
-          "CAUTION",
-          "UNFAVORABLE"
-        ],
+        "enum": ["FAVORABLE", "CAUTION", "UNFAVORABLE"],
         "title": "SprayStatus",
         "type": "string"
       },
@@ -1009,14 +957,25 @@
             "type": "array"
           }
         },
-        "required": [
-          "tags"
-        ],
+        "required": ["tags"],
         "title": "TagsIn",
         "type": "object"
       },
       "TerritoryIn": {
         "properties": {
+          "cadastre": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The parcel the outline came from (province, department, partida, plano)",
+            "title": "Cadastre"
+          },
           "geometry": {
             "additionalProperties": true,
             "description": "GeoJSON Polygon or MultiPolygon, EPSG:4326",
@@ -1050,18 +1009,12 @@
             "type": "array"
           }
         },
-        "required": [
-          "name",
-          "geometry"
-        ],
+        "required": ["name", "geometry"],
         "title": "TerritoryIn",
         "type": "object"
       },
       "TerritoryKind": {
-        "enum": [
-          "FIELD",
-          "SECTION"
-        ],
+        "enum": ["FIELD", "SECTION"],
         "title": "TerritoryKind",
         "type": "string"
       },
@@ -1150,11 +1103,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError",
         "type": "object"
       }
@@ -1186,9 +1135,7 @@
           }
         },
         "summary": "Boundary",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/cadastre/parcel": {
@@ -1244,9 +1191,7 @@
           }
         },
         "summary": "Parcel",
-        "tags": [
-          "cadastre"
-        ]
+        "tags": ["cadastre"]
       }
     },
     "/fire-events": {
@@ -1298,9 +1243,7 @@
           }
         },
         "summary": "Fire Events",
-        "tags": [
-          "fires"
-        ]
+        "tags": ["fires"]
       }
     },
     "/health": {
@@ -1319,9 +1262,7 @@
           }
         },
         "summary": "Health",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/portfolio": {
@@ -1387,9 +1328,7 @@
           }
         },
         "summary": "Portfolio",
-        "tags": [
-          "portfolio"
-        ]
+        "tags": ["portfolio"]
       }
     },
     "/risk-events/{risk_id}": {
@@ -1432,9 +1371,7 @@
           }
         },
         "summary": "Update Risk Status",
-        "tags": [
-          "fires"
-        ]
+        "tags": ["fires"]
       }
     },
     "/territories": {
@@ -1490,9 +1427,7 @@
           }
         },
         "summary": "List ",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       },
       "post": {
         "operationId": "create_territories_post",
@@ -1529,9 +1464,7 @@
           }
         },
         "summary": "Create",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/territories/{territory_id}": {
@@ -1564,9 +1497,7 @@
           }
         },
         "summary": "Delete",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       },
       "get": {
         "operationId": "get_territories__territory_id__get",
@@ -1604,9 +1535,7 @@
           }
         },
         "summary": "Get",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/territories/{territory_id}/fire-history": {
@@ -1646,9 +1575,7 @@
           }
         },
         "summary": "Fire History",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/territories/{territory_id}/risk-events": {
@@ -1692,9 +1619,7 @@
           }
         },
         "summary": "Risk Events",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/territories/{territory_id}/spray-conditions": {
@@ -1748,9 +1673,7 @@
           }
         },
         "summary": "Spray Conditions",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/territories/{territory_id}/tags": {
@@ -1800,9 +1723,7 @@
           }
         },
         "summary": "Replace Tags",
-        "tags": [
-          "territories"
-        ]
+        "tags": ["territories"]
       }
     },
     "/tiles/{layer}/{z}/{x}/{y}.pbf": {
@@ -1865,9 +1786,7 @@
           }
         },
         "summary": "Tile",
-        "tags": [
-          "tiles"
-        ]
+        "tags": ["tiles"]
       }
     }
   }

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { MESSAGES } from "./messages";
-import { formatAge, formatDistance, formatHectares, localTime, ruleSentence } from "./text";
+import {
+  formatAge,
+  formatDistance,
+  formatHectares,
+  localTime,
+  ruleSentence,
+} from "./text";
 
 const { en, es } = MESSAGES;
 
@@ -46,16 +52,37 @@ describe("ruleSentence", () => {
     expect(ruleSentence(es, rule)).toBe("Ráfagas 23 km/h, más que 20 km/h");
   });
   it("explains calm wind and rain chance", () => {
-    expect(ruleSentence(es, { ...rule, rule: "wind", status: "CAUTION", value: 2, limit: 3 })).toBe(
-      "Viento de solo 2 km/h: la deriva queda suspendida",
-    );
     expect(
-      ruleSentence(en, { ...rule, rule: "rain", status: "CAUTION", value: 60, unit: "%", limit: 50, window_h: 2 }),
+      ruleSentence(es, {
+        ...rule,
+        rule: "wind",
+        status: "CAUTION",
+        value: 2,
+        limit: 3,
+      }),
+    ).toBe("Viento de solo 2 km/h: la deriva queda suspendida");
+    expect(
+      ruleSentence(en, {
+        ...rule,
+        rule: "rain",
+        status: "CAUTION",
+        value: 60,
+        unit: "%",
+        limit: 50,
+        window_h: 2,
+      }),
     ).toBe("60 % chance of rain in the next 2 h");
   });
   it("names the inversion as an estimate", () => {
-    expect(ruleSentence(es, { ...rule, rule: "inversion", status: "CAUTION", value: null, unit: "", limit: null })).toMatch(
-      /estimada/,
-    );
+    expect(
+      ruleSentence(es, {
+        ...rule,
+        rule: "inversion",
+        status: "CAUTION",
+        value: null,
+        unit: "",
+        limit: null,
+      }),
+    ).toMatch(/estimada/);
   });
 });

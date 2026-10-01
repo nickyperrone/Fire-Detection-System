@@ -35,8 +35,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    const detail = typeof body?.detail === "string" ? body.detail : response.statusText;
-    throw new ApiError(response.status, detail, typeof body?.code === "string" ? body.code : null);
+    const detail =
+      typeof body?.detail === "string" ? body.detail : response.statusText;
+    throw new ApiError(
+      response.status,
+      detail,
+      typeof body?.code === "string" ? body.code : null,
+    );
   }
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
@@ -48,16 +53,27 @@ function tagQuery(tags: string[]): string {
 }
 
 export const api = {
-  portfolio: (tags: string[]) => request<PortfolioEntry[]>(`/portfolio${tagQuery(tags)}`),
+  portfolio: (tags: string[]) =>
+    request<PortfolioEntry[]>(`/portfolio${tagQuery(tags)}`),
   territories: () => request<Territory[]>("/territories"),
   createTerritory: (body: TerritoryIn) =>
-    request<Territory>("/territories", { method: "POST", body: JSON.stringify(body) }),
-  deleteTerritory: (id: number) => request<void>(`/territories/${id}`, { method: "DELETE" }),
-  riskEvents: (id: number) => request<RiskEvent[]>(`/territories/${id}/risk-events`),
-  sprayConditions: (id: number) => request<SprayHour[]>(`/territories/${id}/spray-conditions`),
+    request<Territory>("/territories", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  deleteTerritory: (id: number) =>
+    request<void>(`/territories/${id}`, { method: "DELETE" }),
+  riskEvents: (id: number) =>
+    request<RiskEvent[]>(`/territories/${id}/risk-events`),
+  sprayConditions: (id: number) =>
+    request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
-  boundary: () => request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>("/boundary"),
-  fireHistory: (id: number) => request<FireHistory>(`/territories/${id}/fire-history`),
+  boundary: () =>
+    request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
+      "/boundary",
+    ),
+  fireHistory: (id: number) =>
+    request<FireHistory>(`/territories/${id}/fire-history`),
 };
 
 export function tileUrl(layer: string, version = 0): string {

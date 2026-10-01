@@ -47,7 +47,7 @@ English for code, identifiers, comments, docs, UI copy and commit messages.
 - Page state a user may want to share (selected field, tag filters, basemap, camera) lives in the URL.
 - One component per file, named after what it renders (`SprayTimeline`, not `Timeline2`).
 - Status colors come from `src/lib/status.ts` only, so the map, chips and lists always agree.
-- Checks: `npm run typecheck` (strict), `npm run lint`, `npm test`.
+- Checks: `npm run typecheck` (strict), `npm run lint`, `npm run format:check` (Prettier defaults), `npm test`.
 
 ## Commits
 

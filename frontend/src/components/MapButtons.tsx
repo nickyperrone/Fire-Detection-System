@@ -12,6 +12,8 @@ type Props = {
   onBasemap: (basemap: Basemap) => void;
   showRisk: boolean;
   onToggleRisk: () => void;
+  showParcels: boolean;
+  onToggleParcels: () => void;
   onLocate: () => void;
   onAddField: () => void;
 };
@@ -24,6 +26,8 @@ export function MapButtons({
   onBasemap,
   showRisk,
   onToggleRisk,
+  showParcels,
+  onToggleParcels,
   onLocate,
   onAddField,
 }: Props) {
@@ -56,21 +60,16 @@ export function MapButtons({
                 </button>
               ))}
             </div>
-            <button
-              role="switch"
-              aria-checked={showRisk}
-              onClick={onToggleRisk}
-              className="flex w-full items-center justify-between gap-3 border-t border-white/10 px-3 py-3 text-sm text-slate-200"
-            >
-              {t.forecast.layer}
-              <span
-                className={`h-5 w-9 rounded-full p-0.5 transition ${showRisk ? "bg-bad" : "bg-white/15"}`}
-              >
-                <span
-                  className={`block size-4 rounded-full bg-white transition ${showRisk ? "translate-x-4" : ""}`}
-                />
-              </span>
-            </button>
+            <Switch
+              label={t.parcels.layer}
+              on={showParcels}
+              onToggle={onToggleParcels}
+            />
+            <Switch
+              label={t.forecast.layer}
+              on={showRisk}
+              onToggle={onToggleRisk}
+            />
           </div>
         )}
       </div>
@@ -94,5 +93,33 @@ export function MapButtons({
         </span>
       </button>
     </div>
+  );
+}
+
+function Switch({
+  label,
+  on,
+  onToggle,
+}: {
+  label: string;
+  on: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      onClick={onToggle}
+      className="flex w-full items-center justify-between gap-3 border-t border-white/10 px-3 py-3 text-sm text-slate-200"
+    >
+      {label}
+      <span
+        className={`h-5 w-9 rounded-full p-0.5 transition ${on ? "bg-accent" : "bg-white/15"}`}
+      >
+        <span
+          className={`block size-4 rounded-full bg-white transition ${on ? "translate-x-4" : ""}`}
+        />
+      </span>
+    </button>
   );
 }

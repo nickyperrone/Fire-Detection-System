@@ -19,18 +19,24 @@ import { StatusChip } from "./StatusChip";
 /** The most useful single sentence about a field: a fire first, then why not to spray. */
 export function headline(t: Messages, entry: PortfolioEntry): string {
   const { fire, spray, lightning } = entry;
-  if (fire.severity || fire.data_quality === "NO_DATA") return fireSentence(t, fire);
+  if (fire.severity || fire.data_quality === "NO_DATA")
+    return fireSentence(t, fire);
   if (lightning.flashes > 0) return lightningSentence(t, entry);
   if (!spray.status) return t.sprayText.noForecast;
   if (spray.status === "FAVORABLE") return t.sprayText.allPass;
   const window = spray.next_favorable;
-  const next = window ? t.sprayText.nextWindow(localTime(t, window[0], true)) : t.sprayText.noWindow;
-  return spray.problems[0] ? `${ruleSentence(t, spray.problems[0])} · ${next}` : next;
+  const next = window
+    ? t.sprayText.nextWindow(localTime(t, window[0], true))
+    : t.sprayText.noWindow;
+  return spray.problems[0]
+    ? `${ruleSentence(t, spray.problems[0])} · ${next}`
+    : next;
 }
 
 export function lightningSentence(t: Messages, entry: PortfolioEntry): string {
   const { lightning } = entry;
-  if (lightning.flashes === 0) return t.lightning.noneSentence(lightning.window_minutes);
+  if (lightning.flashes === 0)
+    return t.lightning.noneSentence(lightning.window_minutes);
   return t.lightning.sentence(
     lightning.flashes,
     formatDistance(t, lightning.nearest_m),
@@ -43,10 +49,16 @@ export function FieldChips({ entry }: { entry: PortfolioEntry }) {
   const { t } = useLocale();
   return (
     <div className="flex flex-wrap gap-1.5">
-      <StatusChip tone={fireTone(entry.fire)} icon={<FlameIcon className="size-3.5" />}>
+      <StatusChip
+        tone={fireTone(entry.fire)}
+        icon={<FlameIcon className="size-3.5" />}
+      >
         {fireLabel(t, entry.fire)}
       </StatusChip>
-      <StatusChip tone={sprayTone(entry.spray)} icon={<SprayIcon className="size-3.5" />}>
+      <StatusChip
+        tone={sprayTone(entry.spray)}
+        icon={<SprayIcon className="size-3.5" />}
+      >
         {sprayLabel(t, entry.spray)}
       </StatusChip>
       {["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "") && (

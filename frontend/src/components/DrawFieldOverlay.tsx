@@ -19,7 +19,12 @@ type Props = {
 };
 
 /** Full-screen drawing mode: the map, a top bar, the tool switch and one card at the bottom. */
-export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: Props) {
+export function DrawFieldOverlay({
+  drawing,
+  fields,
+  defaultParentId,
+  onDone,
+}: Props) {
   const { t } = useLocale();
   const [parentId, setParentId] = useState<number | null>(defaultParentId);
   const parentName = fields.find((f) => f.id === parentId)?.name;
@@ -30,7 +35,10 @@ export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: P
     <>
       <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex flex-col items-center gap-2 pt-[env(safe-area-inset-top)]">
         <div className="glass pointer-events-auto flex h-12 w-full max-w-xl items-center justify-between rounded-2xl px-2">
-          <button onClick={() => onDone(null)} className="rounded-xl px-3 py-2 text-sm text-slate-300">
+          <button
+            onClick={() => onDone(null)}
+            className="rounded-xl px-3 py-2 text-sm text-slate-300"
+          >
             {t.draw.cancel}
           </button>
           <span className="truncate text-sm font-semibold">
@@ -45,7 +53,11 @@ export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: P
           </button>
         </div>
         {!closed && (
-          <div className="glass pointer-events-auto flex rounded-full p-1" role="radiogroup" aria-label={t.draw.tools}>
+          <div
+            className="glass pointer-events-auto flex rounded-full p-1"
+            role="radiogroup"
+            aria-label={t.draw.tools}
+          >
             {TOOLS.map((tool) => (
               <button
                 key={tool}
@@ -53,7 +65,9 @@ export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: P
                 aria-checked={drawing.tool === tool}
                 onClick={() => drawing.setTool(tool)}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-                  drawing.tool === tool ? "bg-accent text-slate-950" : "text-slate-300"
+                  drawing.tool === tool
+                    ? "bg-accent text-slate-950"
+                    : "text-slate-300"
                 }`}
               >
                 {t.draw[tool]}
@@ -64,7 +78,9 @@ export function DrawFieldOverlay({ drawing, fields, defaultParentId, onDone }: P
       </div>
 
       <section className="glass fixed inset-x-3 bottom-3 z-20 mx-auto max-h-[60dvh] max-w-xl overflow-y-auto rounded-3xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <p className="text-3xl font-semibold tabular-nums">{formatHectares(t, drawing.hectares)}</p>
+        <p className="text-3xl font-semibold tabular-nums">
+          {formatHectares(t, drawing.hectares)}
+        </p>
         {closed ? (
           <SaveFieldForm
             drawing={drawing}
@@ -93,7 +109,13 @@ type FormProps = {
   onDone: (created: Territory | null) => void;
 };
 
-function SaveFieldForm({ drawing, fields, parentId, onParentChange, onDone }: FormProps) {
+function SaveFieldForm({
+  drawing,
+  fields,
+  parentId,
+  onParentChange,
+  onDone,
+}: FormProps) {
   const { t } = useLocale();
   const [name, setName] = useState("");
   const [tags, setTags] = useState("");
@@ -146,7 +168,9 @@ function SaveFieldForm({ drawing, fields, parentId, onParentChange, onDone }: Fo
             <span className="text-muted">{t.draw.lotOf}</span>
             <select
               value={parentId ?? ""}
-              onChange={(e) => onParentChange(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) =>
+                onParentChange(e.target.value ? Number(e.target.value) : null)
+              }
               className={inputClass}
             >
               <option value="">{t.draw.ownField}</option>
@@ -168,7 +192,11 @@ function SaveFieldForm({ drawing, fields, parentId, onParentChange, onDone }: Fo
           </label>
         </>
       ) : (
-        <button type="button" onClick={() => setMore(true)} className="text-sm text-accent">
+        <button
+          type="button"
+          onClick={() => setMore(true)}
+          className="text-sm text-accent"
+        >
           {t.draw.more}
         </button>
       )}

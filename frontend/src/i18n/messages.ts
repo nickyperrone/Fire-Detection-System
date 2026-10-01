@@ -22,13 +22,31 @@ const en = {
     days: (n: number) => `${n} d ago`,
   },
   units: { inside: "inside", ha: "ha" },
-  directions: { N: "N", NE: "NE", E: "E", SE: "SE", S: "S", SW: "SW", W: "W", NW: "NW" } as Record<
+  directions: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SW",
+    W: "W",
+    NW: "NW",
+  } as Record<string, string>,
+  confidence: { low: "low", nominal: "nominal", high: "high" } as Record<
     string,
     string
   >,
-  confidence: { low: "low", nominal: "nominal", high: "high" } as Record<string, string>,
-  severity: { CRITICAL: "Inside", VERY_HIGH: "Very close", HIGH: "Close", WATCH: "Nearby" },
-  spray: { FAVORABLE: "Good to spray", CAUTION: "Caution", UNFAVORABLE: "Do not spray" },
+  severity: {
+    CRITICAL: "Inside",
+    VERY_HIGH: "Very close",
+    HIGH: "Close",
+    WATCH: "Nearby",
+  },
+  spray: {
+    FAVORABLE: "Good to spray",
+    CAUTION: "Caution",
+    UNFAVORABLE: "Do not spray",
+  },
   sprayShort: { FAVORABLE: "Good", CAUTION: "Caution", UNFAVORABLE: "No" },
   fire: {
     noDetections: "No fires",
@@ -42,7 +60,8 @@ const en = {
     more: (n: number) => `+${n} more`,
     seenBy: (sensors: string) => `Seen by ${sensors}`,
     confidence: (level: string) => `${level} confidence`,
-    times: (pass: string, received: string) => `Satellite pass ${pass} · received ${received}`,
+    times: (pass: string, received: string) =>
+      `Satellite pass ${pass} · received ${received}`,
     rulesVersion: (v: string) => `Rules version ${v}`,
     popupTitle: "Possible fire",
     detected: (age: string) => `detected ${age}`,
@@ -69,22 +88,28 @@ const en = {
     rain: "Rain",
     inversion: "Inversion",
     missing: (name: string) => `${name}: no data`,
-    over: (name: string, value: string, limit: string) => `${name} ${value}, over ${limit}`,
-    near: (name: string, value: string, limit: string) => `${name} ${value}, close to the limit ${limit}`,
+    over: (name: string, value: string, limit: string) =>
+      `${name} ${value}, over ${limit}`,
+    near: (name: string, value: string, limit: string) =>
+      `${name} ${value}, close to the limit ${limit}`,
     calm: (value: string) => `Wind only ${value}: drift can hang in still air`,
     lowDeltaT: (value: string) => `Delta T ${value}: droplets stay in the air`,
     highDeltaT: (value: string) => `Delta T ${value}: droplets evaporate`,
     rainAmount: (mm: string, h: number) => `${mm} of rain in the next ${h} h`,
-    rainChance: (pct: string, h: number) => `${pct} chance of rain in the next ${h} h`,
-    inversionRisk: "Possible temperature inversion (estimated: calm, clear night or early morning)",
+    rainChance: (pct: string, h: number) =>
+      `${pct} chance of rain in the next ${h} h`,
+    inversionRisk:
+      "Possible temperature inversion (estimated: calm, clear night or early morning)",
   },
   lightning: {
     label: "Lightning",
     none: "No lightning",
-    count: (n: number) => (n === 1 ? "1 lightning flash" : `${n} lightning flashes`),
+    count: (n: number) =>
+      n === 1 ? "1 lightning flash" : `${n} lightning flashes`,
     sentence: (n: number, distance: string, minutes: number) =>
       `${n === 1 ? "1 flash" : `${n} flashes`} within 10 km in the last ${minutes} min, the nearest ${distance} away`,
-    noneSentence: (minutes: number) => `No lightning within 10 km in the last ${minutes} min`,
+    noneSentence: (minutes: number) =>
+      `No lightning within 10 km in the last ${minutes} min`,
     noData: "No lightning data",
     last: (age: string) => `Last one ${age}`,
     why: "Lightning is the main natural cause of fires: watch the field for smoke in the next hours.",
@@ -92,31 +117,44 @@ const en = {
   history: {
     summary: (years: number, days: number, km: number) =>
       `In ${years} years, fire within ${km} km on ${days} ${days === 1 ? "day" : "days"}`,
-    none: (years: number, km: number) => `No fire within ${km} km in ${years} years`,
+    none: (years: number, km: number) =>
+      `No fire within ${km} km in ${years} years`,
     months: (names: string[]) => `Most in ${names.join(" and ")}`,
-    nearest: (distance: string, day: string) => `The closest ${distance} away, ${day}`,
+    nearest: (distance: string, day: string) =>
+      `The closest ${distance} away, ${day}`,
     latest: (day: string) => `The most recent on ${day}`,
-    inside: (days: number) => `Burned inside the field on ${days} ${days === 1 ? "day" : "days"}`,
+    inside: (days: number) =>
+      `Burned inside the field on ${days} ${days === 1 ? "day" : "days"}`,
     neverInside: "Never inside the field",
     perYear: "Fire days per year",
     perMonth: "By month",
     noData: "Fire history has not been loaded yet.",
-    source: "NASA FIRMS archive, VIIRS S-NPP. A fire day is a day with at least one detection.",
+    source:
+      "NASA FIRMS archive, VIIRS S-NPP. A fire day is a day with at least one detection.",
   },
   forecast: {
     title: "Fire risk, next 3 days",
     days: ["Tomorrow", "Day after", "In 3 days"],
-    band: { LOW: "Low", MODERATE: "Moderate", HIGH: "High", VERY_HIGH: "Very high" } as Record<string, string>,
+    band: {
+      LOW: "Low",
+      MODERATE: "Moderate",
+      HIGH: "High",
+      VERY_HIGH: "Very high",
+    } as Record<string, string>,
     chip: (band: string) => `${band} fire risk tomorrow`,
-    sentence: (pct: string) => `${pct} chance that satellites see a fire within 10 km tomorrow`,
+    sentence: (pct: string) =>
+      `${pct} chance that satellites see a fire within 10 km tomorrow`,
     why: "Why",
-    nothingUnusual: "Nothing unusual today: dry, burning season and recent fires all within normal.",
+    nothingUnusual:
+      "Nothing unusual today: dry, burning season and recent fires all within normal.",
     noData: "No forecast yet.",
     stale: "Forecast without today's weather; it uses the last day available.",
     note: "Predicts what satellites will detect near the field, not where a fire will start. Updated every hour.",
     factors: {
-      fire_around_7d: (v: number) => `Fires around in the last week (${v} ${v === 1 ? "day" : "days"})`,
-      recent_cell_fire: (v: number) => `Something burned in this area ${v} days ago`,
+      fire_around_7d: (v: number) =>
+        `Fires around in the last week (${v} ${v === 1 ? "day" : "days"})`,
+      recent_cell_fire: (v: number) =>
+        `Something burned in this area ${v} days ago`,
       dry_air: (v: number) => `Very dry air (${v} % humidity)`,
       no_rain: (v: number) => `${v} days without rain`,
       hot: (v: number) => `Hot (${v} °C)`,
@@ -124,6 +162,9 @@ const en = {
       burning_month: () => "This month usually burns here",
     } as Record<string, (v: number) => string>,
     layer: "Fire risk",
+  },
+  parcels: {
+    layer: "Property lines",
   },
   sections: {
     fire: "Fire",
@@ -145,8 +186,10 @@ const en = {
   },
   portfolio: {
     allQuiet: (fields: number) => `No fires near your ${fields} fields`,
-    withFire: (n: number) => (n === 1 ? "1 field has a fire nearby" : `${n} fields have a fire nearby`),
-    sprayNow: (good: number, total: number) => `Good to spray now: ${good} of ${total}`,
+    withFire: (n: number) =>
+      n === 1 ? "1 field has a fire nearby" : `${n} fields have a fire nearby`,
+    sprayNow: (good: number, total: number) =>
+      `Good to spray now: ${good} of ${total}`,
     counts: (fields: number, lots: number) => `${fields} fields · ${lots} lots`,
     select: (name: string) => `Select ${name}`,
     selected: (n: number) => `${n} selected`,
@@ -181,7 +224,8 @@ const en = {
     tools: "Drawing tool",
     trace: "Trace",
     corners: "Corners",
-    traceHint: "Press on the edge of the field and drag your finger all around it. Lift to close.",
+    traceHint:
+      "Press on the edge of the field and drag your finger all around it. Lift to close.",
     cornersHint: "Tap each corner. Tap the first corner again to close.",
     zoomHint: "Zoom with two fingers or the wheel.",
     tooSmall: "That shape is too small. Go around the whole field.",
@@ -198,7 +242,8 @@ const en = {
     errors: {
       outside_country: "Fields can only be drawn inside Argentina.",
       outside_parent: "The lot must be inside its field.",
-      invalid_polygon: "The outline crosses itself. Start over and go around once.",
+      invalid_polygon:
+        "The outline crosses itself. Start over and go around once.",
     } as Record<string, string>,
   },
 };
@@ -221,10 +266,28 @@ const es: Messages = {
     days: (n) => `hace ${n} d`,
   },
   units: { inside: "adentro", ha: "ha" },
-  directions: { N: "N", NE: "NE", E: "E", SE: "SE", S: "S", SW: "SO", W: "O", NW: "NO" },
+  directions: {
+    N: "N",
+    NE: "NE",
+    E: "E",
+    SE: "SE",
+    S: "S",
+    SW: "SO",
+    W: "O",
+    NW: "NO",
+  },
   confidence: { low: "baja", nominal: "media", high: "alta" },
-  severity: { CRITICAL: "Adentro", VERY_HIGH: "Muy cerca", HIGH: "Cerca", WATCH: "En la zona" },
-  spray: { FAVORABLE: "Se puede pulverizar", CAUTION: "Precaución", UNFAVORABLE: "No pulverizar" },
+  severity: {
+    CRITICAL: "Adentro",
+    VERY_HIGH: "Muy cerca",
+    HIGH: "Cerca",
+    WATCH: "En la zona",
+  },
+  spray: {
+    FAVORABLE: "Se puede pulverizar",
+    CAUTION: "Precaución",
+    UNFAVORABLE: "No pulverizar",
+  },
   sprayShort: { FAVORABLE: "Sí", CAUTION: "Precaución", UNFAVORABLE: "No" },
   fire: {
     noDetections: "Sin fuegos",
@@ -238,7 +301,8 @@ const es: Messages = {
     more: (n) => `+${n} más`,
     seenBy: (sensors) => `Lo vio ${sensors}`,
     confidence: (level) => `confianza ${level}`,
-    times: (pass, received) => `Pasada del satélite ${pass} · recibido ${received}`,
+    times: (pass, received) =>
+      `Pasada del satélite ${pass} · recibido ${received}`,
     rulesVersion: (v) => `Versión de reglas ${v}`,
     popupTitle: "Posible fuego",
     detected: (age) => `detectado ${age}`,
@@ -271,7 +335,8 @@ const es: Messages = {
     lowDeltaT: (value) => `Delta T ${value}: las gotas quedan en el aire`,
     highDeltaT: (value) => `Delta T ${value}: las gotas se evaporan`,
     rainAmount: (mm, h) => `${mm} de lluvia en las próximas ${h} h`,
-    rainChance: (pct, h) => `${pct} de probabilidad de lluvia en las próximas ${h} h`,
+    rainChance: (pct, h) =>
+      `${pct} de probabilidad de lluvia en las próximas ${h} h`,
     inversionRisk:
       "Posible inversión térmica (estimada: calma y cielo despejado, de noche o temprano)",
   },
@@ -281,7 +346,8 @@ const es: Messages = {
     count: (n) => (n === 1 ? "1 rayo" : `${n} rayos`),
     sentence: (n, distance, minutes) =>
       `${n === 1 ? "1 rayo" : `${n} rayos`} a menos de 10 km en los últimos ${minutes} min, el más cercano a ${distance}`,
-    noneSentence: (minutes) => `Sin rayos a menos de 10 km en los últimos ${minutes} min`,
+    noneSentence: (minutes) =>
+      `Sin rayos a menos de 10 km en los últimos ${minutes} min`,
     noData: "Sin datos de rayos",
     last: (age) => `El último ${age}`,
     why: "Los rayos son la principal causa natural de incendios: mirá si aparece humo en las próximas horas.",
@@ -293,26 +359,36 @@ const es: Messages = {
     months: (names) => `Sobre todo en ${names.join(" y ")}`,
     nearest: (distance, day) => `El más cercano a ${distance}, el ${day}`,
     latest: (day) => `El más reciente el ${day}`,
-    inside: (days) => `Se quemó dentro del campo ${days} ${days === 1 ? "día" : "días"}`,
+    inside: (days) =>
+      `Se quemó dentro del campo ${days} ${days === 1 ? "día" : "días"}`,
     neverInside: "Nunca dentro del campo",
     perYear: "Días con fuego por año",
     perMonth: "Por mes",
     noData: "Todavía no se cargó el historial de fuegos.",
-    source: "Archivo de NASA FIRMS, VIIRS S-NPP. Un día con fuego es un día con al menos una detección.",
+    source:
+      "Archivo de NASA FIRMS, VIIRS S-NPP. Un día con fuego es un día con al menos una detección.",
   },
   forecast: {
     title: "Riesgo de fuego, próximos 3 días",
     days: ["Mañana", "Pasado", "En 3 días"],
-    band: { LOW: "Bajo", MODERATE: "Moderado", HIGH: "Alto", VERY_HIGH: "Muy alto" },
+    band: {
+      LOW: "Bajo",
+      MODERATE: "Moderado",
+      HIGH: "Alto",
+      VERY_HIGH: "Muy alto",
+    },
     chip: (band) => `Riesgo ${band.toLowerCase()} mañana`,
-    sentence: (pct) => `${pct} de probabilidad de que el satélite vea fuego a menos de 10 km mañana`,
+    sentence: (pct) =>
+      `${pct} de probabilidad de que el satélite vea fuego a menos de 10 km mañana`,
     why: "Por qué",
-    nothingUnusual: "Nada fuera de lo normal hoy: sequedad, época de quemas y fuegos recientes dentro de lo habitual.",
+    nothingUnusual:
+      "Nada fuera de lo normal hoy: sequedad, época de quemas y fuegos recientes dentro de lo habitual.",
     noData: "Todavía no hay pronóstico.",
     stale: "Pronóstico sin el clima de hoy; usa el último día disponible.",
     note: "Predice lo que el satélite va a detectar cerca del campo, no dónde se va a prender un fuego. Se actualiza cada hora.",
     factors: {
-      fire_around_7d: (v) => `Hubo fuego alrededor esta semana (${v} ${v === 1 ? "día" : "días"})`,
+      fire_around_7d: (v) =>
+        `Hubo fuego alrededor esta semana (${v} ${v === 1 ? "día" : "días"})`,
       recent_cell_fire: (v) => `Se quemó algo en esta zona hace ${v} días`,
       dry_air: (v) => `Aire muy seco (${v} % de humedad)`,
       no_rain: (v) => `${v} días sin llover`,
@@ -321,6 +397,9 @@ const es: Messages = {
       burning_month: () => "En este mes suele haber quemas acá",
     },
     layer: "Riesgo de fuego",
+  },
+  parcels: {
+    layer: "Líneas de propiedad",
   },
   sections: {
     fire: "Fuego",
@@ -337,16 +416,19 @@ const es: Messages = {
     close: "Cerrar",
     deleteField: "Borrar campo",
     deleteLot: "Borrar lote",
-    confirmDelete: (name, withLots) => `¿Borrar ${name}${withLots ? " y sus lotes" : ""}?`,
+    confirmDelete: (name, withLots) =>
+      `¿Borrar ${name}${withLots ? " y sus lotes" : ""}?`,
   },
   portfolio: {
     allQuiet: (fields) => `Sin fuegos cerca de tus ${fields} campos`,
-    withFire: (n) => (n === 1 ? "1 campo tiene fuego cerca" : `${n} campos tienen fuego cerca`),
+    withFire: (n) =>
+      n === 1 ? "1 campo tiene fuego cerca" : `${n} campos tienen fuego cerca`,
     sprayNow: (good, total) => `Para pulverizar ahora: ${good} de ${total}`,
     counts: (fields, lots) => `${fields} campos · ${lots} lotes`,
     select: (name) => `Seleccionar ${name}`,
     selected: (n) => (n === 1 ? "1 seleccionado" : `${n} seleccionados`),
-    showingSelected: (n) => (n === 1 ? "Mostrando 1 seleccionado" : `Mostrando ${n} seleccionados`),
+    showingSelected: (n) =>
+      n === 1 ? "Mostrando 1 seleccionado" : `Mostrando ${n} seleccionados`,
     showOnly: "Ver solo estos",
     showAll: "Ver todos",
     clear: "Limpiar",
@@ -377,7 +459,8 @@ const es: Messages = {
     tools: "Herramienta de dibujo",
     trace: "Trazar",
     corners: "Esquinas",
-    traceHint: "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
+    traceHint:
+      "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
     cornersHint: "Tocá cada esquina. Tocá la primera otra vez para cerrar.",
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
     tooSmall: "La forma es muy chica. Recorré todo el campo.",
@@ -394,7 +477,8 @@ const es: Messages = {
     errors: {
       outside_country: "Solo se pueden dibujar campos dentro de Argentina.",
       outside_parent: "El lote tiene que estar dentro de su campo.",
-      invalid_polygon: "El borde se cruza a sí mismo. Empezá de nuevo y dá una sola vuelta.",
+      invalid_polygon:
+        "El borde se cruza a sí mismo. Empezá de nuevo y dá una sola vuelta.",
     },
   },
 };

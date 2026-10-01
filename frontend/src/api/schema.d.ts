@@ -4,1097 +4,1107 @@
  */
 
 export interface paths {
-    "/boundary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Boundary
-         * @description Argentina, simplified to about 1 km: the map grays out everything else while drawing.
-         */
-        get: operations["boundary_boundary_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/boundary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/cadastre/parcel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Parcel
-         * @description The official parcel at a point, to draw a field from it (docs/08-cadastre.md).
-         */
-        get: operations["parcel_cadastre_parcel_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Boundary
+     * @description Argentina, simplified to about 1 km: the map grays out everything else while drawing.
+     */
+    get: operations["boundary_boundary_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/cadastre/parcel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/fire-events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Fire Events */
-        get: operations["fire_events_fire_events_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Parcel
+     * @description The official parcel at a point, to draw a field from it (docs/08-cadastre.md).
+     */
+    get: operations["parcel_cadastre_parcel_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/fire-events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Health */
-        get: operations["health_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Fire Events */
+    get: operations["fire_events_fire_events_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/health": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/portfolio": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Portfolio */
-        get: operations["portfolio_portfolio_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Health */
+    get: operations["health_health_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/portfolio": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/risk-events/{risk_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Risk Status */
-        patch: operations["update_risk_status_risk_events__risk_id__patch"];
-        trace?: never;
+    /** Portfolio */
+    get: operations["portfolio_portfolio_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/risk-events/{risk_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List */
-        get: operations["list__territories_get"];
-        put?: never;
-        /** Create */
-        post: operations["create_territories_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Risk Status */
+    patch: operations["update_risk_status_risk_events__risk_id__patch"];
+    trace?: never;
+  };
+  "/territories": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories/{territory_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get */
-        get: operations["get_territories__territory_id__get"];
-        put?: never;
-        post?: never;
-        /** Delete */
-        delete: operations["delete_territories__territory_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List */
+    get: operations["list__territories_get"];
+    put?: never;
+    /** Create */
+    post: operations["create_territories_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/territories/{territory_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories/{territory_id}/fire-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Fire History */
-        get: operations["fire_history_territories__territory_id__fire_history_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Get */
+    get: operations["get_territories__territory_id__get"];
+    put?: never;
+    post?: never;
+    /** Delete */
+    delete: operations["delete_territories__territory_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/territories/{territory_id}/fire-history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories/{territory_id}/risk-events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Risk Events */
-        get: operations["risk_events_territories__territory_id__risk_events_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Fire History */
+    get: operations["fire_history_territories__territory_id__fire_history_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/territories/{territory_id}/risk-events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories/{territory_id}/spray-conditions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Spray Conditions */
-        get: operations["spray_conditions_territories__territory_id__spray_conditions_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Risk Events */
+    get: operations["risk_events_territories__territory_id__risk_events_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/territories/{territory_id}/spray-conditions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/territories/{territory_id}/tags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Replace Tags */
-        put: operations["replace_tags_territories__territory_id__tags_put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Spray Conditions */
+    get: operations["spray_conditions_territories__territory_id__spray_conditions_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/territories/{territory_id}/tags": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/tiles/{layer}/{z}/{x}/{y}.pbf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Tile */
-        get: operations["tile_tiles__layer___z___x___y__pbf_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    /** Replace Tags */
+    put: operations["replace_tags_territories__territory_id__tags_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/tiles/{layer}/{z}/{x}/{y}.pbf": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Tile */
+    get: operations["tile_tiles__layer___z___x___y__pbf_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** AnomalyAnswerOut */
-        AnomalyAnswerOut: {
-            data_quality: components["schemas"]["DataQuality"];
-        };
-        /**
-         * DataQuality
-         * @enum {string}
-         */
-        DataQuality: "GOOD" | "PARTIAL" | "STALE" | "CLOUD_OBSCURED" | "NO_DATA";
-        /** FireAnswerOut */
-        FireAnswerOut: {
-            /** Acquired At */
-            acquired_at: string | null;
-            /** Confidence */
-            confidence: string | null;
-            data_quality: components["schemas"]["DataQuality"];
-            /** Direction */
-            direction: string | null;
-            /** Distance M */
-            distance_m: number | null;
-            /** Fire Event Id */
-            fire_event_id: number | null;
-            /** Last Read At */
-            last_read_at: string | null;
-            /** Other Fires */
-            other_fires: number;
-            /** Received At */
-            received_at: string | null;
-            /** Sensors */
-            sensors: string[];
-            severity: components["schemas"]["Severity"] | null;
-        };
-        /** FireDayOut */
-        FireDayOut: {
-            /**
-             * Day
-             * Format: date
-             */
-            day: string;
-            /** Distance M */
-            distance_m: number;
-        };
-        /** FireEventOut */
-        FireEventOut: {
-            /** Confidence */
-            confidence: string;
-            /**
-             * First Detected At
-             * Format: date-time
-             */
-            first_detected_at: string;
-            /** Geometry */
-            geometry: {
-                [key: string]: unknown;
-            };
-            /** Id */
-            id: number;
-            /**
-             * Last Detected At
-             * Format: date-time
-             */
-            last_detected_at: string;
-            /** Max Frp Mw */
-            max_frp_mw: number | null;
-            /** Observation Count */
-            observation_count: number;
-            /** Processing Version */
-            processing_version: string;
-            /** Sensors */
-            sensors: string[];
-            status: components["schemas"]["FireEventStatus"];
-        };
-        /**
-         * FireEventStatus
-         * @enum {string}
-         */
-        FireEventStatus: "ACTIVE" | "STALE" | "CLOSED";
-        /** FireHistoryOut */
-        FireHistoryOut: {
-            /** Days Per Month */
-            days_per_month: number[];
-            /** Days Per Year */
-            days_per_year: {
-                [key: string]: number;
-            };
-            /** Fire Days */
-            fire_days: number;
-            /** First Year */
-            first_year: number;
-            /** Inside Days */
-            inside_days: number;
-            /** Last Year */
-            last_year: number;
-            latest: components["schemas"]["FireDayOut"] | null;
-            nearest: components["schemas"]["FireDayOut"] | null;
-            /** Radius M */
-            radius_m: number;
-            /** Years Loaded */
-            years_loaded: number[];
-        };
-        /** ForecastAnswerOut */
-        ForecastAnswerOut: {
-            data_quality: components["schemas"]["DataQuality"];
-            /** Days */
-            days: components["schemas"]["ForecastDayOut"][];
-            /** Issued At */
-            issued_at: string | null;
-        };
-        /** ForecastDayOut */
-        ForecastDayOut: {
-            /** Band */
-            band: string;
-            /** Factors */
-            factors: components["schemas"]["ForecastFactorOut"][];
-            /** Horizon Days */
-            horizon_days: number;
-            /** Probability */
-            probability: number;
-            /**
-             * Valid From
-             * Format: date
-             */
-            valid_from: string;
-        };
-        /** ForecastFactorOut */
-        ForecastFactorOut: {
-            /** Code */
-            code: string;
-            /** Value */
-            value: number;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /** HealthOut */
-        HealthOut: {
-            /** Database */
-            database: boolean;
-            fire_data_quality: components["schemas"]["DataQuality"];
-            latest_pass: components["schemas"]["LatestPassOut"] | null;
-            /** Processing Version */
-            processing_version: string;
-            /** Sources */
-            sources: components["schemas"]["SourceStatusOut"][];
-        };
-        /** LatestPassOut */
-        LatestPassOut: {
-            /**
-             * Acquired At
-             * Format: date-time
-             */
-            acquired_at: string;
-            /**
-             * Ingested At
-             * Format: date-time
-             */
-            ingested_at: string;
-            /** Satellite */
-            satellite: string;
-            /** Sensor */
-            sensor: string;
-        };
-        /**
-         * Layer
-         * @enum {string}
-         */
-        Layer: "territories" | "fire_events" | "observations" | "lightning" | "risk" | "parcels";
-        /** LightningAnswerOut */
-        LightningAnswerOut: {
-            data_quality: components["schemas"]["DataQuality"];
-            /** Flashes */
-            flashes: number;
-            /** Last At */
-            last_at: string | null;
-            /** Nearest M */
-            nearest_m: number | null;
-            /** Window Minutes */
-            window_minutes: number;
-        };
-        /** PortfolioEntryOut */
-        PortfolioEntryOut: {
-            anomaly: components["schemas"]["AnomalyAnswerOut"];
-            fire: components["schemas"]["FireAnswerOut"];
-            forecast: components["schemas"]["ForecastAnswerOut"];
-            /** Hectares */
-            hectares: number;
-            kind: components["schemas"]["TerritoryKind"];
-            lightning: components["schemas"]["LightningAnswerOut"];
-            /** Name */
-            name: string;
-            /** Parent Id */
-            parent_id: number | null;
-            spray: components["schemas"]["SprayAnswerOut"];
-            /** Tags */
-            tags: string[];
-            /** Territory Id */
-            territory_id: number;
-        };
-        /** RiskEventOut */
-        RiskEventOut: {
-            /** Direction */
-            direction: string | null;
-            /** Distance M */
-            distance_m: number;
-            /** Factors */
-            factors: {
-                [key: string]: unknown;
-            };
-            /** Fire Event Id */
-            fire_event_id: number;
-            /** Id */
-            id: number;
-            /** Processing Version */
-            processing_version: string;
-            severity: components["schemas"]["Severity"];
-            status: components["schemas"]["RiskStatus"];
-            /** Territory Id */
-            territory_id: number;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-        };
-        /**
-         * RiskStatus
-         * @enum {string}
-         */
-        RiskStatus: "NEW" | "SEEN" | "RESOLVED";
-        /** RiskStatusIn */
-        RiskStatusIn: {
-            status: components["schemas"]["RiskStatus"];
-        };
-        /**
-         * RuleStatus
-         * @enum {string}
-         */
-        RuleStatus: "PASS" | "CAUTION" | "FAIL" | "UNKNOWN";
-        /**
-         * Severity
-         * @enum {string}
-         */
-        Severity: "CRITICAL" | "VERY_HIGH" | "HIGH" | "WATCH";
-        /** SourceStatusOut */
-        SourceStatusOut: {
-            /** Last Error */
-            last_error: string | null;
-            /** Last Run At */
-            last_run_at: string | null;
-            /** Last Run Status */
-            last_run_status: string | null;
-            /** Last Success At */
-            last_success_at: string | null;
-            /** Product */
-            product: string;
-            /** Provider */
-            provider: string;
-        };
-        /** SprayAnswerOut */
-        SprayAnswerOut: {
-            data_quality: components["schemas"]["DataQuality"];
-            /** Drift Toward */
-            drift_toward: string | null;
-            /** Next Favorable */
-            next_favorable: [
-                string,
-                string
-            ] | null;
-            /** Problems */
-            problems: components["schemas"]["SprayRuleOut"][];
-            /** Profile */
-            profile: string;
-            status: components["schemas"]["SprayStatus"] | null;
-            /** Valid At */
-            valid_at: string | null;
-        };
-        /** SprayHourOut */
-        SprayHourOut: {
-            data_quality: components["schemas"]["DataQuality"];
-            /**
-             * Forecast Fetched At
-             * Format: date-time
-             */
-            forecast_fetched_at: string;
-            /** Processing Version */
-            processing_version: string;
-            /** Rules */
-            rules: components["schemas"]["SprayRuleOut"][];
-            status: components["schemas"]["SprayStatus"];
-            /**
-             * Valid At
-             * Format: date-time
-             */
-            valid_at: string;
-            /** Weather */
-            weather: {
-                [key: string]: unknown;
-            };
-        };
-        /**
-         * SprayRuleOut
-         * @description Codes and numbers only; the frontend writes the sentence in the user's language.
-         */
-        SprayRuleOut: {
-            /**
-             * Estimated
-             * @default false
-             */
-            estimated: boolean;
-            /** Limit */
-            limit?: number | null;
-            /** Rule */
-            rule: string;
-            status: components["schemas"]["RuleStatus"];
-            /** Unit */
-            unit: string;
-            /** Value */
-            value: number | null;
-            /** Window H */
-            window_h?: number | null;
-        };
-        /**
-         * SprayStatus
-         * @enum {string}
-         */
-        SprayStatus: "FAVORABLE" | "CAUTION" | "UNFAVORABLE";
-        /** TagsIn */
-        TagsIn: {
-            /** Tags */
-            tags: string[];
-        };
-        /** TerritoryIn */
-        TerritoryIn: {
-            /**
-             * Geometry
-             * @description GeoJSON Polygon or MultiPolygon, EPSG:4326
-             */
-            geometry: {
-                [key: string]: unknown;
-            };
-            /** Name */
-            name: string;
-            /**
-             * Parent Id
-             * @description Field id, to create a section
-             */
-            parent_id?: number | null;
-            /**
-             * Tags
-             * @description key:value or plain labels
-             */
-            tags?: string[];
-        };
-        /**
-         * TerritoryKind
-         * @enum {string}
-         */
-        TerritoryKind: "FIELD" | "SECTION";
-        /** TerritoryOut */
-        TerritoryOut: {
-            /** Geometry */
-            geometry: {
-                [key: string]: unknown;
-            };
-            /** Hectares */
-            hectares: number;
-            /** Id */
-            id: number;
-            kind: components["schemas"]["TerritoryKind"];
-            /** Name */
-            name: string;
-            /** Parent Id */
-            parent_id: number | null;
-            /** Tags */
-            tags: string[];
-        };
-        /** ValidationError */
-        ValidationError: {
-            /** Context */
-            ctx?: Record<string, never>;
-            /** Input */
-            input?: unknown;
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
+  schemas: {
+    /** AnomalyAnswerOut */
+    AnomalyAnswerOut: {
+      data_quality: components["schemas"]["DataQuality"];
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * DataQuality
+     * @enum {string}
+     */
+    DataQuality: "GOOD" | "PARTIAL" | "STALE" | "CLOUD_OBSCURED" | "NO_DATA";
+    /** FireAnswerOut */
+    FireAnswerOut: {
+      /** Acquired At */
+      acquired_at: string | null;
+      /** Confidence */
+      confidence: string | null;
+      data_quality: components["schemas"]["DataQuality"];
+      /** Direction */
+      direction: string | null;
+      /** Distance M */
+      distance_m: number | null;
+      /** Fire Event Id */
+      fire_event_id: number | null;
+      /** Last Read At */
+      last_read_at: string | null;
+      /** Other Fires */
+      other_fires: number;
+      /** Received At */
+      received_at: string | null;
+      /** Sensors */
+      sensors: string[];
+      severity: components["schemas"]["Severity"] | null;
+    };
+    /** FireDayOut */
+    FireDayOut: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Distance M */
+      distance_m: number;
+    };
+    /** FireEventOut */
+    FireEventOut: {
+      /** Confidence */
+      confidence: string;
+      /**
+       * First Detected At
+       * Format: date-time
+       */
+      first_detected_at: string;
+      /** Geometry */
+      geometry: {
+        [key: string]: unknown;
+      };
+      /** Id */
+      id: number;
+      /**
+       * Last Detected At
+       * Format: date-time
+       */
+      last_detected_at: string;
+      /** Max Frp Mw */
+      max_frp_mw: number | null;
+      /** Observation Count */
+      observation_count: number;
+      /** Processing Version */
+      processing_version: string;
+      /** Sensors */
+      sensors: string[];
+      status: components["schemas"]["FireEventStatus"];
+    };
+    /**
+     * FireEventStatus
+     * @enum {string}
+     */
+    FireEventStatus: "ACTIVE" | "STALE" | "CLOSED";
+    /** FireHistoryOut */
+    FireHistoryOut: {
+      /** Days Per Month */
+      days_per_month: number[];
+      /** Days Per Year */
+      days_per_year: {
+        [key: string]: number;
+      };
+      /** Fire Days */
+      fire_days: number;
+      /** First Year */
+      first_year: number;
+      /** Inside Days */
+      inside_days: number;
+      /** Last Year */
+      last_year: number;
+      latest: components["schemas"]["FireDayOut"] | null;
+      nearest: components["schemas"]["FireDayOut"] | null;
+      /** Radius M */
+      radius_m: number;
+      /** Years Loaded */
+      years_loaded: number[];
+    };
+    /** ForecastAnswerOut */
+    ForecastAnswerOut: {
+      data_quality: components["schemas"]["DataQuality"];
+      /** Days */
+      days: components["schemas"]["ForecastDayOut"][];
+      /** Issued At */
+      issued_at: string | null;
+    };
+    /** ForecastDayOut */
+    ForecastDayOut: {
+      /** Band */
+      band: string;
+      /** Factors */
+      factors: components["schemas"]["ForecastFactorOut"][];
+      /** Horizon Days */
+      horizon_days: number;
+      /** Probability */
+      probability: number;
+      /**
+       * Valid From
+       * Format: date
+       */
+      valid_from: string;
+    };
+    /** ForecastFactorOut */
+    ForecastFactorOut: {
+      /** Code */
+      code: string;
+      /** Value */
+      value: number;
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components["schemas"]["ValidationError"][];
+    };
+    /** HealthOut */
+    HealthOut: {
+      /** Database */
+      database: boolean;
+      fire_data_quality: components["schemas"]["DataQuality"];
+      latest_pass: components["schemas"]["LatestPassOut"] | null;
+      /** Processing Version */
+      processing_version: string;
+      /** Sources */
+      sources: components["schemas"]["SourceStatusOut"][];
+    };
+    /** LatestPassOut */
+    LatestPassOut: {
+      /**
+       * Acquired At
+       * Format: date-time
+       */
+      acquired_at: string;
+      /**
+       * Ingested At
+       * Format: date-time
+       */
+      ingested_at: string;
+      /** Satellite */
+      satellite: string;
+      /** Sensor */
+      sensor: string;
+    };
+    /**
+     * Layer
+     * @enum {string}
+     */
+    Layer:
+      | "territories"
+      | "fire_events"
+      | "observations"
+      | "lightning"
+      | "risk"
+      | "parcels";
+    /** LightningAnswerOut */
+    LightningAnswerOut: {
+      data_quality: components["schemas"]["DataQuality"];
+      /** Flashes */
+      flashes: number;
+      /** Last At */
+      last_at: string | null;
+      /** Nearest M */
+      nearest_m: number | null;
+      /** Window Minutes */
+      window_minutes: number;
+    };
+    /** PortfolioEntryOut */
+    PortfolioEntryOut: {
+      anomaly: components["schemas"]["AnomalyAnswerOut"];
+      fire: components["schemas"]["FireAnswerOut"];
+      forecast: components["schemas"]["ForecastAnswerOut"];
+      /** Hectares */
+      hectares: number;
+      kind: components["schemas"]["TerritoryKind"];
+      lightning: components["schemas"]["LightningAnswerOut"];
+      /** Name */
+      name: string;
+      /** Parent Id */
+      parent_id: number | null;
+      spray: components["schemas"]["SprayAnswerOut"];
+      /** Tags */
+      tags: string[];
+      /** Territory Id */
+      territory_id: number;
+    };
+    /** RiskEventOut */
+    RiskEventOut: {
+      /** Direction */
+      direction: string | null;
+      /** Distance M */
+      distance_m: number;
+      /** Factors */
+      factors: {
+        [key: string]: unknown;
+      };
+      /** Fire Event Id */
+      fire_event_id: number;
+      /** Id */
+      id: number;
+      /** Processing Version */
+      processing_version: string;
+      severity: components["schemas"]["Severity"];
+      status: components["schemas"]["RiskStatus"];
+      /** Territory Id */
+      territory_id: number;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /**
+     * RiskStatus
+     * @enum {string}
+     */
+    RiskStatus: "NEW" | "SEEN" | "RESOLVED";
+    /** RiskStatusIn */
+    RiskStatusIn: {
+      status: components["schemas"]["RiskStatus"];
+    };
+    /**
+     * RuleStatus
+     * @enum {string}
+     */
+    RuleStatus: "PASS" | "CAUTION" | "FAIL" | "UNKNOWN";
+    /**
+     * Severity
+     * @enum {string}
+     */
+    Severity: "CRITICAL" | "VERY_HIGH" | "HIGH" | "WATCH";
+    /** SourceStatusOut */
+    SourceStatusOut: {
+      /** Last Error */
+      last_error: string | null;
+      /** Last Run At */
+      last_run_at: string | null;
+      /** Last Run Status */
+      last_run_status: string | null;
+      /** Last Success At */
+      last_success_at: string | null;
+      /** Product */
+      product: string;
+      /** Provider */
+      provider: string;
+    };
+    /** SprayAnswerOut */
+    SprayAnswerOut: {
+      data_quality: components["schemas"]["DataQuality"];
+      /** Drift Toward */
+      drift_toward: string | null;
+      /** Next Favorable */
+      next_favorable: [string, string] | null;
+      /** Problems */
+      problems: components["schemas"]["SprayRuleOut"][];
+      /** Profile */
+      profile: string;
+      status: components["schemas"]["SprayStatus"] | null;
+      /** Valid At */
+      valid_at: string | null;
+    };
+    /** SprayHourOut */
+    SprayHourOut: {
+      data_quality: components["schemas"]["DataQuality"];
+      /**
+       * Forecast Fetched At
+       * Format: date-time
+       */
+      forecast_fetched_at: string;
+      /** Processing Version */
+      processing_version: string;
+      /** Rules */
+      rules: components["schemas"]["SprayRuleOut"][];
+      status: components["schemas"]["SprayStatus"];
+      /**
+       * Valid At
+       * Format: date-time
+       */
+      valid_at: string;
+      /** Weather */
+      weather: {
+        [key: string]: unknown;
+      };
+    };
+    /**
+     * SprayRuleOut
+     * @description Codes and numbers only; the frontend writes the sentence in the user's language.
+     */
+    SprayRuleOut: {
+      /**
+       * Estimated
+       * @default false
+       */
+      estimated: boolean;
+      /** Limit */
+      limit?: number | null;
+      /** Rule */
+      rule: string;
+      status: components["schemas"]["RuleStatus"];
+      /** Unit */
+      unit: string;
+      /** Value */
+      value: number | null;
+      /** Window H */
+      window_h?: number | null;
+    };
+    /**
+     * SprayStatus
+     * @enum {string}
+     */
+    SprayStatus: "FAVORABLE" | "CAUTION" | "UNFAVORABLE";
+    /** TagsIn */
+    TagsIn: {
+      /** Tags */
+      tags: string[];
+    };
+    /** TerritoryIn */
+    TerritoryIn: {
+      /**
+       * Cadastre
+       * @description The parcel the outline came from (province, department, partida, plano)
+       */
+      cadastre?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Geometry
+       * @description GeoJSON Polygon or MultiPolygon, EPSG:4326
+       */
+      geometry: {
+        [key: string]: unknown;
+      };
+      /** Name */
+      name: string;
+      /**
+       * Parent Id
+       * @description Field id, to create a section
+       */
+      parent_id?: number | null;
+      /**
+       * Tags
+       * @description key:value or plain labels
+       */
+      tags?: string[];
+    };
+    /**
+     * TerritoryKind
+     * @enum {string}
+     */
+    TerritoryKind: "FIELD" | "SECTION";
+    /** TerritoryOut */
+    TerritoryOut: {
+      /** Geometry */
+      geometry: {
+        [key: string]: unknown;
+      };
+      /** Hectares */
+      hectares: number;
+      /** Id */
+      id: number;
+      kind: components["schemas"]["TerritoryKind"];
+      /** Name */
+      name: string;
+      /** Parent Id */
+      parent_id: number | null;
+      /** Tags */
+      tags: string[];
+    };
+    /** ValidationError */
+    ValidationError: {
+      /** Context */
+      ctx?: Record<string, never>;
+      /** Input */
+      input?: unknown;
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    boundary_boundary_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
+  boundary_boundary_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    parcel_cadastre_parcel_get: {
-        parameters: {
-            query: {
-                lat: number;
-                lon: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
         };
+      };
     };
-    fire_events_fire_events_get: {
-        parameters: {
-            query?: {
-                status?: components["schemas"]["FireEventStatus"] | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FireEventOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  parcel_cadastre_parcel_get: {
+    parameters: {
+      query: {
+        lat: number;
+        lon: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    health_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthOut"];
-                };
-            };
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
     };
-    portfolio_portfolio_get: {
-        parameters: {
-            query?: {
-                /** @description key:value; every tag must match */
-                tag?: string[] | null;
-                profile?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PortfolioEntryOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  fire_events_fire_events_get: {
+    parameters: {
+      query?: {
+        status?: components["schemas"]["FireEventStatus"] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    update_risk_status_risk_events__risk_id__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                risk_id: number;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RiskStatusIn"];
-            };
+        content: {
+          "application/json": components["schemas"]["FireEventOut"][];
         };
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
     };
-    list__territories_get: {
-        parameters: {
-            query?: {
-                /** @description key:value; every tag must match */
-                tag?: string[] | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerritoryOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  health_health_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    create_territories_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TerritoryIn"];
-            };
+        content: {
+          "application/json": components["schemas"]["HealthOut"];
         };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerritoryOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+      };
     };
-    get_territories__territory_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerritoryOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  portfolio_portfolio_get: {
+    parameters: {
+      query?: {
+        /** @description key:value; every tag must match */
+        tag?: string[] | null;
+        profile?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    delete_territories__territory_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["PortfolioEntryOut"][];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
     };
-    fire_history_territories__territory_id__fire_history_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FireHistoryOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  update_risk_status_risk_events__risk_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        risk_id: number;
+      };
+      cookie?: never;
     };
-    risk_events_territories__territory_id__risk_events_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RiskEventOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RiskStatusIn"];
+      };
     };
-    spray_conditions_territories__territory_id__spray_conditions_get: {
-        parameters: {
-            query?: {
-                profile?: string;
-            };
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SprayHourOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
     };
-    replace_tags_territories__territory_id__tags_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                territory_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TagsIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TerritoryOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
+  };
+  list__territories_get: {
+    parameters: {
+      query?: {
+        /** @description key:value; every tag must match */
+        tag?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    tile_tiles__layer___z___x___y__pbf_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                layer: components["schemas"]["Layer"];
-                z: number;
-                x: number;
-                y: number;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["TerritoryOut"][];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
     };
+  };
+  create_territories_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TerritoryIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TerritoryOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_territories__territory_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TerritoryOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_territories__territory_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  fire_history_territories__territory_id__fire_history_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FireHistoryOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  risk_events_territories__territory_id__risk_events_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RiskEventOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  spray_conditions_territories__territory_id__spray_conditions_get: {
+    parameters: {
+      query?: {
+        profile?: string;
+      };
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SprayHourOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  replace_tags_territories__territory_id__tags_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        territory_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TagsIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TerritoryOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  tile_tiles__layer___z___x___y__pbf_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        layer: components["schemas"]["Layer"];
+        z: number;
+        x: number;
+        y: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
 }

@@ -18,13 +18,23 @@ export function FreshnessPill() {
     .sort();
   const checked = formatAge(t, checks.at(-1));
   const pass = health.latest_pass;
-  if (health.fire_data_quality === "NO_DATA" || !pass) return <Pill ok={false}>{t.freshness.noData}</Pill>;
-  if (health.fire_data_quality === "STALE") return <Pill ok={false}>{t.freshness.stale(checked)}</Pill>;
-  const partial = health.fire_data_quality === "PARTIAL" ? ` · ${t.freshness.partial}` : "";
+  if (health.fire_data_quality === "NO_DATA" || !pass)
+    return <Pill ok={false}>{t.freshness.noData}</Pill>;
+  if (health.fire_data_quality === "STALE")
+    return <Pill ok={false}>{t.freshness.stale(checked)}</Pill>;
+  const partial =
+    health.fire_data_quality === "PARTIAL" ? ` · ${t.freshness.partial}` : "";
   return (
     <Pill ok>
-      {t.freshness.lastPass(`${pass.sensor} ${pass.satellite}`, formatAge(t, pass.acquired_at))}
-      <span className="text-muted"> · {t.freshness.checked(checked)}{partial}</span>
+      {t.freshness.lastPass(
+        `${pass.sensor} ${pass.satellite}`,
+        formatAge(t, pass.acquired_at),
+      )}
+      <span className="text-muted">
+        {" "}
+        · {t.freshness.checked(checked)}
+        {partial}
+      </span>
     </Pill>
   );
 }
@@ -32,7 +42,9 @@ export function FreshnessPill() {
 function Pill({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <div className="glass inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs text-slate-200">
-      <SatelliteIcon className={`size-3.5 shrink-0 ${ok ? "text-good" : "text-unknown"}`} />
+      <SatelliteIcon
+        className={`size-3.5 shrink-0 ${ok ? "text-good" : "text-unknown"}`}
+      />
       <span className="truncate">{children}</span>
     </div>
   );

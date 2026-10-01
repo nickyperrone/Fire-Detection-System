@@ -21,6 +21,7 @@ import {
   type Basemap,
   FIRE_HALO_LAYER,
   FIRE_LAYER,
+  PARCELS_LAYER,
   RISK_LAYER,
   styleFor,
   TERRITORY_LAYERS,
@@ -57,6 +58,7 @@ type Props = {
   /** Texts for the fire popup, in the current language. */
   messages: Messages;
   showRisk: boolean;
+  showParcels: boolean;
   /** The country's outline; while `grayOutside` is true everything else is grayed out. */
   boundary: CountryOutline | null;
   grayOutside: boolean;
@@ -93,24 +95,37 @@ export function MapView(props: Props) {
     map.keyboard.disableRotation();
 
     map.on("style.load", () => {
-      addOverlay(
+      addOverlay(map, {
+        basemap: latest.current.basemap,
+        territoriesVersion: latest.current.territoriesVersion,
+        lightningVersion: lightningVersion(),
+        riskVersion: hourVersion(),
+        showRisk: latest.current.showRisk,
+        showParcels: latest.current.showParcels,
+      });
+      applyTerritoryStates(
         map,
-        latest.current.territoriesVersion,
-        lightningVersion(),
-        hourVersion(),
-        latest.current.showRisk,
+        latest.current.territoryStates,
+        latest.current.selectedId,
       );
-      applyTerritoryStates(map, latest.current.territoryStates, latest.current.selectedId);
       showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
     });
     map.on("click", (event) => handleClick(map, event, latest.current));
     for (const layer of [...TERRITORY_LAYERS, FIRE_LAYER]) {
-      map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
+      map.on(
+        "mouseenter",
+        layer,
+        () => (map.getCanvas().style.cursor = "pointer"),
+      );
       map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
     }
     map.on("moveend", () => {
       const center = map.getCenter();
-      latest.current.onCameraChange({ lat: center.lat, lon: center.lng, zoom: map.getZoom() });
+      latest.current.onCameraChange({
+        lat: center.lat,
+        lon: center.lng,
+        zoom: map.getZoom(),
+      });
     });
     const stopPulse = pulseFires(map);
     // New flashes arrive every 20 s; ask for fresh lightning tiles once a minute.
@@ -145,13 +160,29 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map?.isStyleLoaded()) showOutsideMask(map, props.boundary, props.grayOutside);
+    if (map?.isStyleLoaded())
+      showOutsideMask(map, props.boundary, props.grayOutside);
   }, [props.boundary, props.grayOutside]);
 
   useEffect(() => {
     const map = mapRef.current;
+    if (map?.getLayer(PARCELS_LAYER)) {
+      map.setLayoutProperty(
+        PARCELS_LAYER,
+        "visibility",
+        props.showParcels ? "visible" : "none",
+      );
+    }
+  }, [props.showParcels]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (map?.getLayer(RISK_LAYER)) {
-      map.setLayoutProperty(RISK_LAYER, "visibility", props.showRisk ? "visible" : "none");
+      map.setLayoutProperty(
+        RISK_LAYER,
+        "visibility",
+        props.showRisk ? "visible" : "none",
+      );
     }
   }, [props.showRisk]);
 
@@ -171,7 +202,9 @@ export function MapView(props: Props) {
   );
 }
 
-export type CountryOutline = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
+export type CountryOutline = GeoJSON.Feature<
+  GeoJSON.Polygon | GeoJSON.MultiPolygon
+>;
 
 const OUTSIDE_SOURCE = "outside-country";
 
@@ -185,18 +218,30 @@ function outsideOf(country: CountryOutline): GeoJSON.Feature<GeoJSON.Polygon> {
     [-180, -85],
   ];
   const parts =
-    country.geometry.type === "Polygon" ? [country.geometry.coordinates] : country.geometry.coordinates;
+    country.geometry.type === "Polygon"
+      ? [country.geometry.coordinates]
+      : country.geometry.coordinates;
   return {
     type: "Feature",
     properties: {},
-    geometry: { type: "Polygon", coordinates: [world, ...parts.map((polygon) => polygon[0])] },
+    geometry: {
+      type: "Polygon",
+      coordinates: [world, ...parts.map((polygon) => polygon[0])],
+    },
   };
 }
 
-function showOutsideMask(map: MapLibreMap, country: CountryOutline | null, visible: boolean) {
+function showOutsideMask(
+  map: MapLibreMap,
+  country: CountryOutline | null,
+  visible: boolean,
+) {
   if (!country) return;
   if (!map.getSource(OUTSIDE_SOURCE)) {
-    map.addSource(OUTSIDE_SOURCE, { type: "geojson", data: outsideOf(country) });
+    map.addSource(OUTSIDE_SOURCE, {
+      type: "geojson",
+      data: outsideOf(country),
+    });
     map.addLayer({
       id: OUTSIDE_SOURCE,
       type: "fill",
@@ -204,7 +249,11 @@ function showOutsideMask(map: MapLibreMap, country: CountryOutline | null, visib
       paint: { "fill-color": "#6b7280", "fill-opacity": 0.6 },
     });
   }
-  map.setLayoutProperty(OUTSIDE_SOURCE, "visibility", visible ? "visible" : "none");
+  map.setLayoutProperty(
+    OUTSIDE_SOURCE,
+    "visibility",
+    visible ? "visible" : "none",
+  );
 }
 
 function applyTerritoryStates(
@@ -223,35 +272,52 @@ function applyTerritoryStates(
 
 function handleClick(map: MapLibreMap, event: MapMouseEvent, props: Props) {
   if (!props.interactive) return;
-  const fires = map.queryRenderedFeatures(event.point, { layers: [FIRE_LAYER] });
+  const fires = map.queryRenderedFeatures(event.point, {
+    layers: [FIRE_LAYER],
+  });
   if (fires.length) {
     showFire(map, fires[0], event, props.messages);
     return;
   }
   // Sections are drawn above their field, so they come first when both are hit.
-  const [territory] = map.queryRenderedFeatures(event.point, { layers: [...TERRITORY_LAYERS] });
+  const [territory] = map.queryRenderedFeatures(event.point, {
+    layers: [...TERRITORY_LAYERS],
+  });
   const additive = event.originalEvent.shiftKey || event.originalEvent.metaKey;
   props.onSelect(territory ? Number(territory.id) : null, additive);
 }
 
-function showFire(map: MapLibreMap, fire: MapGeoJSONFeature, event: MapMouseEvent, t: Messages) {
+function showFire(
+  map: MapLibreMap,
+  fire: MapGeoJSONFeature,
+  event: MapMouseEvent,
+  t: Messages,
+) {
   const p = fire.properties;
   if (p.event_count !== undefined && p.event_count > 1) {
     map.easeTo({ center: event.lngLat, zoom: map.getZoom() + 2 });
     return;
   }
-  const detected = formatAge(t, new Date(Number(p.last_detected_at) * 1000).toISOString());
+  const detected = formatAge(
+    t,
+    new Date(Number(p.last_detected_at) * 1000).toISOString(),
+  );
   const content = document.createElement("div");
   content.className = "text-xs leading-5 text-slate-900";
   const title = document.createElement("strong");
   title.textContent = t.fire.popupTitle;
   const details = document.createElement("div");
-  const confidence = p.confidence ? t.fire.confidence(t.confidence[p.confidence] ?? p.confidence) : "";
+  const confidence = p.confidence
+    ? t.fire.confidence(t.confidence[p.confidence] ?? p.confidence)
+    : "";
   details.textContent = [p.sensors, confidence, t.fire.detected(detected)]
     .filter(Boolean)
     .join(" · ");
   content.append(title, details);
-  new Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(event.lngLat).setDOMContent(content).addTo(map);
+  new Popup({ closeButton: false, maxWidth: "240px" })
+    .setLngLat(event.lngLat)
+    .setDOMContent(content)
+    .addTo(map);
 }
 
 /** Slow breathing halo on fires, like a live location dot. Throttled to about 20 frames per second. */
@@ -260,10 +326,15 @@ function pulseFires(map: MapLibreMap): () => void {
   let last = 0;
   const tick = (time: number) => {
     frame = requestAnimationFrame(tick);
-    if (time - last < 50 || document.hidden || !map.getLayer(FIRE_HALO_LAYER)) return;
+    if (time - last < 50 || document.hidden || !map.getLayer(FIRE_HALO_LAYER))
+      return;
     last = time;
     const phase = (Math.sin(time / 450) + 1) / 2;
-    map.setPaintProperty(FIRE_HALO_LAYER, "circle-opacity", 0.12 + phase * 0.25);
+    map.setPaintProperty(
+      FIRE_HALO_LAYER,
+      "circle-opacity",
+      0.12 + phase * 0.25,
+    );
   };
   frame = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(frame);

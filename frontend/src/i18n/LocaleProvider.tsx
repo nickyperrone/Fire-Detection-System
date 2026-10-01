@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 
 import { type Locale, LOCALES, MESSAGES, type Messages } from "./messages";
 
@@ -37,12 +43,20 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-type LocaleContext = { locale: Locale; setLocale: (locale: Locale) => void; t: Messages };
+type LocaleContext = {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: Messages;
+};
 
 const Context = createContext<LocaleContext | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const locale = useSyncExternalStore(subscribe, browserLocale, () => SERVER_LOCALE);
+  const locale = useSyncExternalStore(
+    subscribe,
+    browserLocale,
+    () => SERVER_LOCALE,
+  );
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -59,7 +73,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <Context.Provider value={{ locale, setLocale, t: MESSAGES[locale] }}>{children}</Context.Provider>
+    <Context.Provider value={{ locale, setLocale, t: MESSAGES[locale] }}>
+      {children}
+    </Context.Provider>
   );
 }
 

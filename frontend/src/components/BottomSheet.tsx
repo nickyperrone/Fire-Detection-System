@@ -7,7 +7,10 @@ import { useLocale } from "@/i18n/LocaleProvider";
 export type Snap = "peek" | "half" | "full";
 
 const PEEK_PX = 168;
-const FRACTION: Record<Exclude<Snap, "peek">, number> = { half: 0.48, full: 0.9 };
+const FRACTION: Record<Exclude<Snap, "peek">, number> = {
+  half: 0.48,
+  full: 0.9,
+};
 
 function heightFor(snap: Snap, viewport: number): number {
   return snap === "peek" ? PEEK_PX : viewport * FRACTION[snap];
@@ -16,7 +19,8 @@ function heightFor(snap: Snap, viewport: number): number {
 function nearestSnap(height: number, viewport: number): Snap {
   const snaps: Snap[] = ["peek", "half", "full"];
   return snaps.reduce((best, snap) =>
-    Math.abs(heightFor(snap, viewport) - height) < Math.abs(heightFor(best, viewport) - height)
+    Math.abs(heightFor(snap, viewport) - height) <
+    Math.abs(heightFor(best, viewport) - height)
       ? snap
       : best,
   );
@@ -31,7 +35,12 @@ type Props = {
 };
 
 /** Mobile: a sheet dragged between three heights. Desktop: a fixed panel on the left. */
-export function BottomSheet({ snap, onSnapChange, contentKey, children }: Props) {
+export function BottomSheet({
+  snap,
+  onSnapChange,
+  contentKey,
+  children,
+}: Props) {
   const { t } = useLocale();
   const [viewport, setViewport] = useState(800);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -66,7 +75,10 @@ export function BottomSheet({ snap, onSnapChange, contentKey, children }: Props)
     drag.current = null;
     setDragHeight(null);
     // A tap on the handle cycles up, like tapping the grabber in a maps app.
-    if (moved < 6) onSnapChange(snap === "peek" ? "half" : snap === "half" ? "full" : "peek");
+    if (moved < 6)
+      onSnapChange(
+        snap === "peek" ? "half" : snap === "half" ? "full" : "peek",
+      );
     else onSnapChange(nearestSnap(height, viewport));
   };
 
@@ -88,7 +100,10 @@ export function BottomSheet({ snap, onSnapChange, contentKey, children }: Props)
       >
         <span className="h-1.5 w-10 rounded-full bg-white/25" />
       </div>
-      <div ref={content} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 md:pt-4">
+      <div
+        ref={content}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 md:pt-4"
+      >
         {children}
       </div>
     </section>

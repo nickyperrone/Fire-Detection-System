@@ -2,7 +2,8 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --color-surface: #11151c;
   --color-surface-2: #1a2029;
   --color-line: #2a313c;

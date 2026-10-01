@@ -6,7 +6,11 @@ import { LOCALES } from "@/i18n/messages";
 export function LanguageSwitch() {
   const { locale, setLocale, t } = useLocale();
   return (
-    <div role="radiogroup" aria-label={t.buttons.language} className="glass flex rounded-full p-0.5 text-xs font-semibold">
+    <div
+      role="radiogroup"
+      aria-label={t.buttons.language}
+      className="glass flex rounded-full p-0.5 text-xs font-semibold"
+    >
       {LOCALES.map((option) => (
         <button
           key={option}

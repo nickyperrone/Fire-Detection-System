@@ -4,9 +4,15 @@ import type { Messages, SprayRule } from "./messages";
 
 const LOCAL_TZ = "America/Argentina/Buenos_Aires";
 
-export function formatAge(t: Messages, iso: string | null | undefined, now: Date = new Date()): string {
+export function formatAge(
+  t: Messages,
+  iso: string | null | undefined,
+  now: Date = new Date(),
+): string {
   if (!iso) return t.age.unknown;
-  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  const minutes = Math.floor(
+    (now.getTime() - new Date(iso).getTime()) / 60_000,
+  );
   if (minutes < 1) return t.age.justNow;
   if (minutes < 60) return t.age.minutes(minutes);
   if (minutes < 48 * 60) return t.age.hours(Math.floor(minutes / 60));
@@ -14,13 +20,21 @@ export function formatAge(t: Messages, iso: string | null | undefined, now: Date
 }
 
 export function formatNumber(t: Messages, value: number, digits = 0): string {
-  return value.toLocaleString(t.intl, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  return value.toLocaleString(t.intl, {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
+  });
 }
 
-export function formatDistance(t: Messages, meters: number | null | undefined): string {
+export function formatDistance(
+  t: Messages,
+  meters: number | null | undefined,
+): string {
   if (meters === null || meters === undefined) return "";
   if (meters === 0) return t.units.inside;
-  return meters < 1000 ? `${Math.round(meters)} m` : `${formatNumber(t, meters / 1000, 1)} km`;
+  return meters < 1000
+    ? `${Math.round(meters)} m`
+    : `${formatNumber(t, meters / 1000, 1)} km`;
 }
 
 export function formatHectares(t: Messages, hectares: number): string {
@@ -46,7 +60,10 @@ export function localHourNumber(iso: string): number {
   return Number(hour);
 }
 
-export function direction(t: Messages, code: string | null | undefined): string {
+export function direction(
+  t: Messages,
+  code: string | null | undefined,
+): string {
   return code ? (t.directions[code] ?? code) : "";
 }
 
@@ -60,12 +77,18 @@ export function fireLabel(t: Messages, fire: FireAnswer): string {
 export function fireSentence(t: Messages, fire: FireAnswer): string {
   if (!fire.severity) {
     if (fire.data_quality === "NO_DATA") return t.fire.notReadYet;
-    if (fire.data_quality === "STALE") return t.fire.lastRead(formatAge(t, fire.last_read_at));
+    if (fire.data_quality === "STALE")
+      return t.fire.lastRead(formatAge(t, fire.last_read_at));
     return t.fire.noneWithin;
   }
   const where = fire.distance_m ? direction(t, fire.direction) : "";
-  const sentence = t.fire.possibleFire(formatDistance(t, fire.distance_m), where);
-  return fire.other_fires ? `${sentence} · ${t.fire.more(fire.other_fires)}` : sentence;
+  const sentence = t.fire.possibleFire(
+    formatDistance(t, fire.distance_m),
+    where,
+  );
+  return fire.other_fires
+    ? `${sentence} · ${t.fire.more(fire.other_fires)}`
+    : sentence;
 }
 
 export function sprayLabel(t: Messages, spray: SprayAnswer): string {
@@ -76,12 +99,19 @@ export function sprayLabel(t: Messages, spray: SprayAnswer): string {
 
 /** One sentence per rule that did not pass, written from its codes and numbers. */
 export function ruleSentence(t: Messages, rule: SprayRule): string {
-  const name = t.rules[rule.rule as "wind" | "gusts" | "delta_t" | "temperature" | "rain" | "inversion"];
+  const name =
+    t.rules[
+      rule.rule as
+        "wind" | "gusts" | "delta_t" | "temperature" | "rain" | "inversion"
+    ];
   // The inversion estimate has no value: it is a flag.
-  if (rule.rule === "inversion" && rule.status === "CAUTION") return t.rules.inversionRisk;
-  if (rule.status === "UNKNOWN" || rule.value === null) return t.rules.missing(name);
+  if (rule.rule === "inversion" && rule.status === "CAUTION")
+    return t.rules.inversionRisk;
+  if (rule.status === "UNKNOWN" || rule.value === null)
+    return t.rules.missing(name);
 
-  const withUnit = (n: number) => `${formatNumber(t, n, rule.unit === "°C" ? 1 : 0)} ${rule.unit}`;
+  const withUnit = (n: number) =>
+    `${formatNumber(t, n, rule.unit === "°C" ? 1 : 0)} ${rule.unit}`;
   const value = withUnit(rule.value);
   const limit = rule.limit == null ? "" : withUnit(rule.limit);
   const belowLimit = rule.limit != null && rule.value < rule.limit;
@@ -92,7 +122,9 @@ export function ruleSentence(t: Messages, rule: SprayRule): string {
       return belowLimit ? t.rules.calm(value) : overOrNear(name, value, limit);
     case "delta_t":
       if (belowLimit) return t.rules.lowDeltaT(value);
-      return rule.status === "FAIL" ? t.rules.highDeltaT(value) : overOrNear(name, value, limit);
+      return rule.status === "FAIL"
+        ? t.rules.highDeltaT(value)
+        : overOrNear(name, value, limit);
     case "rain":
       return rule.unit === "%"
         ? t.rules.rainChance(value, rule.window_h ?? 2)

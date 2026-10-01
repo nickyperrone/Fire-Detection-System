@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",
@@ -30,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.7",
     "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.9",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.2"

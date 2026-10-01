@@ -19,7 +19,10 @@ export type DrawnPolygon = { type: "Polygon"; coordinates: number[][][] };
 /** "trace": drag a finger along the edge. "corners": tap each corner. */
 export type DrawTool = "trace" | "corners";
 
-const MODE: Record<DrawTool, string> = { trace: "freehand", corners: "polygon" };
+const MODE: Record<DrawTool, string> = {
+  trace: "freehand",
+  corners: "polygon",
+};
 
 const STYLE = {
   fillColor: "#22d3ee",
@@ -73,7 +76,11 @@ function buildDraw(map: MapLibreMap): TerraDraw {
       }),
       new TerraDrawPolygonMode({
         validation: (feature) => ValidateNotSelfIntersecting(feature),
-        styles: { ...STYLE, closingPointColor: "#ffffff", closingPointOutlineColor: "#22d3ee" },
+        styles: {
+          ...STYLE,
+          closingPointColor: "#ffffff",
+          closingPointOutlineColor: "#22d3ee",
+        },
       }),
       // After closing, every point can be dragged to fit the field edge exactly. A traced shape
       // has many points already, so it gets no midpoints.
@@ -86,7 +93,10 @@ function buildDraw(map: MapLibreMap): TerraDraw {
 }
 
 /** Field drawing on the map while `active` is true. Leaving draw mode discards the shape. */
-export function useFieldDrawing(map: MapLibreMap | null, active: boolean): FieldDrawing {
+export function useFieldDrawing(
+  map: MapLibreMap | null,
+  active: boolean,
+): FieldDrawing {
   const [polygon, setPolygon] = useState<DrawnPolygon | null>(null);
   const [hectares, setHectares] = useState(0);
   const [tool, setToolState] = useState<DrawTool>("trace");
@@ -112,12 +122,17 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
 
     const polygonOf = (id: string | number): DrawnPolygon | null => {
       const feature = draw.getSnapshotFeature(id);
-      return feature?.geometry.type === "Polygon" ? (feature.geometry as DrawnPolygon) : null;
+      return feature?.geometry.type === "Polygon"
+        ? (feature.geometry as DrawnPolygon)
+        : null;
     };
     draw.on("change", (ids) => {
       setTooSmall(false);
       const closedId = closedIdRef.current;
-      const shape = closedId !== null ? polygonOf(closedId) : ids.map(polygonOf).find(Boolean);
+      const shape =
+        closedId !== null
+          ? polygonOf(closedId)
+          : ids.map(polygonOf).find(Boolean);
       if (!shape) return;
       setHectares(area(shape) / 10_000);
       if (closedId !== null) setPolygon(shape);
@@ -133,7 +148,10 @@ export function useFieldDrawing(map: MapLibreMap | null, active: boolean): Field
         return;
       }
       if (toolRef.current === "trace") {
-        const ring = simplifyRing(shape.coordinates[0], TRACE_TOLERANCE_PX * metersPerPixel(map));
+        const ring = simplifyRing(
+          shape.coordinates[0],
+          TRACE_TOLERANCE_PX * metersPerPixel(map),
+        );
         shape = { type: "Polygon", coordinates: [ring] };
         draw.updateFeatureGeometry(id, shape);
       }

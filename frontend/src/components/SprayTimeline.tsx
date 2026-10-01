@@ -11,13 +11,18 @@ import { sprayStatusTone, TONE_HEX } from "@/lib/status";
 export function SprayTimeline({ hours }: { hours: SprayHour[] }) {
   const { t } = useLocale();
   const [picked, setPicked] = useState(0);
-  if (hours.length === 0) return <p className="text-sm text-muted">{t.sprayText.noForecast}.</p>;
+  if (hours.length === 0)
+    return <p className="text-sm text-muted">{t.sprayText.noForecast}.</p>;
   const hour = hours[Math.min(picked, hours.length - 1)];
   const problems = hour.rules.filter((r) => r.status !== "PASS");
 
   return (
     <div>
-      <div className="flex gap-px overflow-hidden rounded-lg" role="listbox" aria-label={t.sprayText.timelineLabel}>
+      <div
+        className="flex gap-px overflow-hidden rounded-lg"
+        role="listbox"
+        aria-label={t.sprayText.timelineLabel}
+      >
         {hours.map((h, i) => (
           <button
             key={h.valid_at}
@@ -60,4 +65,3 @@ export function SprayTimeline({ hours }: { hours: SprayHour[] }) {
     </div>
   );
 }
-

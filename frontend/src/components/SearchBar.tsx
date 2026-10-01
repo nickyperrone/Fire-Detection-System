@@ -8,7 +8,10 @@ import { formatHectares } from "@/i18n/text";
 
 import { SearchIcon } from "./Icons";
 
-type Props = { territories: Territory[]; onPick: (territory: Territory) => void };
+type Props = {
+  territories: Territory[];
+  onPick: (territory: Territory) => void;
+};
 
 export function SearchBar({ territories, onPick }: Props) {
   const { t } = useLocale();
@@ -18,7 +21,11 @@ export function SearchBar({ territories, onPick }: Props) {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return territories
-      .filter((x) => x.name.toLowerCase().includes(q) || x.tags.some((tag) => tag.toLowerCase().includes(q)))
+      .filter(
+        (x) =>
+          x.name.toLowerCase().includes(q) ||
+          x.tags.some((tag) => tag.toLowerCase().includes(q)),
+      )
       .slice(0, 6);
   }, [query, territories]);
 
