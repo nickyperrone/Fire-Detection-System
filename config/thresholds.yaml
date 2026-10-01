@@ -20,6 +20,12 @@ static_sources:
   grid_degrees: 0.005
   radius_m: 1000
 
+static_sources:
+  # Archive "type" codes that mark a source hot every day (2: industry, gas flares).
+  types: [2]
+  grid_degrees: 0.005
+  radius_m: 1000
+
 firms:
   # FIRMS Landsat detections only cover the US and Canada.
   products: [VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT, VIIRS_SNPP_NRT, MODIS_NRT]
@@ -33,13 +39,7 @@ correlation:
   rule: spatiotemporal_v1
   # By source of the new observation: GOES pixels are about 2 x 3 km over Entre Ríos.
   max_distance_m:
-    static_sources:
-  # Archive "type" codes that mark a source hot every day (2: industry, gas flares).
-  types: [2]
-  grid_degrees: 0.005
-  radius_m: 1000
-
-firms: 1000
+    firms: 1000
     goes: 3000
   max_time_gap_hours: 24
   stale_after_hours: 48

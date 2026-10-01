@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     BigInteger,
+    Boolean,
+    Date,
     DateTime,
     Enum,
     Float,
@@ -170,6 +172,8 @@ class Observation(Base):
     brightness_k: Mapped[float | None] = mapped_column(Float)
     day_night: Mapped[str | None] = mapped_column(String(1))
     raw_payload: Mapped[dict] = mapped_column(JSONB)
+    # Within reach of a known industrial heat source: kept, but never part of a fire event.
+    static_source: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
 
 
 class FireEvent(Base):
@@ -290,3 +294,79 @@ class HistoricalDetection(Base):
     confidence: Mapped[Confidence] = mapped_column(_enum(Confidence))
     frp_mw: Mapped[float | None] = mapped_column(Float)
     day_night: Mapped[str | None] = mapped_column(String(1))
+
+
+class WeatherDay(Base):
+    """One day of weather at a forecast weather point, with the FWI codes as of that day.
+
+    POWER rows replace Open-Meteo rows when POWER publishes (docs/05-fire-forecast.md#live-data).
+    """
+
+    __tablename__ = "weather_day"
+
+    latitude: Mapped[float] = mapped_column(Float, primary_key=True)
+    longitude: Mapped[float] = mapped_column(Float, primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20))
+    tmax_c: Mapped[float] = mapped_column(Float)
+    rh_pct: Mapped[float] = mapped_column(Float)
+    wind_kmh: Mapped[float] = mapped_column(Float)
+    rain_mm: Mapped[float] = mapped_column(Float)
+    ffmc: Mapped[float | None] = mapped_column(Float)
+    dmc: Mapped[float | None] = mapped_column(Float)
+    dc: Mapped[float | None] = mapped_column(Float)
+    isi: Mapped[float | None] = mapped_column(Float)
+    bui: Mapped[float | None] = mapped_column(Float)
+    fwi: Mapped[float | None] = mapped_column(Float)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class CellForecast(Base):
+    """Latest fire probability per forecast cell and horizon; replaced on every run."""
+
+    __tablename__ = "cell_forecast"
+
+    row: Mapped[int] = mapped_column(Integer, primary_key=True)
+    col: Mapped[int] = mapped_column(Integer, primary_key=True)
+    horizon_days: Mapped[int] = mapped_column(Integer, primary_key=True)
+    valid_from: Mapped[date] = mapped_column(Date)
+    probability: Mapped[float] = mapped_column(Float)
+    factors: Mapped[list[dict]] = mapped_column(JSONB)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    model_version: Mapped[str] = mapped_column(String(60))
+
+
+class FireForecast(Base):
+    """Latest fire probability per territory and horizon (cells within the radius combined)."""
+
+    __tablename__ = "fire_forecast"
+
+    territory_id: Mapped[int] = mapped_column(
+        ForeignKey("territory.id", ondelete="CASCADE"), primary_key=True
+    )
+    horizon_days: Mapped[int] = mapped_column(Integer, primary_key=True)
+    valid_from: Mapped[date] = mapped_column(Date)
+    probability: Mapped[float] = mapped_column(Float)
+    band: Mapped[str] = mapped_column(String(20))
+    factors: Mapped[list[dict]] = mapped_column(JSONB)
+    data_quality: Mapped[DataQuality] = mapped_column(_enum(DataQuality))
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    model_version: Mapped[str] = mapped_column(String(60))
+    processing_version: Mapped[str] = mapped_column(String(40))
+
+
+class StaticSource(Base):
+    """A place hot every day (industry, gas flares), from archive detections of type 2.
+
+    Live detections near one never alert (docs/03-rules.md#static-heat-sources).
+    """
+
+    __tablename__ = "static_source"
+    __table_args__ = (Index("ix_static_source_geom", "geom", postgresql_using="gist"),)
+
+    # Rounded to the static_sources grid, so repeated detections of one plant are one row.
+    latitude: Mapped[float] = mapped_column(Float, primary_key=True)
+    longitude: Mapped[float] = mapped_column(Float, primary_key=True)
+    geom = mapped_column(Geometry("POINT", srid=4326, spatial_index=False), nullable=False)
+    detections: Mapped[int] = mapped_column(Integer)
+    last_seen: Mapped[date] = mapped_column(Date)

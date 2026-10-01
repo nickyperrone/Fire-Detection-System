@@ -43,7 +43,7 @@ def correlate(session: Session, config: dict, version: str, now: datetime) -> se
     unlinked = session.scalars(
         select(Observation)
         .outerjoin(ObservationEventLink)
-        .where(ObservationEventLink.observation_id.is_(None))
+        .where(ObservationEventLink.observation_id.is_(None), Observation.static_source.is_(False))
         .order_by(Observation.acquired_at, Observation.id)
     ).all()
     changed: set[int] = set()

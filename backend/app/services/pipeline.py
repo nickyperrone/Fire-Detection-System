@@ -12,6 +12,7 @@ from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
 from app.services.spray_conditions import assess_spray
+from app.services.static_sources import mark_observations
 from app.versioning import processing_version
 
 
@@ -21,6 +22,7 @@ def _summary(run: IngestionRun) -> tuple:
 
 def _derive_fire_events(session: Session, thresholds: dict, now: datetime) -> dict:
     version = processing_version(thresholds)
+    mark_observations(session, thresholds["static_sources"]["radius_m"])
     changed = correlate(session, thresholds["correlation"], version, now)
     # All active events, not only the changed ones: fields created since the last run need them too.
     touched = assess_active_fire_events(session, thresholds["field_risk"], version, now)

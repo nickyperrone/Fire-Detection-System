@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.models import HistoricalDetection, IngestionRun, RunStatus
 from app.providers import firms_archive
 from app.providers.firms_archive import ArchiveDetection
+from app.services.static_sources import rebuild_static
 
 PROVIDER = "firms_archive"
 BATCH_ROWS = 5_000
@@ -73,9 +74,10 @@ def load_history(
     bbox: list[float],
     decimals: int,
     root: Path,
+    static: dict | None = None,
 ) -> list[IngestionRun]:
     """Downloads (once) and loads every configured year. A failed year does not stop the rest."""
-    runs = []
+    runs, paths = [], []
     for year in range(config["first_year"], config["last_year"] + 1):
         now = datetime.now(UTC)
         run = IngestionRun(
@@ -94,6 +96,7 @@ def load_history(
             for batch in batched(detections, BATCH_ROWS):
                 run.fetched += len(batch)
                 run.inserted += store_detections(session, list(batch), decimals)
+            paths.append(path)
             run.status = RunStatus.SUCCESS
         except (httpx.HTTPError, OSError, KeyError, ValueError) as exc:
             session.rollback()
@@ -103,6 +106,9 @@ def load_history(
         session.add(run)
         session.commit()
         runs.append(run)
+    if static is not None:
+        rebuild_static(session, paths, bbox, static)
+        session.commit()
     return runs
 
 

@@ -137,6 +137,7 @@ def main() -> None:
                 thresholds["region"]["bbox"],
                 thresholds["firms"]["dedup_coordinate_decimals"],
                 REPO_ROOT,
+                thresholds["static_sources"],
             )
             for run in runs:
                 print(run.product, run.status.value, run.fetched, run.inserted, run.error or "")
