@@ -34,6 +34,18 @@ them all would download hundreds of megabytes nobody looks at. Instead:
 
 - "Property lines" in the layers menu, on by default, thin light lines that read over the dark,
   light and satellite basemaps.
+- A shape drawn by hand (Trace or Corners) is fitted to the property lines when it closes,
+  by the first rule that applies (`POST /cadastre/snap`):
+  1. **Whole parcels.** Every parcel the drawing covers for at least half of its area is taken,
+     and the field becomes the exact union of those parcels, as long as that union differs from
+     the drawing by at most 35 % of the drawing's area. This is "I went roughly around these
+     parcels".
+  2. **Edges.** Otherwise, the drawing's points within 30 m of a property line move onto it
+     (PostGIS `ST_Snap`); the rest stay where they were. This is "a lot inside a parcel that shares
+     some of its edges".
+  3. Neither: the drawing is kept as it is.
+  The card says what happened ("Fitted to 3 parcels") and offers **Use my drawing**, which puts
+  the original shape back; it can be fitted again. Thresholds are in `cadastre.snap`.
 - Drawing a field has a third tool, **Parcel**: tap a parcel and its exact outline becomes the
   field, which can still be adjusted point by point. The parcel's department, `partida` and `plano`
   are kept in the field's attributes.

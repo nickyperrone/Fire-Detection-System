@@ -30,6 +30,10 @@ cadastre:
   # docs/08-cadastre.md. Parcels load per zoom-13 tile, on first view.
   tile_zoom: 13
   refresh_days: 90
+  snap:
+    parcel_cover_share: 0.5
+    max_shape_change: 0.35
+    edge_tolerance_m: 30
   sources:
     - province: Entre Ríos
       bbox: [-60.85, -34.1, -57.75, -30.1]
