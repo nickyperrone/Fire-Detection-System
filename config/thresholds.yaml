@@ -48,6 +48,18 @@ lightning:
   window_minutes: 60
   keep_days: 7
 
+history:
+  # FIRMS yearly country archive (docs/07-fire-history.md).
+  url: https://firms.modaps.eosdis.nasa.gov/data/country/{product}/{year}/{product}_{year}_{country}.csv
+  product: viirs-snpp
+  country: Argentina
+  first_year: 2015
+  last_year: 2024
+  # Archive "type": 0 vegetation fire; 1 volcano, 2 static land source, 3 offshore are dropped.
+  keep_types: [0]
+  radius_m: 10000
+  cache_dir: data/cache/firms-archive
+
 field_risk:
   # Ordered from closest to farthest; distance 0 means the fire intersects the territory.
   bands:

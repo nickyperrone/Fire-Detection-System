@@ -1,7 +1,7 @@
 BACKEND = cd backend && uv run
 TAG ?=
 
-.PHONY: setup db migrate migration seed run-once portfolio api worker test lint
+.PHONY: setup db migrate migration seed history run-once portfolio api worker test lint
 
 setup:
 	cd backend && uv sync
@@ -19,6 +19,9 @@ migration:
 
 seed:
 	$(BACKEND) python -m app.cli load-territories ../data/aoi/larroque_sample_fields.geojson
+
+history:
+	$(BACKEND) python -m app.cli load-history
 
 run-once:
 	$(BACKEND) python -m app.cli run-once

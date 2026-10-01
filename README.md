@@ -102,6 +102,7 @@ Full diagrams, the data model and the decision log are in [02-architecture](docs
 | [04-frontend](docs/04-frontend.md) | Map-first UI, bottom sheet, vector tiles by zoom, explore mode |
 | [05-fire-forecast](docs/05-fire-forecast.md) | Fire probability per field for 24–72 h: data, model, evaluation |
 | [06-goes](docs/06-goes.md) | GOES-19 fire every 10 minutes, lightning, colors |
+| [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
 the tests against a PostGIS service container, and a Docker image build.
