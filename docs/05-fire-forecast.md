@@ -68,6 +68,16 @@ Delta burns every year and shares weather with it.
   model version and processing version. Serving starts only after the report shows the model
   beats the baselines.
 
+## Efficiency
+
+- Training works on grid arrays (cells × days) with vectorized history features, in float32. It
+  trains on all positives and a quarter of the negatives (weighted), which takes a quarter of the
+  time; calibration on the untouched validation years restores the probabilities.
+- Weather and archive files are downloaded once and cached.
+- Serving has no model in the request path. A daily job runs the model once for every cell (about
+  1,100 rows, milliseconds) and stores the probabilities; the API reads them. The FWI codes are
+  stored per weather point, so each day adds one day of FWI instead of recomputing ten years.
+
 ## Code
 
 - `backend/app/forecast/`: `fwi.py` (Fire Weather Index), `weather_history.py` (NASA POWER),
