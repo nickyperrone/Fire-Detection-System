@@ -68,6 +68,10 @@ export const api = {
   sprayConditions: (id: number) =>
     request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
+  parcelAt: (lat: number, lon: number) =>
+    request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
+      `/cadastre/parcel?lat=${lat}&lon=${lon}`,
+    ),
   boundary: () =>
     request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
       "/boundary",

@@ -28,7 +28,15 @@ def loaded(session, thresholds):
 
 
 def test_sample_file_loads_fields_sections_and_tags(loaded, session, thresholds):
-    assert len(loaded) == 8  # three fields, four lots and the test field at the house
+    # Three sample fields with four lots, and the test field with one lot per cadastral parcel.
+    sample = json.loads(SAMPLE.read_text())["features"]
+    assert len(loaded) == len(sample)
+    assert {t.name for t in loaded if t.kind == TerritoryKind.FIELD} == {
+        "La Esperanza",
+        "Campo Norte",
+        "El Ombu",
+        "Campo de prueba",
+    }
     esperanza = next(t for t in loaded if t.name == "La Esperanza")
     assert esperanza.kind == TerritoryKind.FIELD
     assert sorted(s.name for s in esperanza.sections) == ["Lote 1 - Soy", "Lote 2 - Corn"]

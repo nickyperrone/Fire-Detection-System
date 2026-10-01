@@ -9,7 +9,7 @@ import { formatHectares } from "@/i18n/text";
 
 import type { DrawTool, FieldDrawing } from "./map/useFieldDrawing";
 
-const TOOLS: DrawTool[] = ["trace", "corners"];
+const TOOLS: DrawTool[] = ["parcel", "trace", "corners"];
 
 type Props = {
   drawing: FieldDrawing;
@@ -29,7 +29,7 @@ export function DrawFieldOverlay({
   const [parentId, setParentId] = useState<number | null>(defaultParentId);
   const parentName = fields.find((f) => f.id === parentId)?.name;
   const closed = drawing.polygon !== null;
-  const hint = drawing.tool === "trace" ? t.draw.traceHint : t.draw.cornersHint;
+  const hint = t.draw.hints[drawing.tool];
 
   return (
     <>
@@ -89,8 +89,12 @@ export function DrawFieldOverlay({
             onParentChange={setParentId}
             onDone={onDone}
           />
-        ) : drawing.tooSmall ? (
-          <p className="mt-1 text-sm text-bad">{t.draw.tooSmall}</p>
+        ) : drawing.searching ? (
+          <p className="mt-1 text-sm text-slate-300">{t.draw.searching}</p>
+        ) : drawing.notice ? (
+          <p className="mt-1 text-sm text-bad">
+            {t.draw.notices[drawing.notice]}
+          </p>
         ) : (
           <p className="mt-1 text-sm text-slate-300">
             {hint} {t.draw.zoomHint}
@@ -134,6 +138,7 @@ function SaveFieldForm({
             name: name.trim(),
             geometry: drawing.polygon as Record<string, unknown>,
             parent_id: parentId,
+            cadastre: drawing.parcel,
             tags: tags
               .split(",")
               .map((tag) => tag.trim())
@@ -143,7 +148,11 @@ function SaveFieldForm({
         );
       }}
     >
-      <p className="text-sm text-slate-300">{t.draw.adjust}</p>
+      <p className="text-sm text-slate-300">
+        {drawing.parcel &&
+          `${t.draw.fromParcel(drawing.parcel.partida, drawing.parcel.plano)} `}
+        {t.draw.adjust}
+      </p>
       <div className="flex gap-2">
         <input
           autoFocus

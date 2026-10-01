@@ -224,11 +224,22 @@ const en = {
     tools: "Drawing tool",
     trace: "Trace",
     corners: "Corners",
-    traceHint:
-      "Press on the edge of the field and drag your finger all around it. Lift to close.",
-    cornersHint: "Tap each corner. Tap the first corner again to close.",
+    parcel: "Parcel",
+    hints: {
+      parcel:
+        "Tap the field on the map: its official parcel outline (Entre Ríos cadastre) is used.",
+      trace:
+        "Press on the edge of the field and drag your finger all around it. Lift to close.",
+      corners: "Tap each corner. Tap the first corner again to close.",
+    },
     zoomHint: "Zoom with two fingers or the wheel.",
-    tooSmall: "That shape is too small. Go around the whole field.",
+    searching: "Looking up the parcel…",
+    notices: {
+      too_small: "That shape is too small. Go around the whole field.",
+      no_parcel: "No cadastral parcel there. Try Trace or Corners.",
+    },
+    fromParcel: (partida: number, plano: number | null) =>
+      `Parcel ${partida}${plano ? `, plan ${plano}` : ""}.`,
     adjust: "Drag the points on the map to fit the edge exactly.",
     namePlaceholder: "Name, e.g. La Esperanza",
     name: "Name",
@@ -459,11 +470,23 @@ const es: Messages = {
     tools: "Herramienta de dibujo",
     trace: "Trazar",
     corners: "Esquinas",
-    traceHint:
-      "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
-    cornersHint: "Tocá cada esquina. Tocá la primera otra vez para cerrar.",
+    parcel: "Parcela",
+    hints: {
+      parcel:
+        "Tocá el campo en el mapa: se usa el borde oficial de la parcela (catastro de Entre Ríos).",
+      trace:
+        "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
+      corners: "Tocá cada esquina. Tocá la primera otra vez para cerrar.",
+    },
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
-    tooSmall: "La forma es muy chica. Recorré todo el campo.",
+    searching: "Buscando la parcela…",
+    notices: {
+      too_small: "La forma es muy chica. Recorré todo el campo.",
+      no_parcel:
+        "No hay una parcela catastral ahí. Probá con Trazar o Esquinas.",
+    },
+    fromParcel: (partida, plano) =>
+      `Partida ${partida}${plano ? `, plano ${plano}` : ""}.`,
     adjust: "Arrastrá los puntos en el mapa para ajustar el borde.",
     namePlaceholder: "Nombre, por ejemplo La Esperanza",
     name: "Nombre",
