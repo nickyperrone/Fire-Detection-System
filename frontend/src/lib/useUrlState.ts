@@ -6,8 +6,8 @@ import { useCallback, useMemo } from "react";
 import { BASEMAPS, type Basemap } from "@/components/map/overlay";
 import type { MapCamera } from "@/components/map/MapView";
 
-// Larroque, Entre Ríos: where the first fields are.
-const DEFAULT_CAMERA: MapCamera = { lat: -32.97, lon: -59.05, zoom: 10.5 };
+// The whole country: a first visit starts here and then flies to Larroque (FieldWatchApp).
+const DEFAULT_CAMERA: MapCamera = { lat: -38.5, lon: -64.5, zoom: 3.4 };
 
 type Changes = Partial<{
   f: string | null;
@@ -16,6 +16,7 @@ type Changes = Partial<{
   v: string;
   s: string[];
   only: string | null;
+  r: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
@@ -43,6 +44,7 @@ export function useUrlState() {
     [pickedKey],
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
+  const showRisk = params.get("r") === "1";
   const basemapParam = params.get("b") as Basemap | null;
   const basemap = basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
   // Read once: afterwards the map owns the camera and only writes it back.
@@ -60,5 +62,15 @@ export function useUrlState() {
     window.history.replaceState(null, "", `?${next}`);
   }, []);
 
-  return { selectedId, tags, picked, onlyPicked, basemap, initialCamera, linkHasCamera, update };
+  return {
+    selectedId,
+    tags,
+    picked,
+    onlyPicked,
+    showRisk,
+    basemap,
+    initialCamera,
+    linkHasCamera,
+    update,
+  };
 }

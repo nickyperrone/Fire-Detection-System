@@ -44,6 +44,14 @@ export const HistoryIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const ForecastIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 20h18" />
+    <path d="M6 16l4-5 3 3 5-7" />
+    <path d="M15 7h3v3" />
+  </Icon>
+);
+
 export const LayersIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="m12 3 9 5-9 5-9-5 9-5Z" />

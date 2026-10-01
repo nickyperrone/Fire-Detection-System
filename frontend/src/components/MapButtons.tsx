@@ -10,39 +10,75 @@ import { BASEMAPS, type Basemap } from "./map/overlay";
 type Props = {
   basemap: Basemap;
   onBasemap: (basemap: Basemap) => void;
+  showRisk: boolean;
+  onToggleRisk: () => void;
   onLocate: () => void;
   onAddField: () => void;
 };
 
-const ROUND = "glass grid size-12 place-items-center rounded-full text-slate-100";
+const ROUND =
+  "glass grid size-12 place-items-center rounded-full text-slate-100";
 
-export function MapButtons({ basemap, onBasemap, onLocate, onAddField }: Props) {
+export function MapButtons({
+  basemap,
+  onBasemap,
+  showRisk,
+  onToggleRisk,
+  onLocate,
+  onAddField,
+}: Props) {
   const { t } = useLocale();
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex flex-col items-end gap-3">
       <div className="relative">
-        <button aria-label={t.buttons.layers} aria-expanded={menu} onClick={() => setMenu((m) => !m)} className={ROUND}>
+        <button
+          aria-label={t.buttons.layers}
+          aria-expanded={menu}
+          onClick={() => setMenu((m) => !m)}
+          className={ROUND}
+        >
           <LayersIcon />
         </button>
         {menu && (
-          <div className="glass absolute right-14 top-0 flex overflow-hidden rounded-2xl">
-            {BASEMAPS.map((b) => (
-              <button
-                key={b}
-                onClick={() => {
-                  onBasemap(b);
-                  setMenu(false);
-                }}
-                className={`px-3 py-3 text-sm ${b === basemap ? "text-accent" : "text-slate-200"}`}
+          <div className="glass absolute right-14 top-0 w-max overflow-hidden rounded-2xl">
+            <div className="flex">
+              {BASEMAPS.map((b) => (
+                <button
+                  key={b}
+                  onClick={() => {
+                    onBasemap(b);
+                    setMenu(false);
+                  }}
+                  className={`px-3 py-3 text-sm ${b === basemap ? "text-accent" : "text-slate-200"}`}
+                >
+                  {t.basemaps[b]}
+                </button>
+              ))}
+            </div>
+            <button
+              role="switch"
+              aria-checked={showRisk}
+              onClick={onToggleRisk}
+              className="flex w-full items-center justify-between gap-3 border-t border-white/10 px-3 py-3 text-sm text-slate-200"
+            >
+              {t.forecast.layer}
+              <span
+                className={`h-5 w-9 rounded-full p-0.5 transition ${showRisk ? "bg-bad" : "bg-white/15"}`}
               >
-                {t.basemaps[b]}
-              </button>
-            ))}
+                <span
+                  className={`block size-4 rounded-full bg-white transition ${showRisk ? "translate-x-4" : ""}`}
+                />
+              </span>
+            </button>
           </div>
         )}
       </div>
-      <button aria-label={t.buttons.locate} onClick={onLocate} className={ROUND}>
+      <button
+        aria-label={t.buttons.locate}
+        onClick={onLocate}
+        className={ROUND}
+      >
         <LocateIcon />
       </button>
       <button

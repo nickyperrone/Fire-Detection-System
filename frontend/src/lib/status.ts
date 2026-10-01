@@ -35,6 +35,12 @@ export function lightningTone(lightning: LightningAnswer): Tone {
   return BLIND.includes(lightning.data_quality) ? "unknown" : "good";
 }
 
+/** Low risk is green; from moderate up it is red, and the band name says how high. */
+export function forecastTone(band: string | undefined, dataQuality: DataQuality): Tone {
+  if (!band || dataQuality === "NO_DATA") return "unknown";
+  return band === "LOW" ? "good" : "bad";
+}
+
 /**
  * The field's color on the map: hazards only (fire, lightning). Spraying is often "caution" for
  * hours; if it colored the map, a real fire would no longer stand out. It has its own chip.

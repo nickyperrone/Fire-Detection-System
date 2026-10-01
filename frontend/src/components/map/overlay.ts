@@ -11,7 +11,8 @@ export type Basemap = "dark" | "light" | "satellite";
 
 export const BASEMAPS: Basemap[] = ["dark", "light", "satellite"];
 
-const CARTO_GLYPHS = "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf";
+const CARTO_GLYPHS =
+  "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf";
 const LABEL_FONT = ["Montserrat Medium"];
 
 const SATELLITE_STYLE: StyleSpecification = {
@@ -42,6 +43,7 @@ export const TERRITORY_LAYERS = ["section-fill", "field-fill"] as const;
 export const FIRE_LAYER = "fire-core";
 export const FIRE_HALO_LAYER = "fire-halo";
 export const LIGHTNING_LAYER = "lightning-ring";
+export const RISK_LAYER = "risk-fill";
 
 const toneColor: ExpressionSpecification = [
   "match",
@@ -84,13 +86,48 @@ export function addOverlay(
   map: MapLibreMap,
   territoriesVersion: number,
   lightningVersion: number,
+  riskVersion: number,
+  showRisk: boolean,
 ): void {
+  // Below everything else: the risk shading is background, fields and fires sit on top.
+  map.addSource("risk", {
+    type: "vector",
+    tiles: [tileUrl("risk", riskVersion)],
+    maxzoom: 10,
+  });
+  map.addLayer({
+    id: RISK_LAYER,
+    type: "fill",
+    source: "risk",
+    "source-layer": "risk",
+    layout: { visibility: showRisk ? "visible" : "none" },
+    paint: {
+      "fill-color": TONE_HEX.bad,
+      // Transparent at low risk, stronger red as the next-day probability grows.
+      "fill-opacity": [
+        "interpolate",
+        ["linear"],
+        ["get", "probability"],
+        0.02,
+        0,
+        0.05,
+        0.12,
+        0.35,
+        0.5,
+      ],
+      "fill-antialias": false,
+    },
+  });
   map.addSource("territories", {
     type: "vector",
     tiles: [tileUrl("territories", territoriesVersion)],
     maxzoom: 16,
   });
-  map.addSource("fires", { type: "vector", tiles: [tileUrl("fire_events")], maxzoom: 14 });
+  map.addSource("fires", {
+    type: "vector",
+    tiles: [tileUrl("fire_events")],
+    maxzoom: 14,
+  });
   map.addSource("lightning", {
     type: "vector",
     tiles: [tileUrl("lightning", lightningVersion)],
@@ -103,7 +140,11 @@ export function addOverlay(
     maxzoom: 14,
   });
 
-  const byKind = (kind: string): ExpressionSpecification => ["==", ["get", "kind"], kind];
+  const byKind = (kind: string): ExpressionSpecification => [
+    "==",
+    ["get", "kind"],
+    kind,
+  ];
   map.addLayer({
     id: "field-fill",
     type: "fill",
@@ -145,7 +186,11 @@ export function addOverlay(
       "line-opacity": lineOpacity,
     },
   });
-  const labelPaint = { "text-color": "#f3f6fa", "text-halo-color": "#0b0e13", "text-halo-width": 1.4 };
+  const labelPaint = {
+    "text-color": "#f3f6fa",
+    "text-halo-color": "#0b0e13",
+    "text-halo-width": 1.4,
+  };
   // Field names while the field is small on screen, lot names once the lots are readable.
   map.addLayer({
     id: "field-label",
@@ -155,7 +200,11 @@ export function addOverlay(
     filter: byKind("FIELD"),
     minzoom: 10,
     maxzoom: 13,
-    layout: { "text-field": ["get", "name"], "text-font": LABEL_FONT, "text-size": 13 },
+    layout: {
+      "text-field": ["get", "name"],
+      "text-font": LABEL_FONT,
+      "text-size": 13,
+    },
     paint: labelPaint,
   });
   map.addLayer({
@@ -165,7 +214,11 @@ export function addOverlay(
     "source-layer": "territory_labels",
     filter: byKind("SECTION"),
     minzoom: 13,
-    layout: { "text-field": ["get", "name"], "text-font": LABEL_FONT, "text-size": 12 },
+    layout: {
+      "text-field": ["get", "name"],
+      "text-font": LABEL_FONT,
+      "text-size": 12,
+    },
     paint: labelPaint,
   });
 
@@ -192,7 +245,15 @@ export function addOverlay(
       "circle-color": "rgba(0,0,0,0)",
       "circle-stroke-color": TONE_HEX.bad,
       "circle-stroke-width": 2,
-      "circle-stroke-opacity": ["interpolate", ["linear"], ["get", "age_minutes"], 0, 1, 60, 0.2],
+      "circle-stroke-opacity": [
+        "interpolate",
+        ["linear"],
+        ["get", "age_minutes"],
+        0,
+        1,
+        60,
+        0.2,
+      ],
     },
   });
   map.addLayer({
@@ -216,14 +277,28 @@ export function addOverlay(
       "circle-radius": [
         "case",
         isCluster,
-        ["interpolate", ["linear"], ["get", "event_count"], 1, 8, 10, 13, 50, 18],
+        [
+          "interpolate",
+          ["linear"],
+          ["get", "event_count"],
+          1,
+          8,
+          10,
+          13,
+          50,
+          18,
+        ],
         6,
       ],
       "circle-color": TONE_HEX.bad,
       // Lower confidence is paler, still red: the text says how sure it is.
       "circle-opacity": [
         "case",
-        ["any", ["==", ["get", "confidence"], "high"], ["to-boolean", ["get", "any_high_confidence"]]],
+        [
+          "any",
+          ["==", ["get", "confidence"], "high"],
+          ["to-boolean", ["get", "any_high_confidence"]],
+        ],
         1,
         0.65,
       ],

@@ -4,7 +4,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { PortfolioEntry, Territory } from "@/api/client";
-import { usePortfolio, useTerritories } from "@/api/queries";
+import { useBoundary, usePortfolio, useTerritories } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { hazardTone } from "@/lib/status";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
@@ -21,6 +21,9 @@ import { PortfolioPanel } from "./PortfolioPanel";
 import { SearchBar } from "./SearchBar";
 
 type Bounds = [[number, number], [number, number]];
+
+const LARROQUE: [number, number] = [-59.01, -33.04];
+const OPENING_FLIGHT_MS = 3000;
 
 function boundsOf(territories: Territory[]): Bounds | null {
   const points = territories.flatMap((t) => (t.geometry.coordinates as number[][][][]).flat(2));
@@ -53,6 +56,7 @@ export function FieldWatchApp() {
   const everything = usePortfolio([]);
   const filtered = usePortfolio(url.tags);
   const territories = useTerritories();
+  const boundary = useBoundary();
   const drawing = useFieldDrawing(map, drawingActive);
 
   const territoryById = useMemo(
@@ -88,7 +92,7 @@ export function FieldWatchApp() {
   const selected = everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
 
   const frame = useCallback(
-    (targets: Territory[]) => {
+    (targets: Territory[], duration = 900) => {
       const bounds = boundsOf(targets);
       if (!bounds) return;
       const mobile = window.innerWidth < 768;
@@ -97,19 +101,24 @@ export function FieldWatchApp() {
           ? { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
           : { top: 60, bottom: 60, left: 440, right: 60 },
         maxZoom: 15,
-        duration: 900,
+        duration,
       });
     },
     [map],
   );
 
-  // First visit without a camera in the link: frame every field instead of a fixed point.
-  const framedOnce = useRef(false);
+  // First visit without a camera in the link: start over Argentina and fly to the fields
+  // around Larroque (or to Larroque itself before there are any). MapLibre skips the animation
+  // for people who ask their system for reduced motion.
+  const flewIn = useRef(false);
   useEffect(() => {
-    const all = territories.data ?? [];
-    if (framedOnce.current || url.linkHasCamera || !map || all.length === 0) return;
-    framedOnce.current = true;
-    frame(all.filter((t) => t.kind === "FIELD"));
+    if (flewIn.current || url.linkHasCamera || !map || !territories.data) return;
+    flewIn.current = true;
+    const fields = territories.data.filter((t) => t.kind === "FIELD");
+    map.once("idle", () => {
+      if (fields.length) frame(fields, OPENING_FLIGHT_MS);
+      else map.flyTo({ center: LARROQUE, zoom: 11, duration: OPENING_FLIGHT_MS });
+    });
   }, [map, territories.data, url.linkHasCamera, frame]);
 
   const open = useCallback(
@@ -186,6 +195,9 @@ export function FieldWatchApp() {
         onCameraChange={onCameraChange}
         onReady={setMap}
         messages={t}
+        showRisk={url.showRisk}
+        boundary={boundary.data ?? null}
+        grayOutside={drawingActive}
       />
 
       {drawingActive ? (
@@ -211,6 +223,8 @@ export function FieldWatchApp() {
             <MapButtons
               basemap={url.basemap}
               onBasemap={(b) => url.update({ b })}
+              showRisk={url.showRisk}
+              onToggleRisk={() => url.update({ r: url.showRisk ? null : "1" })}
               onLocate={locate}
               onAddField={() => setDrawingActive(true)}
             />

@@ -11,6 +11,8 @@ export type RiskEvent = Schemas["RiskEventOut"];
 export type SprayHour = Schemas["SprayHourOut"];
 export type Health = Schemas["HealthOut"];
 export type FireHistory = Schemas["FireHistoryOut"];
+export type ForecastAnswer = Schemas["ForecastAnswerOut"];
+export type ForecastDay = Schemas["ForecastDayOut"];
 export type DataQuality = Schemas["DataQuality"];
 export type Severity = Schemas["Severity"];
 export type SprayStatus = Schemas["SprayStatus"];
@@ -54,6 +56,7 @@ export const api = {
   riskEvents: (id: number) => request<RiskEvent[]>(`/territories/${id}/risk-events`),
   sprayConditions: (id: number) => request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
+  boundary: () => request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>("/boundary"),
   fireHistory: (id: number) => request<FireHistory>(`/territories/${id}/fire-history`),
 };
 

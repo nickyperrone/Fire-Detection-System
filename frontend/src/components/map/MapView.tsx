@@ -21,15 +21,15 @@ import {
   type Basemap,
   FIRE_HALO_LAYER,
   FIRE_LAYER,
+  RISK_LAYER,
   styleFor,
   TERRITORY_LAYERS,
 } from "./overlay";
 
-// West, south, east, north: Argentina plus about 3 degrees around it.
-const ARGENTINA_BOUNDS: [[number, number], [number, number]] = [
-  [-77, -57],
-  [-50, -19],
-];
+/** Changes once an hour, like the forecast it fetches. */
+function hourVersion(): number {
+  return Math.floor(Date.now() / 3_600_000);
+}
 
 /** Changes once a minute, so the lightning tile URL (and the browser cache) turns over. */
 function lightningVersion(): number {
@@ -56,6 +56,10 @@ type Props = {
   onReady: (map: MapLibreMap | null) => void;
   /** Texts for the fire popup, in the current language. */
   messages: Messages;
+  showRisk: boolean;
+  /** The country's outline; while `grayOutside` is true everything else is grayed out. */
+  boundary: CountryOutline | null;
+  grayOutside: boolean;
 };
 
 export function MapView(props: Props) {
@@ -72,9 +76,6 @@ export function MapView(props: Props) {
     const { basemap, initialCamera, onReady } = latest.current;
     const map = new MapLibreMap({
       container: container.current!,
-      // Fields can only be in Argentina; the map stays around it (with room for the Delta and
-      // neighbors' fires near the border).
-      maxBounds: ARGENTINA_BOUNDS,
       style: styleFor(basemap),
       center: [initialCamera.lon, initialCamera.lat],
       zoom: initialCamera.zoom,
@@ -92,8 +93,15 @@ export function MapView(props: Props) {
     map.keyboard.disableRotation();
 
     map.on("style.load", () => {
-      addOverlay(map, latest.current.territoriesVersion, lightningVersion());
+      addOverlay(
+        map,
+        latest.current.territoriesVersion,
+        lightningVersion(),
+        hourVersion(),
+        latest.current.showRisk,
+      );
       applyTerritoryStates(map, latest.current.territoryStates, latest.current.selectedId);
+      showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
     });
     map.on("click", (event) => handleClick(map, event, latest.current));
     for (const layer of [...TERRITORY_LAYERS, FIRE_LAYER]) {
@@ -137,6 +145,18 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
+    if (map?.isStyleLoaded()) showOutsideMask(map, props.boundary, props.grayOutside);
+  }, [props.boundary, props.grayOutside]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map?.getLayer(RISK_LAYER)) {
+      map.setLayoutProperty(RISK_LAYER, "visibility", props.showRisk ? "visible" : "none");
+    }
+  }, [props.showRisk]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (map?.getSource("territories")) {
       applyTerritoryStates(map, props.territoryStates, props.selectedId);
     }
@@ -149,6 +169,42 @@ export function MapView(props: Props) {
       <div ref={container} className="h-full w-full" />
     </div>
   );
+}
+
+export type CountryOutline = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
+
+const OUTSIDE_SOURCE = "outside-country";
+
+/** The whole world with the country cut out of it, so only the outside gets the gray. */
+function outsideOf(country: CountryOutline): GeoJSON.Feature<GeoJSON.Polygon> {
+  const world = [
+    [-180, -85],
+    [180, -85],
+    [180, 85],
+    [-180, 85],
+    [-180, -85],
+  ];
+  const parts =
+    country.geometry.type === "Polygon" ? [country.geometry.coordinates] : country.geometry.coordinates;
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "Polygon", coordinates: [world, ...parts.map((polygon) => polygon[0])] },
+  };
+}
+
+function showOutsideMask(map: MapLibreMap, country: CountryOutline | null, visible: boolean) {
+  if (!country) return;
+  if (!map.getSource(OUTSIDE_SOURCE)) {
+    map.addSource(OUTSIDE_SOURCE, { type: "geojson", data: outsideOf(country) });
+    map.addLayer({
+      id: OUTSIDE_SOURCE,
+      type: "fill",
+      source: OUTSIDE_SOURCE,
+      paint: { "fill-color": "#6b7280", "fill-opacity": 0.6 },
+    });
+  }
+  map.setLayoutProperty(OUTSIDE_SOURCE, "visibility", visible ? "visible" : "none");
 }
 
 function applyTerritoryStates(

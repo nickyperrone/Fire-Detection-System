@@ -42,6 +42,11 @@ export function useFireHistory(id: number) {
   });
 }
 
+export function useBoundary() {
+  // A country's outline does not change while the app is open.
+  return useQuery({ queryKey: ["boundary"], queryFn: api.boundary, staleTime: Infinity });
+}
+
 export function useHealth() {
   return useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: REFRESH_MS });
 }

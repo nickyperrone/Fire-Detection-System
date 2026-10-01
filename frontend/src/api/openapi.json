@@ -324,6 +324,94 @@
         "title": "FireHistoryOut",
         "type": "object"
       },
+      "ForecastAnswerOut": {
+        "properties": {
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastDayOut"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "issued_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued At"
+          }
+        },
+        "required": [
+          "data_quality",
+          "issued_at",
+          "days"
+        ],
+        "title": "ForecastAnswerOut",
+        "type": "object"
+      },
+      "ForecastDayOut": {
+        "properties": {
+          "band": {
+            "title": "Band",
+            "type": "string"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastFactorOut"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "horizon_days": {
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "probability": {
+            "title": "Probability",
+            "type": "number"
+          },
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "horizon_days",
+          "valid_from",
+          "probability",
+          "band",
+          "factors"
+        ],
+        "title": "ForecastDayOut",
+        "type": "object"
+      },
+      "ForecastFactorOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "value"
+        ],
+        "title": "ForecastFactorOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -413,7 +501,8 @@
           "territories",
           "fire_events",
           "observations",
-          "lightning"
+          "lightning",
+          "risk"
         ],
         "title": "Layer",
         "type": "string"
@@ -473,6 +562,9 @@
           "fire": {
             "$ref": "#/components/schemas/FireAnswerOut"
           },
+          "forecast": {
+            "$ref": "#/components/schemas/ForecastAnswerOut"
+          },
           "hectares": {
             "title": "Hectares",
             "type": "number"
@@ -523,6 +615,7 @@
           "fire",
           "spray",
           "lightning",
+          "forecast",
           "anomaly"
         ],
         "title": "PortfolioEntryOut",
@@ -1073,6 +1166,30 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/boundary": {
+      "get": {
+        "description": "Argentina, simplified to about 1 km: the map grays out everything else while drawing.",
+        "operationId": "boundary_boundary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Boundary Boundary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Boundary",
+        "tags": [
+          "health"
+        ]
+      }
+    },
     "/fire-events": {
       "get": {
         "operationId": "fire_events_fire_events_get",

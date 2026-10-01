@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/boundary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Boundary
+         * @description Argentina, simplified to about 1 km: the map grays out everything else while drawing.
+         */
+        get: operations["boundary_boundary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fire-events": {
         parameters: {
             query?: never;
@@ -297,6 +317,37 @@ export interface components {
             /** Years Loaded */
             years_loaded: number[];
         };
+        /** ForecastAnswerOut */
+        ForecastAnswerOut: {
+            data_quality: components["schemas"]["DataQuality"];
+            /** Days */
+            days: components["schemas"]["ForecastDayOut"][];
+            /** Issued At */
+            issued_at: string | null;
+        };
+        /** ForecastDayOut */
+        ForecastDayOut: {
+            /** Band */
+            band: string;
+            /** Factors */
+            factors: components["schemas"]["ForecastFactorOut"][];
+            /** Horizon Days */
+            horizon_days: number;
+            /** Probability */
+            probability: number;
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+        };
+        /** ForecastFactorOut */
+        ForecastFactorOut: {
+            /** Code */
+            code: string;
+            /** Value */
+            value: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -334,7 +385,7 @@ export interface components {
          * Layer
          * @enum {string}
          */
-        Layer: "territories" | "fire_events" | "observations" | "lightning";
+        Layer: "territories" | "fire_events" | "observations" | "lightning" | "risk";
         /** LightningAnswerOut */
         LightningAnswerOut: {
             data_quality: components["schemas"]["DataQuality"];
@@ -351,6 +402,7 @@ export interface components {
         PortfolioEntryOut: {
             anomaly: components["schemas"]["AnomalyAnswerOut"];
             fire: components["schemas"]["FireAnswerOut"];
+            forecast: components["schemas"]["ForecastAnswerOut"];
             /** Hectares */
             hectares: number;
             kind: components["schemas"]["TerritoryKind"];
@@ -565,6 +617,28 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    boundary_boundary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     fire_events_fire_events_get: {
         parameters: {
             query?: {

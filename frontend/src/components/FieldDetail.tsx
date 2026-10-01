@@ -16,7 +16,8 @@ import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
 import { FieldChips, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
-import { BoltIcon, CloseIcon, FlameIcon, HistoryIcon, SprayIcon } from "./Icons";
+import { ForecastSection } from "./ForecastSection";
+import { BoltIcon, CloseIcon, FlameIcon, ForecastIcon, HistoryIcon, SprayIcon } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
 
 const TONE_TEXT: Record<Tone, string> = {
@@ -84,6 +85,11 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
         {risks.data?.[0] && (
           <p className="mt-2 text-[11px] text-muted">{t.fire.rulesVersion(risks.data[0].processing_version)}</p>
         )}
+      </section>
+
+      <section>
+        <SectionTitle icon={<ForecastIcon className="size-4" />}>{t.forecast.title}</SectionTitle>
+        <ForecastSection forecast={entry.forecast} />
       </section>
 
       <section>
