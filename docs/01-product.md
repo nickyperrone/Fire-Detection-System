@@ -30,7 +30,20 @@ different answers:
 - A **field** is a polygon drawn on the map or imported from GeoJSON/KML. Its area in hectares is
   computed by the backend. Fields must lie in Argentina: the backend checks them against the
   Natural Earth 1:10m boundary (`data/boundaries/argentina.geojson`, public domain) with 1 km of
-  tolerance for the generalized rivers and coasts, and the map does not pan far outside the country.
+  tolerance for the generalized rivers and coasts.
+
+## Scope: Argentina
+
+The map can be explored anywhere, but everything the product computes is about Argentina:
+
+- Fields and lots can only be drawn inside Argentina. While drawing, everything outside the
+  country is grayed out.
+- Fire detections (FIRMS, GOES) and lightning are stored only inside Argentina, with the same 1 km
+  tolerance as fields, so a fire on the bank of a border river still counts.
+- The forecast grid, the fire history and the static heat sources use Argentine cells only.
+
+When the app opens without a position in the link, the map starts over the whole country and
+zooms into Larroque, where the first fields are.
 - A field can be split into **sections** (lots): "La Esperanza / Lote 3". A section must lie inside
   its field. Every answer is computed for fields and for sections.
 - Any field or section can carry **tags** in `key:value` form: `client:Juan Perez`, `crop:soy`,
