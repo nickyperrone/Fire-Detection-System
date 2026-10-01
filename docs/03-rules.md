@@ -22,9 +22,19 @@ All values below are defaults in [`config/thresholds.yaml`](../config/thresholds
 - A failed product (HTTP error, invalid key, unexpected columns) is recorded as a failed
   `ingestion_run` and the other products still run.
 
+## Static heat sources
+
+Steel mills, gas flares and other industry are hot every day and the satellites see them. The
+FIRMS archive and the standard product mark them (`type = 2`), but near real time detections and
+GOES do not. Every type 2 location in the archive is kept in `static_source` (rounded to 0.005°,
+about 500 m). A live detection within `static_sources.radius_m` (1,000 m) of one is stored with
+`static_source = true` and never joins a fire event, so it never alerts. Example: the steel plant
+near Ramallo (-33.37, -60.15) shows up almost every night.
+
 ## Fire correlation
 
-Rule `spatiotemporal_v1`, applied to observations without a fire event, oldest first:
+Rule `spatiotemporal_v1`, applied to observations without a fire event that are not static
+sources, oldest first:
 
 1. Candidates are fire events with status `ACTIVE` whose geometry is within `max_distance_m` of
    the observation and whose last detection is within `max_time_gap_hours` (24 h). The distance

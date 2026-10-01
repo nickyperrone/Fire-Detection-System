@@ -15,6 +15,9 @@ FIRMS publishes one CSV per country and year with the standard-processing detect
   (not committed) and only downloaded once.
 - The `type` column says what the detection is: 0 vegetation fire, 1 volcano, 2 static land
   source (industry, gas flares), 3 offshore. Only type 0 is kept; the others would be false fires.
+- Type 2 locations are not thrown away: they fill `static_source`
+  ([03-rules](03-rules.md#static-heat-sources)), which filters live detections and the recent
+  top-up of the forecast.
 - Only detections inside the region bounding box are stored: about 20,000 a year for Entre Ríos
   and the Delta (2023), against 165,000 for the whole country.
 
