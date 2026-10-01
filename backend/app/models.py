@@ -273,3 +273,20 @@ class LightningFlash(Base):
     geom = mapped_column(Geometry("POINT", srid=4326, spatial_index=False), nullable=False)
     energy_j: Mapped[float] = mapped_column(Float)
     area_m2: Mapped[float] = mapped_column(Float)
+
+
+class HistoricalDetection(Base):
+    """Archive detections for fire history. Separate from `observation` on purpose: history
+    must never create fire events or alerts (docs/07-fire-history.md)."""
+
+    __tablename__ = "historical_detection"
+    __table_args__ = (Index("ix_historical_detection_geom", "geom", postgresql_using="gist"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    product: Mapped[str] = mapped_column(String(30))
+    dedup_key: Mapped[str] = mapped_column(String(40), unique=True)
+    acquired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    geom = mapped_column(Geometry("POINT", srid=4326, spatial_index=False), nullable=False)
+    confidence: Mapped[Confidence] = mapped_column(_enum(Confidence))
+    frp_mw: Mapped[float | None] = mapped_column(Float)
+    day_night: Mapped[str | None] = mapped_column(String(1))

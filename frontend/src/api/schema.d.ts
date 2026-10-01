@@ -108,6 +108,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/territories/{territory_id}/fire-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fire History */
+        get: operations["fire_history_territories__territory_id__fire_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/territories/{territory_id}/risk-events": {
         parameters: {
             query?: never;
@@ -212,6 +229,16 @@ export interface components {
             sensors: string[];
             severity: components["schemas"]["Severity"] | null;
         };
+        /** FireDayOut */
+        FireDayOut: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Distance M */
+            distance_m: number;
+        };
         /** FireEventOut */
         FireEventOut: {
             /** Confidence */
@@ -247,6 +274,29 @@ export interface components {
          * @enum {string}
          */
         FireEventStatus: "ACTIVE" | "STALE" | "CLOSED";
+        /** FireHistoryOut */
+        FireHistoryOut: {
+            /** Days Per Month */
+            days_per_month: number[];
+            /** Days Per Year */
+            days_per_year: {
+                [key: string]: number;
+            };
+            /** Fire Days */
+            fire_days: number;
+            /** First Year */
+            first_year: number;
+            /** Inside Days */
+            inside_days: number;
+            /** Last Year */
+            last_year: number;
+            latest: components["schemas"]["FireDayOut"] | null;
+            nearest: components["schemas"]["FireDayOut"] | null;
+            /** Radius M */
+            radius_m: number;
+            /** Years Loaded */
+            years_loaded: number[];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -745,6 +795,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fire_history_territories__territory_id__fire_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FireHistoryOut"];
+                };
             };
             /** @description Validation Error */
             422: {

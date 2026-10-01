@@ -7,10 +7,11 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from app.boundaries import allowed_area
-from app.config import get_settings, get_thresholds
+from app.config import REPO_ROOT, get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.models import DataQuality
+from app.services.fire_history import load_history
 from app.services.pipeline import (
     run_fire_pipeline,
     run_goes_fire_pipeline,
@@ -101,6 +102,7 @@ def main() -> None:
     commands.add_parser("ingest-fires", help="read FIRMS and derive fire events and field risk")
     commands.add_parser("ingest-goes", help="read new GOES-19 fire scans and lightning files")
     commands.add_parser("update-spray", help="read the forecast and assess spraying conditions")
+    commands.add_parser("load-history", help="download and load the FIRMS fire archive")
     commands.add_parser("run-once", help="ingest-fires, ingest-goes and update-spray")
     portfolio = commands.add_parser("portfolio", help="every field and section with its answers")
     portfolio.add_argument("--tag", action="append", default=[], help="key:value, repeatable")
@@ -127,6 +129,17 @@ def main() -> None:
                 print(json.dumps(pipeline(session, client, thresholds), indent=2, default=str))
         if args.command in ("update-spray", "run-once"):
             print(json.dumps(run_spray_pipeline(session, client, thresholds), indent=2))
+        if args.command == "load-history":
+            runs = load_history(
+                session,
+                client,
+                thresholds["history"],
+                thresholds["region"]["bbox"],
+                thresholds["firms"]["dedup_coordinate_decimals"],
+                REPO_ROOT,
+            )
+            for run in runs:
+                print(run.product, run.status.value, run.fetched, run.inserted, run.error or "")
         if args.command == "portfolio":
             now = datetime.now(UTC)
             entries = build_portfolio(session, settings.owner, thresholds, now, args.tag)

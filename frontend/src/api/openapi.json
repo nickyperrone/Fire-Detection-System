@@ -147,6 +147,25 @@
         "title": "FireAnswerOut",
         "type": "object"
       },
+      "FireDayOut": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "day",
+          "distance_m"
+        ],
+        "title": "FireDayOut",
+        "type": "object"
+      },
       "FireEventOut": {
         "properties": {
           "confidence": {
@@ -225,6 +244,85 @@
         ],
         "title": "FireEventStatus",
         "type": "string"
+      },
+      "FireHistoryOut": {
+        "properties": {
+          "days_per_month": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Days Per Month",
+            "type": "array"
+          },
+          "days_per_year": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Days Per Year",
+            "type": "object"
+          },
+          "fire_days": {
+            "title": "Fire Days",
+            "type": "integer"
+          },
+          "first_year": {
+            "title": "First Year",
+            "type": "integer"
+          },
+          "inside_days": {
+            "title": "Inside Days",
+            "type": "integer"
+          },
+          "last_year": {
+            "title": "Last Year",
+            "type": "integer"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FireDayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nearest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FireDayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "radius_m": {
+            "title": "Radius M",
+            "type": "integer"
+          },
+          "years_loaded": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Years Loaded",
+            "type": "array"
+          }
+        },
+        "required": [
+          "first_year",
+          "last_year",
+          "radius_m",
+          "years_loaded",
+          "fire_days",
+          "inside_days",
+          "days_per_year",
+          "days_per_month",
+          "nearest",
+          "latest"
+        ],
+        "title": "FireHistoryOut",
+        "type": "object"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1330,6 +1428,48 @@
           }
         },
         "summary": "Get",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/fire-history": {
+      "get": {
+        "operationId": "fire_history_territories__territory_id__fire_history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FireHistoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fire History",
         "tags": [
           "territories"
         ]

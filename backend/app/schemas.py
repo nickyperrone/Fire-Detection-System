@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -134,6 +134,24 @@ class SprayHourOut(BaseModel):
     weather: dict
     forecast_fetched_at: datetime
     processing_version: str
+
+
+class FireDayOut(BaseModel):
+    day: date
+    distance_m: float
+
+
+class FireHistoryOut(BaseModel):
+    first_year: int
+    last_year: int
+    radius_m: int
+    years_loaded: list[int]
+    fire_days: int
+    inside_days: int
+    days_per_year: dict[int, int]
+    days_per_month: list[int]
+    nearest: FireDayOut | None
+    latest: FireDayOut | None
 
 
 class SourceStatusOut(BaseModel):

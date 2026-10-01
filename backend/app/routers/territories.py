@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
@@ -7,9 +8,17 @@ from app.boundaries import allowed_area
 from app.config import Settings, get_thresholds
 from app.models import Territory
 from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
-from app.schemas import RiskEventOut, SprayHourOut, TagsIn, TerritoryIn, TerritoryOut
+from app.schemas import (
+    FireHistoryOut,
+    RiskEventOut,
+    SprayHourOut,
+    TagsIn,
+    TerritoryIn,
+    TerritoryOut,
+)
 from app.services.field_risk import assess_active_fire_events, compass
 from app.services.fire_events import geojson, list_risk_events
+from app.services.fire_history import field_history
 from app.services.spray_conditions import list_spray_hours
 from app.services.territories import create_territory, get_territory, list_territories, set_tags
 from app.versioning import processing_version
@@ -124,6 +133,12 @@ def risk_events(
         )
         for r in list_risk_events(session, settings.owner, territory_id)
     ]
+
+
+@router.get("/{territory_id}/fire-history", response_model=FireHistoryOut)
+def fire_history(session: SessionDep, settings: SettingsDep, territory_id: int):
+    owned(session, settings, territory_id)
+    return asdict(field_history(session, territory_id, get_thresholds()["history"]))
 
 
 @router.get("/{territory_id}/spray-conditions", response_model=list[SprayHourOut])
