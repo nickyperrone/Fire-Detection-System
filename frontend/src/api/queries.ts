@@ -33,6 +33,15 @@ export function useSprayConditions(id: number | null) {
   });
 }
 
+export function useFireHistory(id: number) {
+  // The archive changes once a year; no refetching while the app is open.
+  return useQuery({
+    queryKey: ["fire-history", id],
+    queryFn: () => api.fireHistory(id),
+    staleTime: Infinity,
+  });
+}
+
 export function useHealth() {
   return useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: REFRESH_MS });
 }

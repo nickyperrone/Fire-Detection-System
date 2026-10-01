@@ -15,7 +15,8 @@ import {
 import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
 import { FieldChips, lightningSentence } from "./FieldSummary";
-import { BoltIcon, CloseIcon, FlameIcon, SprayIcon } from "./Icons";
+import { FireHistory } from "./FireHistory";
+import { BoltIcon, CloseIcon, FlameIcon, HistoryIcon, SprayIcon } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
 
 const TONE_TEXT: Record<Tone, string> = {
@@ -64,7 +65,8 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
             <p>{t.fire.times(formatAge(t, fire.acquired_at), formatAge(t, fire.received_at))}</p>
           </div>
         ) : (
-          fire.data_quality !== "NO_DATA" && (
+          // With NO_DATA or STALE the sentence above already says when satellites were read.
+          !["NO_DATA", "STALE"].includes(fire.data_quality) && (
             <p className="mt-1 text-sm text-slate-400">{t.fire.lastRead(formatAge(t, fire.last_read_at))}</p>
           )
         )}
@@ -82,6 +84,11 @@ export function FieldDetail({ entry, parentName, onClose }: Props) {
         {risks.data?.[0] && (
           <p className="mt-2 text-[11px] text-muted">{t.fire.rulesVersion(risks.data[0].processing_version)}</p>
         )}
+      </section>
+
+      <section>
+        <SectionTitle icon={<HistoryIcon className="size-4" />}>{t.sections.history}</SectionTitle>
+        <FireHistory territoryId={entry.territory_id} />
       </section>
 
       <section>

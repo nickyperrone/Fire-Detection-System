@@ -10,6 +10,7 @@ export type TerritoryIn = Schemas["TerritoryIn"];
 export type RiskEvent = Schemas["RiskEventOut"];
 export type SprayHour = Schemas["SprayHourOut"];
 export type Health = Schemas["HealthOut"];
+export type FireHistory = Schemas["FireHistoryOut"];
 export type DataQuality = Schemas["DataQuality"];
 export type Severity = Schemas["Severity"];
 export type SprayStatus = Schemas["SprayStatus"];
@@ -53,6 +54,7 @@ export const api = {
   riskEvents: (id: number) => request<RiskEvent[]>(`/territories/${id}/risk-events`),
   sprayConditions: (id: number) => request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
+  fireHistory: (id: number) => request<FireHistory>(`/territories/${id}/fire-history`),
 };
 
 export function tileUrl(layer: string, version = 0): string {
