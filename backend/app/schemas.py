@@ -199,3 +199,13 @@ class HealthOut(BaseModel):
     fire_data_quality: DataQuality
     latest_pass: LatestPassOut | None
     sources: list[SourceStatusOut]
+
+
+class SnapIn(BaseModel):
+    geometry: dict = Field(description="GeoJSON Polygon drawn by hand, EPSG:4326")
+
+
+class SnapOut(BaseModel):
+    method: str = Field(description="parcels, edges or none")
+    geometry: dict
+    parcels: list[dict]

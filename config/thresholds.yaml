@@ -34,6 +34,8 @@ cadastre:
     parcel_cover_share: 0.5
     max_shape_change: 0.35
     edge_tolerance_m: 30
+    # Gaps up to twice this (roads between parcels) are closed in a parcel union.
+    close_gaps_m: 20
   sources:
     - province: Entre Ríos
       bbox: [-60.85, -34.1, -57.75, -30.1]

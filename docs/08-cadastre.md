@@ -40,8 +40,8 @@ them all would download hundreds of megabytes nobody looks at. Instead:
      and the field becomes the exact union of those parcels, as long as that union differs from
      the drawing by at most 35 % of the drawing's area. This is "I went roughly around these
      parcels".
-  2. **Edges.** Otherwise, the drawing's points within 30 m of a property line move onto it
-     (PostGIS `ST_Snap`); the rest stay where they were. This is "a lot inside a parcel that shares
+  2. **Edges.** Otherwise, the drawing's points within 30 m of a property corner move into it,
+     and those within 30 m of a property line move onto it; the rest stay where they were. This is "a lot inside a parcel that shares
      some of its edges".
   3. Neither: the drawing is kept as it is.
   The card says what happened ("Fitted to 3 parcels") and offers **Use my drawing**, which puts
