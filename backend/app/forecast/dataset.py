@@ -175,17 +175,19 @@ def labels(fire: np.ndarray, horizon: int) -> np.ndarray:
 
 
 @dataclass(frozen=True)
-class Table:
-    X: np.ndarray  # (rows, features) float32
-    y: dict[int, np.ndarray]  # horizon -> (rows,) 0/1, NaN where unknown
-    year: np.ndarray
-    month: np.ndarray
-    cell: np.ndarray  # (rows, 2) grid row and column
-    day: np.ndarray  # index into `days`
+class Inputs:
+    """Everything the rows are read from, computed once for all splits."""
+
+    grid: Grid
     days: list[date]
+    horizons: list[int]
+    cell_weather: dict[tuple[int, int], dict[str, np.ndarray]]
+    seasonal: tuple[np.ndarray, np.ndarray]
+    history: dict[str, np.ndarray]
+    targets: dict[int, np.ndarray]
 
 
-def build_table(
+def prepare(
     grid: Grid,
     days: list[date],
     weather_by_point: dict[tuple[float, float], DailyWeather],
@@ -193,33 +195,77 @@ def build_table(
     horizons: list[int],
     weather_degrees: float,
     rain_day_mm: float,
-) -> Table:
-    nd = len(days)
+) -> Inputs:
+    by_point = {p: weather_features(w, rain_day_mm) for p, w in weather_by_point.items()}
     doy = np.array([d.timetuple().tm_yday for d in days])
-    point_features = {p: weather_features(w, rain_day_mm) for p, w in weather_by_point.items()}
-    history = history_features(fire, days)
-    targets = {h: labels(fire, h) for h in horizons}
-
-    cells = np.argwhere(grid.mask)
-    blocks, ys, cell_ids, day_ids = [], {h: [] for h in horizons}, [], []
-    for row, col in cells:
-        lat, lon = grid.center(row, col)
-        weather = point_features[weather_point(lat, lon, weather_degrees)]
-        columns = [weather[name] for name in FEATURES[:13]]
-        columns += [np.sin(2 * np.pi * doy / 365.25), np.cos(2 * np.pi * doy / 365.25)]
-        columns += [history[name][row, col] for name in FEATURES[15:]]
-        blocks.append(np.stack(columns, axis=1).astype(np.float32))
-        for h in horizons:
-            ys[h].append(targets[h][row, col])
-        cell_ids.append(np.repeat([[row, col]], nd, axis=0))
-        day_ids.append(np.arange(nd))
-    day_index = np.concatenate(day_ids)
-    return Table(
-        X=np.concatenate(blocks),
-        y={h: np.concatenate(ys[h]) for h in horizons},
-        year=np.array([d.year for d in days])[day_index],
-        month=np.array([d.month for d in days])[day_index],
-        cell=np.concatenate(cell_ids),
-        day=day_index,
+    return Inputs(
+        grid=grid,
         days=days,
+        horizons=horizons,
+        # Cells share their weather point's arrays; nothing is copied per cell.
+        cell_weather={
+            (int(r), int(c)): by_point[weather_point(*grid.center(r, c), weather_degrees)]
+            for r, c in np.argwhere(grid.mask)
+        },
+        seasonal=(np.sin(2 * np.pi * doy / 365.25), np.cos(2 * np.pi * doy / 365.25)),
+        history=history_features(fire, days),
+        targets={h: labels(fire, h) for h in horizons},
     )
+
+
+@dataclass(frozen=True)
+class Table:
+    X: np.ndarray  # (rows, features) float32
+    y: dict[int, np.ndarray]  # horizon -> (rows,) 0/1 as float32
+    weight: np.ndarray  # 1 / the chance the row was kept (see `build_table`)
+    cell: np.ndarray  # (rows, 2) int16 grid row and column
+    day: np.ndarray  # int16 index into `days`
+
+
+def build_table(
+    inputs: Inputs, years: tuple[int, int], negative_share: float, rng: np.random.Generator
+) -> Table:
+    """Rows of the cell-days in `years`. A row with no fire in any horizon is kept with
+    probability `negative_share`; `weight` is 1 / that probability, so training still sees the
+    true balance. Use 1.0 for validation and test.
+
+    Two passes: the first only decides which rows to keep, the second writes them into arrays
+    allocated once, so no intermediate copy of the table exists.
+    """
+    days, horizons = inputs.days, inputs.horizons
+    nd, longest = len(days), max(horizons)
+    year = np.array([d.year for d in days])
+    in_years = (year >= years[0]) & (year <= years[1]) & (np.arange(nd) < nd - longest)
+
+    kept: list[tuple[int, int, np.ndarray, np.ndarray]] = []
+    for row, col in inputs.cell_weather:
+        any_fire = np.zeros(nd, dtype=bool)
+        for h in horizons:
+            any_fire |= inputs.targets[h][row, col] == 1
+        keep = in_years & (any_fire | (rng.random(nd) < negative_share))
+        index = np.flatnonzero(keep)
+        kept.append((row, col, index, any_fire[index]))
+
+    rows = sum(len(index) for _, _, index, _ in kept)
+    X = np.empty((rows, len(FEATURES)), dtype=np.float32)
+    y = {h: np.empty(rows, dtype=np.float32) for h in horizons}
+    weight = np.empty(rows, dtype=np.float32)
+    cell = np.empty((rows, 2), dtype=np.int16)
+    day = np.empty(rows, dtype=np.int16)
+    at = 0
+    for row, col, index, fire_ahead in kept:
+        end = at + len(index)
+        weather = inputs.cell_weather[(row, col)]
+        for j, name in enumerate(FEATURES[:13]):
+            X[at:end, j] = weather[name][index]
+        X[at:end, 13] = inputs.seasonal[0][index]
+        X[at:end, 14] = inputs.seasonal[1][index]
+        for j, name in enumerate(FEATURES[15:], start=15):
+            X[at:end, j] = inputs.history[name][row, col, index]
+        for h in horizons:
+            y[h][at:end] = inputs.targets[h][row, col, index]
+        weight[at:end] = np.where(fire_ahead, 1.0, 1 / negative_share)
+        cell[at:end] = (row, col)
+        day[at:end] = index
+        at = end
+    return Table(X=X, y=y, weight=weight, cell=cell, day=day)

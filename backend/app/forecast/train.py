@@ -15,15 +15,24 @@ from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_s
 from app.boundaries import allowed_area
 from app.config import REPO_ROOT, get_thresholds
 from app.db import session_factory
-from app.forecast.dataset import FEATURES, Table, build_grid, build_table, fire_days, weather_point
+from app.forecast.dataset import (
+    FEATURES,
+    Table,
+    build_grid,
+    build_table,
+    fire_days,
+    prepare,
+    weather_point,
+)
 from app.forecast.weather_history import fetch_point
 from app.logging_setup import configure_logging
 
 log = logging.getLogger("forecast")
 
-# Negatives are ~99.7 % of cell-days. Training on all positives and a quarter of the negatives
-# (weighted x4) gives the same model in a quarter of the time; isotonic calibration on the
-# untouched validation years fixes the probabilities afterwards.
+# Negatives are ~99 % of cell-days. Training on all positives and a quarter of the negatives
+# (weighted x4) gives the same model in a quarter of the time and memory; isotonic calibration on
+# the untouched validation years fixes the probabilities afterwards. Rows are sampled while the
+# table is built (dataset.build_table), so the full table never exists in memory.
 NEGATIVE_SHARE = 0.25
 TOP_SHARE = 0.05
 # Enough rows to rank features; more only adds minutes.
@@ -53,19 +62,21 @@ def evaluate(y: np.ndarray, p: np.ndarray) -> Scores:
     )
 
 
-def in_years(table: Table, years: list[int]) -> np.ndarray:
-    return (table.year >= years[0]) & (table.year <= years[1])
+PREDICT_CHUNK = 250_000
 
 
-def train_horizon(table: Table, horizon: int, config: dict, rng: np.random.Generator) -> dict:
-    y_all = table.y[horizon]
-    known = ~np.isnan(y_all)
-    train = known & in_years(table, config["train_years"])
-    valid = known & in_years(table, config["validation_years"])
-    test = known & in_years(table, config["test_years"])
+def predict(model: HistGradientBoostingClassifier, X: np.ndarray) -> np.ndarray:
+    """In chunks: scikit-learn converts its input to float64, which would double a large table."""
+    return np.concatenate(
+        [
+            model.predict_proba(X[i : i + PREDICT_CHUNK])[:, 1]
+            for i in range(0, len(X), PREDICT_CHUNK)
+        ]
+    )
 
-    keep = train & ((y_all == 1) | (rng.random(len(y_all)) < NEGATIVE_SHARE))
-    weights = np.where(y_all[keep] == 1, 1.0, 1 / NEGATIVE_SHARE)
+
+def train_horizon(tables: dict[str, Table], horizon: int, rng: np.random.Generator) -> dict:
+    train, valid, test = tables["train"], tables["validation"], tables["test"]
     model = HistGradientBoostingClassifier(
         learning_rate=0.06,
         max_iter=400,
@@ -74,29 +85,25 @@ def train_horizon(table: Table, horizon: int, config: dict, rng: np.random.Gener
         early_stopping=True,
         random_state=0,
     )
-    log.info("horizon %s: training on %s cell-days", horizon, keep.sum())
-    model.fit(table.X[keep], y_all[keep], sample_weight=weights)
+    log.info("horizon %s: training on %s cell-days", horizon, len(train.X))
+    model.fit(train.X, train.y[horizon], sample_weight=train.weight)
 
     calibration = IsotonicRegression(out_of_bounds="clip", y_min=0, y_max=1)
-    calibration.fit(model.predict_proba(table.X[valid])[:, 1], y_all[valid])
-    p_test = calibration.predict(model.predict_proba(table.X[test])[:, 1])
-    results = {"model": evaluate(y_all[test], p_test)}
+    calibration.fit(predict(model, valid.X), valid.y[horizon])
+    y_test = test.y[horizon]
+    results = {"model": evaluate(y_test, calibration.predict(predict(model, test.X)))}
 
     for name, feature in BASELINES.items():
         column = FEATURES.index(feature)
         baseline = IsotonicRegression(out_of_bounds="clip", y_min=0, y_max=1)
-        baseline.fit(np.nan_to_num(table.X[valid, column]), y_all[valid])
-        results[name] = evaluate(
-            y_all[test], baseline.predict(np.nan_to_num(table.X[test, column]))
-        )
+        baseline.fit(np.nan_to_num(valid.X[:, column]), valid.y[horizon])
+        results[name] = evaluate(y_test, baseline.predict(np.nan_to_num(test.X[:, column])))
 
-    sample = rng.choice(
-        np.flatnonzero(test), size=min(IMPORTANCE_SAMPLE, int(test.sum())), replace=False
-    )
+    sample = rng.choice(len(test.X), size=min(IMPORTANCE_SAMPLE, len(test.X)), replace=False)
     importance = permutation_importance(
         model,
-        table.X[sample],
-        y_all[sample],
+        test.X[sample],
+        y_test[sample],
         scoring="average_precision",
         n_repeats=3,
         random_state=0,
@@ -107,9 +114,9 @@ def train_horizon(table: Table, horizon: int, config: dict, rng: np.random.Gener
         "calibration": calibration,
         "scores": results,
         "importance": dict(zip(FEATURES, importance.importances_mean.tolist(), strict=True)),
-        "base_rate": float(y_all[test].mean()),
-        "test_positives": int(y_all[test].sum()),
-        "train_rows": int(keep.sum()),
+        "base_rate": float(y_test.mean()),
+        "test_positives": int(y_test.sum()),
+        "train_rows": len(train.X),
     }
 
 
@@ -190,7 +197,8 @@ def main() -> None:
         fire = fire_days(session, grid, days)
     log.info("%s fire cell-days", int(fire[grid.mask].sum()))
 
-    table = build_table(
+    rng = np.random.default_rng(0)
+    inputs = prepare(
         grid,
         days,
         weather,
@@ -199,8 +207,14 @@ def main() -> None:
         config["weather_degrees"],
         config["rain_day_mm"],
     )
-    rng = np.random.default_rng(0)
-    results = [train_horizon(table, h, config, rng) for h in config["horizons_days"]]
+    tables = {
+        "train": build_table(inputs, tuple(config["train_years"]), NEGATIVE_SHARE, rng),
+        "validation": build_table(inputs, tuple(config["validation_years"]), 1.0, rng),
+        "test": build_table(inputs, tuple(config["test_years"]), 1.0, rng),
+    }
+    # The tables hold everything training needs; drop the grid-sized inputs before fitting.
+    del inputs, weather, fire
+    results = [train_horizon(tables, h, rng) for h in config["horizons_days"]]
 
     model_dir = REPO_ROOT / config["model_dir"]
     model_dir.mkdir(parents=True, exist_ok=True)
