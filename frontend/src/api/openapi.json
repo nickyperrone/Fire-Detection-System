@@ -1135,6 +1135,43 @@
         "title": "SprayStatus",
         "type": "string"
       },
+      "TagColorIn": {
+        "properties": {
+          "color": {
+            "description": "One of the palette colors, #rrggbb",
+            "title": "Color",
+            "type": "string"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "title": "TagColorIn",
+        "type": "object"
+      },
+      "TagOut": {
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "color"
+        ],
+        "title": "TagOut",
+        "type": "object"
+      },
       "TagsIn": {
         "properties": {
           "tags": {
@@ -1149,6 +1186,31 @@
           "tags"
         ],
         "title": "TagsIn",
+        "type": "object"
+      },
+      "TagsOut": {
+        "properties": {
+          "palette": {
+            "description": "The colors a tag can take, in order",
+            "items": {
+              "type": "string"
+            },
+            "title": "Palette",
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "palette",
+          "tags"
+        ],
+        "title": "TagsOut",
         "type": "object"
       },
       "TerritoryIn": {
@@ -1639,6 +1701,79 @@
         "summary": "Update Risk Status",
         "tags": [
           "fires"
+        ]
+      }
+    },
+    "/tags": {
+      "get": {
+        "operationId": "list__tags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List ",
+        "tags": [
+          "tags"
+        ]
+      }
+    },
+    "/tags/{tag_id}": {
+      "patch": {
+        "operationId": "change_color_tags__tag_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "title": "Tag Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagColorIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Color",
+        "tags": [
+          "tags"
         ]
       }
     },

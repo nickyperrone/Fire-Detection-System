@@ -132,6 +132,40 @@ export interface paths {
         patch: operations["update_risk_status_risk_events__risk_id__patch"];
         trace?: never;
     };
+    "/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["list__tags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tags/{tag_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change Color */
+        patch: operations["change_color_tags__tag_id__patch"];
+        trace?: never;
+    };
     "/territories": {
         parameters: {
             query?: never;
@@ -687,10 +721,37 @@ export interface components {
          * @enum {string}
          */
         SprayStatus: "FAVORABLE" | "CAUTION" | "UNFAVORABLE";
+        /** TagColorIn */
+        TagColorIn: {
+            /**
+             * Color
+             * @description One of the palette colors, #rrggbb
+             */
+            color: string;
+        };
+        /** TagOut */
+        TagOut: {
+            /** Color */
+            color: string;
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+        };
         /** TagsIn */
         TagsIn: {
             /** Tags */
             tags: string[];
+        };
+        /** TagsOut */
+        TagsOut: {
+            /**
+             * Palette
+             * @description The colors a tag can take, in order
+             */
+            palette: string[];
+            /** Tags */
+            tags: components["schemas"]["TagOut"][];
         };
         /** TerritoryIn */
         TerritoryIn: {
@@ -965,6 +1026,61 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list__tags_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagsOut"];
+                };
+            };
+        };
+    };
+    change_color_tags__tag_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tag_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagColorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagOut"];
+                };
             };
             /** @description Validation Error */
             422: {

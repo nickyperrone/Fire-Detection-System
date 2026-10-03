@@ -202,6 +202,14 @@ const en = {
     highPriority: "High priority",
     alertsOff: "Alerts off",
   },
+  tags: {
+    title: "Tags",
+    add: "Add",
+    addPlaceholder: "casa, cliente 1, crop:soy",
+    remove: (label: string) => `Remove ${label}`,
+    changeColor: (label: string) => `Color of ${label}`,
+  },
+  colorBy: { label: "Color fields by", status: "Status", tags: "Tags" },
   settings: {
     title: "Settings",
     alerts: "Alert me of danger nearby",
@@ -491,6 +499,18 @@ const es: Messages = {
     hidden: (n) => `Ocultos (${n})`,
     highPriority: "Prioridad alta",
     alertsOff: "Sin avisos",
+  },
+  tags: {
+    title: "Etiquetas",
+    add: "Agregar",
+    addPlaceholder: "casa, cliente 1, crop:soy",
+    remove: (label) => `Quitar ${label}`,
+    changeColor: (label) => `Color de ${label}`,
+  },
+  colorBy: {
+    label: "Colorear campos por",
+    status: "Estado",
+    tags: "Etiquetas",
   },
   settings: {
     title: "Ajustes",

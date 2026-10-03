@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useLocale } from "@/i18n/LocaleProvider";
+import type { ColorBy } from "@/lib/useUrlState";
 
 import { LayersIcon, LocateIcon, PlusIcon } from "./Icons";
 import { BASEMAPS, type Basemap } from "./map/overlay";
@@ -14,6 +15,8 @@ type Props = {
   onToggleRisk: () => void;
   showParcels: boolean;
   onToggleParcels: () => void;
+  colorBy: ColorBy;
+  onColorBy: (colorBy: ColorBy) => void;
   onLocate: () => void;
   onAddField: () => void;
 };
@@ -28,6 +31,8 @@ export function MapButtons({
   onToggleRisk,
   showParcels,
   onToggleParcels,
+  colorBy,
+  onColorBy,
   onLocate,
   onAddField,
 }: Props) {
@@ -70,6 +75,30 @@ export function MapButtons({
               on={showRisk}
               onToggle={onToggleRisk}
             />
+            <div className="flex items-center justify-between gap-3 border-t border-white/10 px-3 py-3 text-sm text-slate-200">
+              {t.colorBy.label}
+              <div
+                role="radiogroup"
+                aria-label={t.colorBy.label}
+                className="flex rounded-full bg-white/10 p-0.5"
+              >
+                {(["status", "tags"] as const).map((option) => (
+                  <button
+                    key={option}
+                    role="radio"
+                    aria-checked={colorBy === option}
+                    onClick={() => onColorBy(option)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      colorBy === option
+                        ? "bg-accent text-slate-950"
+                        : "text-slate-300"
+                    }`}
+                  >
+                    {t.colorBy[option]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -69,6 +69,7 @@ function useInvalidateTerritories() {
   return () => {
     client.invalidateQueries({ queryKey: ["territories"] });
     client.invalidateQueries({ queryKey: ["portfolio"] });
+    client.invalidateQueries({ queryKey: ["tags"] });
   };
 }
 
@@ -118,6 +119,28 @@ export function useChangeSettings() {
     mutationFn: ({ id, body }: { id: number; body: SettingsIn }) =>
       api.changeSettings(id, body),
     onSuccess: invalidate,
+  });
+}
+
+export function useTags() {
+  return useQuery({ queryKey: ["tags"], queryFn: api.tags });
+}
+
+export function useReplaceTags() {
+  const invalidate = useInvalidateTerritories();
+  return useMutation({
+    mutationFn: ({ id, tags }: { id: number; tags: string[] }) =>
+      api.replaceTags(id, tags),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSetTagColor() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, color }: { id: number; color: string }) =>
+      api.setTagColor(id, color),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["tags"] }),
   });
 }
 

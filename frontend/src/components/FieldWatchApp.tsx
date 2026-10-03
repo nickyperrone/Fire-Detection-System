@@ -4,9 +4,15 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { PortfolioEntry, Territory } from "@/api/client";
-import { useBoundary, usePortfolio, useTerritories } from "@/api/queries";
+import {
+  useBoundary,
+  usePortfolio,
+  useTags,
+  useTerritories,
+} from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { hazardTone } from "@/lib/status";
+import { hazardTone, TONE_HEX } from "@/lib/status";
+import { leadingTag } from "@/lib/tags";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
@@ -63,6 +69,7 @@ export function FieldWatchApp() {
   const everything = usePortfolio([]);
   const filtered = usePortfolio(url.tags);
   const territories = useTerritories();
+  const tags = useTags();
   const boundary = useBoundary();
 
   const territoryById = useMemo(
@@ -89,10 +96,13 @@ export function FieldWatchApp() {
     );
   }, [everything.data]);
   useDangerAlerts(everything.data, t);
-  const allTags = useMemo(
-    () => [...new Set((territories.data ?? []).flatMap((t) => t.tags))].sort(),
-    [territories.data],
-  );
+  // In the API's order (plain labels first), the order that decides a field's color.
+  const allTags = useMemo(() => {
+    const used = new Set((territories.data ?? []).flatMap((t) => t.tags));
+    return (tags.data?.tags ?? [])
+      .map((tag) => tag.label)
+      .filter((label) => used.has(label));
+  }, [territories.data, tags.data]);
   const pickedWithLots = useMemo(
     () => withLots(url.picked, everything.data ?? []),
     [url.picked, everything.data],
@@ -103,20 +113,44 @@ export function FieldWatchApp() {
       ? entries.filter((e) => pickedWithLots.has(e.territory_id))
       : entries;
   }, [filtered.data, url.onlyPicked, pickedWithLots]);
+  const tagColors = useMemo(
+    () => new Map((tags.data?.tags ?? []).map((tag) => [tag.label, tag.color])),
+    [tags.data],
+  );
   const territoryStates = useMemo(() => {
     const shown = new Set(listed.map((e) => e.territory_id));
     const narrowed = url.tags.length > 0 || url.onlyPicked;
+    const entries = everything.data ?? [];
+    const byId = new Map(entries.map((e) => [e.territory_id, e]));
+    // With tags, a lot without tags of its own takes its field's color.
+    const tagColor = (e: PortfolioEntry): string | undefined => {
+      const tag = leadingTag(e.tags);
+      if (tag) return tagColors.get(tag);
+      const parent = e.parent_id !== null ? byId.get(e.parent_id) : undefined;
+      return parent ? tagColor(parent) : undefined;
+    };
     return new Map<number, TerritoryState>(
-      (everything.data ?? []).map((e) => [
+      entries.map((e) => [
         e.territory_id,
         {
-          tone: hazardTone(e.fire, e.lightning),
+          color:
+            url.colorBy === "tags"
+              ? (tagColor(e) ?? TONE_HEX.unknown)
+              : TONE_HEX[hazardTone(e.fire, e.lightning)],
           dimmed: narrowed && !shown.has(e.territory_id),
           picked: url.picked.includes(e.territory_id),
         },
       ]),
     );
-  }, [everything.data, listed, url.tags, url.onlyPicked, url.picked]);
+  }, [
+    everything.data,
+    listed,
+    url.tags,
+    url.onlyPicked,
+    url.picked,
+    url.colorBy,
+    tagColors,
+  ]);
   const selected =
     everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
 
@@ -285,6 +319,8 @@ export function FieldWatchApp() {
               onToggleParcels={() =>
                 url.update({ p: url.showParcels ? "0" : null })
               }
+              colorBy={url.colorBy}
+              onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
               onLocate={locate}
               onAddField={() => setDrawingActive(true)}
             />
@@ -312,6 +348,7 @@ export function FieldWatchApp() {
               <PortfolioPanel
                 entries={listed}
                 hidden={hiddenIds}
+                tagColors={tagColors}
                 allTags={allTags}
                 activeTags={url.tags}
                 picked={url.picked}

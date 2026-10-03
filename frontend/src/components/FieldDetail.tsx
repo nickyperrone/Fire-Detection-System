@@ -32,6 +32,7 @@ import {
   SprayIcon,
 } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
+import { TagEditor } from "./TagEditor";
 
 const TONE_TEXT: Record<Tone, string> = {
   bad: "text-bad",
@@ -94,6 +95,11 @@ export function FieldDetail({
       <section>
         <SectionTitle>{t.settings.title}</SectionTitle>
         <FieldSettings entry={entry} />
+      </section>
+
+      <section>
+        <SectionTitle>{t.tags.title}</SectionTitle>
+        <TagEditor entry={entry} />
       </section>
 
       <section>

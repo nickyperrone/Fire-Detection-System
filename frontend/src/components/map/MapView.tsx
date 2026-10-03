@@ -14,7 +14,6 @@ import { useEffect, useRef } from "react";
 import { tileUrl } from "@/api/client";
 import type { Messages } from "@/i18n/messages";
 import { formatAge } from "@/i18n/text";
-import type { Tone } from "@/lib/status";
 
 import {
   addOverlay,
@@ -43,7 +42,11 @@ setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export type MapCamera = { lat: number; lon: number; zoom: number };
 
-export type TerritoryState = { tone: Tone; dimmed: boolean; picked: boolean };
+export type TerritoryState = {
+  color: string;
+  dimmed: boolean;
+  picked: boolean;
+};
 
 type Props = {
   basemap: Basemap;

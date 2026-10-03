@@ -46,13 +46,10 @@ export const LIGHTNING_LAYER = "lightning-ring";
 export const RISK_LAYER = "risk-fill";
 export const PARCELS_LAYER = "parcel-line";
 
-const toneColor: ExpressionSpecification = [
-  "match",
-  ["coalesce", ["feature-state", "tone"], "unknown"],
-  "bad",
-  TONE_HEX.bad,
-  "good",
-  TONE_HEX.good,
+// Set per field by the app: its status tone, or its tag color when coloring by tags.
+const territoryColor: ExpressionSpecification = [
+  "coalesce",
+  ["feature-state", "color"],
   TONE_HEX.unknown,
 ];
 
@@ -200,7 +197,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     source: "territories",
     "source-layer": "territories",
     filter: byKind("FIELD"),
-    paint: { "fill-color": toneColor, "fill-opacity": fillOpacity(0.18) },
+    paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.18) },
   });
   map.addLayer({
     id: "section-fill",
@@ -208,7 +205,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     source: "territories",
     "source-layer": "territories",
     filter: byKind("SECTION"),
-    paint: { "fill-color": toneColor, "fill-opacity": fillOpacity(0.12) },
+    paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.12) },
   });
   map.addLayer({
     id: "field-line",
@@ -217,7 +214,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     "source-layer": "territories",
     filter: byKind("FIELD"),
     paint: {
-      "line-color": toneColor,
+      "line-color": territoryColor,
       "line-width": ["case", highlighted, 3.5, 2],
       "line-opacity": lineOpacity,
     },
@@ -229,7 +226,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     "source-layer": "territories",
     filter: byKind("SECTION"),
     paint: {
-      "line-color": toneColor,
+      "line-color": territoryColor,
       "line-width": 1.2,
       "line-dasharray": [2, 2],
       "line-opacity": lineOpacity,

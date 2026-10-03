@@ -19,6 +19,7 @@ export type SprayStatus = Schemas["SprayStatus"];
 export type Snap = Schemas["SnapOut"];
 export type OutlineIn = Schemas["OutlineIn"];
 export type SettingsIn = Schemas["SettingsIn"];
+export type Tags = Schemas["TagsOut"];
 
 export class ApiError extends Error {
   constructor(
@@ -59,6 +60,17 @@ export const api = {
   portfolio: (tags: string[]) =>
     request<PortfolioEntry[]>(`/portfolio${tagQuery(tags)}`),
   territories: () => request<Territory[]>("/territories"),
+  replaceTags: (id: number, tags: string[]) =>
+    request<Territory>(`/territories/${id}/tags`, {
+      method: "PUT",
+      body: JSON.stringify({ tags }),
+    }),
+  tags: () => request<Tags>("/tags"),
+  setTagColor: (id: number, color: string) =>
+    request<Tags["tags"][number]>(`/tags/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ color }),
+    }),
   createTerritory: (body: TerritoryIn) =>
     request<Territory>("/territories", {
       method: "POST",

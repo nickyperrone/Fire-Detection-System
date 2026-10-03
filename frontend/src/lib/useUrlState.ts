@@ -18,6 +18,7 @@ type Changes = Partial<{
   only: string | null;
   r: string | null;
   p: string | null;
+  c: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
@@ -33,8 +34,11 @@ export function formatCamera({ lat, lon, zoom }: MapCamera): string {
 
 /**
  * App state that belongs in a shareable link: the open field (f), tag filters (tag), the fields
- * picked to compare (s) and whether only those are shown (only), basemap (b) and camera (v).
+ * picked to compare (s) and whether only those are shown (only), basemap (b), field colors (c) and camera (v).
  */
+/** What colors the fields on the map (docs/01-product.md#tags-and-colors). */
+export type ColorBy = "status" | "tags";
+
 export function useUrlState() {
   const params = useSearchParams();
 
@@ -51,6 +55,7 @@ export function useUrlState() {
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
   const showRisk = params.get("r") === "1";
+  const colorBy: ColorBy = params.get("c") === "tags" ? "tags" : "status";
   // Property lines are on unless the link turns them off.
   const showParcels = params.get("p") !== "0";
   const basemapParam = params.get("b") as Basemap | null;
@@ -78,6 +83,7 @@ export function useUrlState() {
     onlyPicked,
     showRisk,
     showParcels,
+    colorBy,
     basemap,
     initialCamera,
     linkHasCamera,

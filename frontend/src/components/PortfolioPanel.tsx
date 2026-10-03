@@ -12,6 +12,7 @@ type Props = {
   /** Fields and lots the user hid: listed apart, at the end, and left out of the summary. */
   hidden: Set<number>;
   allTags: string[];
+  tagColors: Map<string, string>;
   activeTags: string[];
   picked: number[];
   onlyPicked: boolean;
@@ -57,12 +58,16 @@ export function PortfolioPanel(props: Props) {
                 key={tag}
                 onClick={() => props.onToggleTag(tag)}
                 aria-pressed={active}
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
                   active
                     ? "border-accent bg-accent/15 text-accent"
                     : "border-line text-slate-300"
                 }`}
               >
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ background: props.tagColors.get(tag) }}
+                />
                 {tag}
               </button>
             );
