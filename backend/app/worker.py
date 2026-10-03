@@ -10,6 +10,7 @@ from app.config import get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.services.pipeline import (
+    run_alert_pipeline,
     run_fire_pipeline,
     run_forecast_pipeline,
     run_goes_fire_pipeline,
@@ -21,12 +22,20 @@ log = logging.getLogger("worker")
 
 
 def job(
-    name: str, pipeline: Callable[..., dict], with_settings: bool = False
+    name: str,
+    pipeline: Callable[..., dict],
+    with_settings: bool = False,
+    then_alert: bool = False,
 ) -> Callable[[], None]:
+    """`then_alert`: the run may have brought new danger near fields, so alerts are checked."""
+
     def run() -> None:
+        settings, thresholds = get_settings(), get_thresholds()
         with session_factory()() as session, httpx.Client() as client:
-            args = (get_settings(),) if with_settings else ()
-            log.info("%s: %s", name, pipeline(session, client, *args, get_thresholds()))
+            args = (settings,) if with_settings else ()
+            log.info("%s: %s", name, pipeline(session, client, *args, thresholds))
+            if then_alert:
+                log.info("alerts: %s", run_alert_pipeline(session, settings, thresholds))
 
     return run
 
@@ -47,9 +56,18 @@ def main() -> None:
     )
     start = datetime.now(UTC)
     jobs = [
-        (job("firms", run_fire_pipeline, with_settings=True), intervals["fire_interval_minutes"]),
-        (job("goes fire", run_goes_fire_pipeline), intervals["goes_fire_interval_minutes"]),
-        (job("lightning", run_lightning_pipeline), intervals["lightning_interval_minutes"]),
+        (
+            job("firms", run_fire_pipeline, with_settings=True, then_alert=True),
+            intervals["fire_interval_minutes"],
+        ),
+        (
+            job("goes fire", run_goes_fire_pipeline, then_alert=True),
+            intervals["goes_fire_interval_minutes"],
+        ),
+        (
+            job("lightning", run_lightning_pipeline, then_alert=True),
+            intervals["lightning_interval_minutes"],
+        ),
         (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"]),
         (
             job("forecast", run_forecast_pipeline, with_settings=True),

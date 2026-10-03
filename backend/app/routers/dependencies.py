@@ -1,11 +1,39 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, Query
+from fastapi import Cookie, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.db import get_session
+from app.models import User
+from app.services.auth import user_for_session
+from app.services.mail import SendEmail, smtp_sender
+
+SESSION_COOKIE = "fw_session"
 
 SessionDep = Annotated[Session, Depends(get_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 TagsQuery = Annotated[list[str] | None, Query(description="key:value; every tag must match")]
+
+
+def current_user(
+    session: SessionDep, fw_session: Annotated[str | None, Cookie()] = None
+) -> User | None:
+    return user_for_session(session, fw_session, datetime.now(UTC)) if fw_session else None
+
+
+def require_owner(user: Annotated[User | None, Depends(current_user)]) -> str:
+    """The signed-in user's address, which owns their fields and tags."""
+    if user is None:
+        raise HTTPException(401, "sign in to see and change fields")
+    return user.email
+
+
+def mail_sender(settings: SettingsDep) -> SendEmail:
+    return smtp_sender(settings)
+
+
+UserDep = Annotated[User | None, Depends(current_user)]
+OwnerDep = Annotated[str, Depends(require_owner)]
+MailDep = Annotated[SendEmail, Depends(mail_sender)]

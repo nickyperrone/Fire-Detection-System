@@ -15,6 +15,11 @@ services:
       interval: 3s
       retries: 20
 
+  # Catches every email in development; read them at http://localhost:8025.
+  mail:
+    image: axllent/mailpit:v1.20
+    ports: ["1025:1025", "8025:8025"]
+
   api:
     build: ./backend
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
@@ -22,6 +27,13 @@ services:
       DATABASE_URL: postgresql+psycopg://fieldwatch:fieldwatch@db:5432/fieldwatch
       FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
       THRESHOLDS_PATH: /config/thresholds.yaml
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      SMTP_HOST: ${SMTP_HOST:-mail}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      SMTP_FROM: ${SMTP_FROM:-Field Watch <alerts@fieldwatch.local>}
     volumes: ["./config:/config:ro"]
     ports: ["8000:8000"]
     depends_on:

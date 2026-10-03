@@ -9,6 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.models import Tag, Territory, TerritoryKind, TerritoryTag
 
+# Owner of territories loaded from the command line without an account (`make seed`).
+DEFAULT_OWNER = "default"
+
 
 class TerritoryError(ValueError):
     """Invalid geometry, hierarchy or tag supplied by the user.
@@ -272,3 +275,32 @@ def _exists(session: Session, owner: str, name: str, parent: Territory | None) -
 def get_territory(session: Session, owner: str, territory_id: int) -> Territory | None:
     territory = session.get(Territory, territory_id)
     return territory if territory is not None and territory.owner == owner else None
+
+
+def claim_fields(session: Session, from_owner: str, to_owner: str) -> int:
+    """Moves every territory and tag of `from_owner` to `to_owner`, merging tags both have."""
+    for tag in session.scalars(select(Tag).where(Tag.owner == from_owner)).all():
+        same = session.scalar(
+            select(Tag).where(
+                Tag.owner == to_owner,
+                Tag.key == tag.key,
+                Tag.value.is_(None) if tag.value is None else Tag.value == tag.value,
+            )
+        )
+        if same is None:
+            tag.owner = to_owner
+            continue
+        links = session.scalars(select(TerritoryTag).where(TerritoryTag.tag_id == tag.id)).all()
+        for link in links:
+            session.execute(
+                delete(TerritoryTag).where(
+                    TerritoryTag.territory_id == link.territory_id, TerritoryTag.tag_id == tag.id
+                )
+            )
+            session.merge(TerritoryTag(territory_id=link.territory_id, tag_id=same.id))
+        session.delete(tag)
+    territories = session.scalars(select(Territory).where(Territory.owner == from_owner)).all()
+    for territory in territories:
+        territory.owner = to_owner
+    session.flush()
+    return len(territories)

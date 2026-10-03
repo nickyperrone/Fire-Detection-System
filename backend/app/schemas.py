@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.models import (
     DataQuality,
@@ -48,6 +48,22 @@ class TagsOut(BaseModel):
 
 class TagColorIn(BaseModel):
     color: str = Field(description="One of the palette colors, #rrggbb")
+
+
+class LoginIn(BaseModel):
+    email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    locale: Literal["es", "en"] = "es"
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        # Phone keyboards add a space after an autocompleted address.
+        return value.strip() if isinstance(value, str) else value
+
+
+class MeOut(BaseModel):
+    email: str
+    locale: str
 
 
 class SettingsIn(BaseModel):

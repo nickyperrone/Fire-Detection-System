@@ -7,7 +7,9 @@ from fastapi.testclient import TestClient
 
 from app.db import get_session
 from app.main import app
-from app.services.territories import load_feature_collection
+from app.models import User
+from app.routers.dependencies import current_user
+from app.services.territories import DEFAULT_OWNER, load_feature_collection
 from tests.conftest import ARGENTINA
 from tests.test_territories import SAMPLE
 
@@ -24,12 +26,23 @@ def tile_xy(lon: float, lat: float, z: int) -> tuple[int, int]:
 
 
 @pytest.fixture
-def client(session):
-    load_feature_collection(session, "default", json.loads(SAMPLE.read_text()), 5, ARGENTINA)
+def anonymous(session):
+    load_feature_collection(session, DEFAULT_OWNER, json.loads(SAMPLE.read_text()), 5, ARGENTINA)
     session.commit()
     app.dependency_overrides[get_session] = lambda: session
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(anonymous):
+    app.dependency_overrides[current_user] = lambda: User(email=DEFAULT_OWNER, locale="es")
+    return anonymous
+
+
+def test_signed_out_the_field_layer_is_empty(anonymous):
+    x, y = tile_xy(LON, LAT, 12)
+    assert anonymous.get(f"/tiles/territories/12/{x}/{y}.pbf").status_code == 204
 
 
 def test_territory_tile_carries_ids_and_names_only(client):

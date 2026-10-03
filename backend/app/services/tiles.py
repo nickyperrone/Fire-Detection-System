@@ -161,7 +161,7 @@ def build_tile(
     z: int,
     x: int,
     y: int,
-    owner: str,
+    owner: str | None,
     now: datetime,
     lightning_window_minutes: int = 60,
     forecast_grid: tuple[float, float, float] | None = None,

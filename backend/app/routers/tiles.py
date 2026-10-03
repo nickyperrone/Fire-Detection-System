@@ -5,7 +5,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Path, Response
 
 from app.config import get_thresholds
-from app.routers.dependencies import SessionDep, SettingsDep
+from app.routers.dependencies import SessionDep, UserDep
 from app.services.cadastre import ensure_tile
 from app.services.tiles import Layer, build_tile
 
@@ -30,7 +30,7 @@ CACHE_CONTROL = {
 @router.get("/tiles/{layer}/{z}/{x}/{y}.pbf", response_class=Response)
 def tile(
     session: SessionDep,
-    settings: SettingsDep,
+    user: UserDep,
     layer: Layer,
     z: Annotated[int, Path(ge=0, le=22)],
     x: Annotated[int, Path(ge=0)],
@@ -50,7 +50,8 @@ def tile(
         z,
         x,
         y,
-        settings.owner,
+        # Signed out, the field layer is empty: fields belong to their owner.
+        user.email if user else None,
         datetime.now(UTC),
         thresholds["lightning"]["window_minutes"],
         (west, south, thresholds["forecast"]["cell_degrees"]),

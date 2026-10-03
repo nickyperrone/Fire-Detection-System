@@ -170,3 +170,13 @@ worker:
   lightning_interval_minutes: 1
   forecast_interval_minutes: 60
   weather_interval_minutes: 60
+
+# Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
+auth:
+  link_minutes: 15
+  session_days: 30
+  login_links_per_hour: 5
+
+alerts:
+  # A field gets at most one lightning email in this time, however long the storm lasts.
+  lightning_quiet_minutes: 60

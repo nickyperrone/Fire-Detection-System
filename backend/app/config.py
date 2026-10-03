@@ -13,7 +13,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://fieldwatch:fieldwatch@localhost:5433/fieldwatch"
     firms_map_key: str = ""
     thresholds_path: Path = REPO_ROOT / "config" / "thresholds.yaml"
-    owner: str = "default"
+    # Where sign-in and alert links point, and the cookie is Secure when it is https.
+    app_url: str = "http://localhost:3000"
+    # Development defaults: Mailpit from docker compose, which keeps every email local.
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = False
+    smtp_from: str = "Field Watch <alerts@fieldwatch.local>"
 
 
 @lru_cache

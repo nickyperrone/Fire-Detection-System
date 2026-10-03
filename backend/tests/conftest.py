@@ -1,4 +1,5 @@
 import os
+from email.message import EmailMessage
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,8 @@ from app.boundaries import allowed_area
 from app.db import get_session
 from app.main import app
 from app.models import Base
+from app.routers.dependencies import mail_sender, require_owner
+from app.services.territories import DEFAULT_OWNER
 
 BACKEND = Path(__file__).resolve().parents[1]
 ARGENTINA = allowed_area("data/boundaries/argentina.geojson", 1000)
@@ -56,11 +59,25 @@ def session(engine):
 
 
 @pytest.fixture
-def client(session):
-    """The API with its database session swapped for the test one."""
+def outbox() -> list[EmailMessage]:
+    """Emails the API would have sent."""
+    return []
+
+
+@pytest.fixture
+def anonymous(session, outbox):
+    """The API with the test database and an outbox instead of SMTP, signed out."""
     app.dependency_overrides[get_session] = lambda: session
+    app.dependency_overrides[mail_sender] = lambda: outbox.append
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(anonymous):
+    """The API signed in as the owner the command line uses."""
+    app.dependency_overrides[require_owner] = lambda: DEFAULT_OWNER
+    return anonymous
 
 
 def pytest_collection_modifyitems(items):

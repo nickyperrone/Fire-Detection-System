@@ -11,6 +11,7 @@ from app.config import REPO_ROOT, get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.models import DataQuality
+from app.services.auth import normalize_email
 from app.services.fire_history import load_history
 from app.services.pipeline import (
     run_fire_pipeline,
@@ -20,7 +21,7 @@ from app.services.pipeline import (
     run_spray_pipeline,
 )
 from app.services.portfolio import FireAnswer, PortfolioEntry, SprayAnswer, build_portfolio
-from app.services.territories import load_feature_collection
+from app.services.territories import DEFAULT_OWNER, claim_fields, load_feature_collection
 
 LOCAL_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -100,6 +101,7 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     load = commands.add_parser("load-territories", help="load fields and sections from GeoJSON")
     load.add_argument("path", type=Path)
+    load.add_argument("--owner", default=DEFAULT_OWNER, help="email of the account; see claim")
     commands.add_parser("ingest-fires", help="read FIRMS and derive fire events and field risk")
     commands.add_parser("ingest-goes", help="read new GOES-19 fire scans and lightning files")
     commands.add_parser("update-spray", help="read the forecast and assess spraying conditions")
@@ -108,6 +110,11 @@ def main() -> None:
     commands.add_parser("run-once", help="ingest-fires, ingest-goes and update-spray")
     portfolio = commands.add_parser("portfolio", help="every field and section with its answers")
     portfolio.add_argument("--tag", action="append", default=[], help="key:value, repeatable")
+    portfolio.add_argument("--owner", default=DEFAULT_OWNER)
+    claim = commands.add_parser(
+        "claim", help="give the fields and tags loaded without an account to an account"
+    )
+    claim.add_argument("email")
     args = parser.parse_args()
 
     configure_logging()
@@ -117,7 +124,7 @@ def main() -> None:
             config = thresholds["territories"]
             created = load_feature_collection(
                 session,
-                settings.owner,
+                args.owner,
                 json.loads(args.path.read_text()),
                 config["section_tolerance_m"],
                 allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
@@ -148,10 +155,14 @@ def main() -> None:
             print(json.dumps(result, indent=2, default=str))
         if args.command == "portfolio":
             now = datetime.now(UTC)
-            entries = build_portfolio(session, settings.owner, thresholds, now, args.tag)
+            entries = build_portfolio(session, args.owner, thresholds, now, args.tag)
             listed_ids = {e.territory.id for e in entries}
             for entry in entries:
                 print_entry(entry, listed_ids, now)
+        if args.command == "claim":
+            moved = claim_fields(session, DEFAULT_OWNER, normalize_email(args.email))
+            session.commit()
+            print(f"moved {moved} territories to {normalize_email(args.email)}")
 
 
 if __name__ == "__main__":

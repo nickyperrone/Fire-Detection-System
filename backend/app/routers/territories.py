@@ -5,9 +5,9 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
 from app.boundaries import allowed_area
-from app.config import Settings, get_thresholds
+from app.config import get_thresholds
 from app.models import Territory
-from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
+from app.routers.dependencies import OwnerDep, SessionDep, TagsQuery
 from app.schemas import (
     FireHistoryOut,
     OutlineIn,
@@ -49,8 +49,8 @@ def territory_out(territory: Territory) -> TerritoryOut:
     )
 
 
-def owned(session: Session, settings: Settings, territory_id: int) -> Territory:
-    territory = get_territory(session, settings.owner, territory_id)
+def owned(session: Session, owner: str, territory_id: int) -> Territory:
+    territory = get_territory(session, owner, territory_id)
     if territory is None:
         raise HTTPException(404, "territory not found")
     return territory
@@ -59,22 +59,22 @@ def owned(session: Session, settings: Settings, territory_id: int) -> Territory:
 @router.get("", response_model=list[TerritoryOut])
 def list_(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     tag: TagsQuery = None,
 ):
-    return [territory_out(t) for t in list_territories(session, settings.owner, tag or [])]
+    return [territory_out(t) for t in list_territories(session, owner, tag or [])]
 
 
 @router.post("", response_model=TerritoryOut, status_code=201)
 def create(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     body: TerritoryIn,
 ):
     config = get_thresholds()["territories"]
     territory = create_territory(
         session,
-        owner=settings.owner,
+        owner=owner,
         name=body.name,
         geometry=body.geometry,
         parent_id=body.parent_id,
@@ -95,30 +95,30 @@ def create(
 @router.get("/{territory_id}", response_model=TerritoryOut)
 def get(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
 ):
-    return territory_out(owned(session, settings, territory_id))
+    return territory_out(owned(session, owner, territory_id))
 
 
 @router.delete("/{territory_id}", status_code=204)
 def delete(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
 ):
-    session.delete(owned(session, settings, territory_id))
+    session.delete(owned(session, owner, territory_id))
     session.commit()
 
 
 @router.patch("/{territory_id}/outline", response_model=TerritoryOut)
 def change_outline(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
     body: OutlineIn,
 ):
-    territory = owned(session, settings, territory_id)
+    territory = owned(session, owner, territory_id)
     config = get_thresholds()["territories"]
     edit_outline(
         session,
@@ -147,11 +147,11 @@ def change_outline(
 @router.patch("/{territory_id}/settings", response_model=TerritoryOut)
 def change_settings(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
     body: SettingsIn,
 ):
-    territory = owned(session, settings, territory_id)
+    territory = owned(session, owner, territory_id)
     for name, value in body.model_dump(exclude_none=True).items():
         setattr(territory, name, value)
     session.commit()
@@ -161,11 +161,11 @@ def change_settings(
 @router.put("/{territory_id}/tags", response_model=TerritoryOut)
 def replace_tags(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
     body: TagsIn,
 ):
-    territory = owned(session, settings, territory_id)
+    territory = owned(session, owner, territory_id)
     set_tags(session, territory, body.tags)
     session.commit()
     return territory_out(territory)
@@ -174,7 +174,7 @@ def replace_tags(
 @router.get("/{territory_id}/risk-events", response_model=list[RiskEventOut])
 def risk_events(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
 ):
     return [
@@ -190,23 +190,23 @@ def risk_events(
             processing_version=r.processing_version,
             updated_at=r.updated_at,
         )
-        for r in list_risk_events(session, settings.owner, territory_id)
+        for r in list_risk_events(session, owner, territory_id)
     ]
 
 
 @router.get("/{territory_id}/fire-history", response_model=FireHistoryOut)
-def fire_history(session: SessionDep, settings: SettingsDep, territory_id: int):
-    owned(session, settings, territory_id)
+def fire_history(session: SessionDep, owner: OwnerDep, territory_id: int):
+    owned(session, owner, territory_id)
     return asdict(field_history(session, territory_id, get_thresholds()["history"]))
 
 
 @router.get("/{territory_id}/spray-conditions", response_model=list[SprayHourOut])
 def spray_conditions(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     territory_id: int,
     profile: str = "default",
 ):
-    owned(session, settings, territory_id)
+    owned(session, owner, territory_id)
     hours = list_spray_hours(session, territory_id, profile, datetime.now(UTC))
     return [SprayHourOut.model_validate(h, from_attributes=True) for h in hours]

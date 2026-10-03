@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 
 from app.config import get_thresholds
-from app.routers.dependencies import SessionDep, SettingsDep, TagsQuery
+from app.routers.dependencies import OwnerDep, SessionDep, TagsQuery
 from app.schemas import PortfolioEntryOut
 from app.services.portfolio import build_portfolio
 
@@ -14,12 +14,12 @@ router = APIRouter(tags=["portfolio"])
 @router.get("/portfolio", response_model=list[PortfolioEntryOut])
 def portfolio(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     tag: TagsQuery = None,
     profile: str = "default",
 ):
     entries = build_portfolio(
-        session, settings.owner, get_thresholds(), datetime.now(UTC), tag or [], profile
+        session, owner, get_thresholds(), datetime.now(UTC), tag or [], profile
     )
     return [
         PortfolioEntryOut(

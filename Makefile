@@ -1,7 +1,7 @@
 BACKEND = cd backend && uv run
 TAG ?=
 
-.PHONY: setup db migrate migration seed history run-once portfolio api worker test lint
+.PHONY: setup db migrate migration seed history run-once claim portfolio api worker test lint
 
 setup:
 	cd backend && uv sync
@@ -31,6 +31,10 @@ forecast-train:
 
 run-once:
 	$(BACKEND) python -m app.cli run-once
+
+# The sample fields are loaded without an account; this gives them to EMAIL's account.
+claim:
+	$(BACKEND) python -m app.cli claim $(EMAIL)
 
 portfolio:
 	$(BACKEND) python -m app.cli portfolio $(if $(TAG),--tag "$(TAG)")

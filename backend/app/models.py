@@ -34,10 +34,12 @@ class Base(DeclarativeBase):
     )
 
 
-def _enum(enum_cls: type[StrEnum]) -> Enum:
+def _enum(enum_cls: type[StrEnum], name: str | None = None) -> Enum:
     # Stored as varchar + CHECK, so adding a value is a small migration, not an ALTER TYPE.
+    # `name` names the CHECK constraint when a table has two columns of the same enum.
     return Enum(
         enum_cls,
+        name=name or enum_cls.__name__.lower(),
         native_enum=False,
         create_constraint=True,
         length=20,
@@ -144,6 +146,7 @@ class Territory(Base):
     alerts: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     visible: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     priority: Mapped[Priority] = mapped_column(_enum(Priority), server_default=Priority.NORMAL)
+    lightning_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     tags: Mapped[list[Tag]] = relationship(secondary="territory_tag", lazy="selectin")
@@ -235,6 +238,8 @@ class FieldRiskEvent(Base):
     severity: Mapped[Severity] = mapped_column(_enum(Severity))
     factors: Mapped[dict] = mapped_column(JSONB)
     status: Mapped[RiskStatus] = mapped_column(_enum(RiskStatus))
+    # The severity last emailed to the owner; an email goes out again only when it grows.
+    notified_severity: Mapped[Severity | None] = mapped_column(_enum(Severity, "notified_severity"))
     processing_version: Mapped[str] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -412,3 +417,56 @@ class CadastralTile(Base):
     y: Mapped[int] = mapped_column(Integer, primary_key=True)
     parcels: Mapped[int] = mapped_column(Integer)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class User(Base):
+    """Someone who signed in with a link by email (docs/09-accounts-and-alerts.md)."""
+
+    __tablename__ = "app_user"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    # Lowercased; it is also the owner of the user's territories and tags.
+    email: Mapped[str] = mapped_column(String(254), unique=True)
+    locale: Mapped[str] = mapped_column(String(5))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LoginLink(Base):
+    """A one-time sign-in link; only the hash of its token is stored."""
+
+    __tablename__ = "login_link"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), index=True)
+    locale: Mapped[str] = mapped_column(String(5))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class UserSession(Base):
+    """A signed-in browser; only the hash of its cookie is stored."""
+
+    __tablename__ = "user_session"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship(lazy="joined")
+
+
+class AlertEmail(Base):
+    """An alert email accepted by the mail server, with what it announced."""
+
+    __tablename__ = "alert_email"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"), index=True)
+    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    dangers: Mapped[list] = mapped_column(JSONB)
+    processing_version: Mapped[str] = mapped_column(String(40))

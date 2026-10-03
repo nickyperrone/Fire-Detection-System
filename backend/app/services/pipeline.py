@@ -14,10 +14,12 @@ from app.forecast.recent_fires import PROVIDER as RECENT_PROVIDER
 from app.forecast.recent_fires import top_up
 from app.forecast.serve import cells_of, forecast_grid, issue_forecast
 from app.models import IngestionRun, RunStatus
+from app.services.alerts import send_alerts
 from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
+from app.services.mail import smtp_sender
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
 from app.versioning import processing_version
@@ -107,3 +109,15 @@ def run_spray_pipeline(session: Session, client: httpx.Client, thresholds: dict)
         session, client, thresholds, processing_version(thresholds), datetime.now(UTC)
     )
     return {"status": run.status.value, "assessments": run.inserted, "error": run.error}
+
+
+def run_alert_pipeline(session: Session, settings: Settings, thresholds: dict) -> dict:
+    """Emails new danger near fields, after each fire or lightning run (docs/09)."""
+    return send_alerts(
+        session,
+        smtp_sender(settings),
+        settings,
+        thresholds,
+        processing_version(thresholds),
+        datetime.now(UTC),
+    )

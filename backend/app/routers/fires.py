@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models import FireEventStatus
-from app.routers.dependencies import SessionDep, SettingsDep
+from app.routers.dependencies import OwnerDep, SessionDep
 from app.schemas import FireEventOut, RiskStatusIn
 from app.services.fire_events import geojson, list_fire_events, set_risk_status
 
@@ -33,9 +33,9 @@ def fire_events(
 @router.patch("/risk-events/{risk_id}", status_code=204)
 def update_risk_status(
     session: SessionDep,
-    settings: SettingsDep,
+    owner: OwnerDep,
     risk_id: int,
     body: RiskStatusIn,
 ):
-    if set_risk_status(session, settings.owner, risk_id, body.status) is None:
+    if set_risk_status(session, owner, risk_id, body.status) is None:
         raise HTTPException(404, "risk event not found")
