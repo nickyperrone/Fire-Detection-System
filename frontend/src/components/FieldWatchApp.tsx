@@ -343,6 +343,9 @@ export function FieldWatchApp() {
               }
               colorBy={url.colorBy}
               onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
+              onGoToFields={() =>
+                signedIn ? frame(fields) : setSignIn("open")
+              }
               onLocate={locate}
               onAddField={() =>
                 signedIn ? setDrawingActive(true) : setSignIn("open")

@@ -17,6 +17,8 @@ type Props = {
   onToggleParcels: () => void;
   colorBy: ColorBy;
   onColorBy: (colorBy: ColorBy) => void;
+  /** Frames the user's fields, or asks to sign in first. */
+  onGoToFields: () => void;
   onLocate: () => void;
   onAddField: () => void;
 };
@@ -33,6 +35,7 @@ export function MapButtons({
   onToggleParcels,
   colorBy,
   onColorBy,
+  onGoToFields,
   onLocate,
   onAddField,
 }: Props) {
@@ -99,6 +102,15 @@ export function MapButtons({
                 ))}
               </div>
             </div>
+            <button
+              onClick={() => {
+                onGoToFields();
+                setMenu(false);
+              }}
+              className="w-full border-t border-white/10 px-3 py-3 text-left text-sm font-medium text-accent"
+            >
+              {t.buttons.goToFields}
+            </button>
           </div>
         )}
       </div>

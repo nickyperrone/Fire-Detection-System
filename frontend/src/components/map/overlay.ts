@@ -166,11 +166,27 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     source: "parcels",
     "source-layer": "parcels",
     layout: { visibility: options.showParcels ? "visible" : "none" },
-    paint: {
-      "line-color": options.basemap === "light" ? "#475569" : "#e5e7eb",
-      "line-opacity": 0.6,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.5, 17, 1.4],
-    },
+    // Over the satellite photo, field edges and tracks look like lines too: ours are bolder there.
+    paint:
+      options.basemap === "satellite"
+        ? {
+            "line-color": "#ffffff",
+            "line-opacity": 0.9,
+            "line-width": ["interpolate", ["linear"], ["zoom"], 13, 1, 17, 2.4],
+          }
+        : {
+            "line-color": options.basemap === "light" ? "#475569" : "#e5e7eb",
+            "line-opacity": 0.6,
+            "line-width": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              13,
+              0.5,
+              17,
+              1.4,
+            ],
+          },
   });
   map.addSource("territories", {
     type: "vector",
