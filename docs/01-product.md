@@ -32,6 +32,27 @@ different answers:
   Natural Earth 1:10m boundary (`data/boundaries/argentina.geojson`, public domain) with 1 km of
   tolerance for the generalized rivers and coasts.
 
+### Settings per field
+
+A contractor watches their own fields and their clients' fields, and not all of them matter the same
+on a given week. Each field and each lot has three settings, changed from its card:
+
+| Setting | Values | Default | What it changes |
+|---|---|---|---|
+| Alerts | on, off | on | On: danger near it is announced. Off: its answers are still shown, but nothing is announced. |
+| On the map | shown, hidden | shown | Hidden: not drawn on the map and listed at the end, under "Hidden". Hiding a field hides its lots. |
+| Priority | high, normal, low | normal | The list orders fields by priority first, then by danger. High-priority fields carry a mark. |
+
+- **Danger** is a fire at any severity band or lightning within its radius. An alert is sent when
+  it starts (no fire, then a fire; a fire, then a closer one; no lightning, then lightning), not on
+  every refresh while it lasts.
+- **Where alerts go today:** a browser notification while the app is open, after the user allows
+  them (asked the first time a bell is turned on). Email alerts need an account and come with
+  login (Phase 3); they will read the same setting.
+- A lot follows its own settings; a hidden field hides its lots whatever their setting.
+- `PATCH /territories/{id}/settings` changes any of the three; the portfolio and the territory list
+  return them.
+
 ## Scope: Argentina
 
 The map can be explored anywhere, but everything the product computes is about Argentina:
