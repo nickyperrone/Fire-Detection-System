@@ -3,7 +3,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 import httpx
-from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.executors.debug import DebugExecutor
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from app.config import get_settings, get_thresholds
@@ -34,12 +34,16 @@ def job(
 def main() -> None:
     configure_logging()
     intervals = get_thresholds()["worker"]
-    # One job at a time: FIRMS and GOES both correlate fire events and must not interleave.
+    # One job at a time, on the main thread: FIRMS and GOES both correlate fire events and must not
+    # interleave, and netCDF only silences HDF5's error printing on the main thread (in another
+    # thread every GOES file logs a page of harmless diagnostics).
     # coalesce: a job that fell behind runs once, not once per missed interval.
+    # misfire_grace_time=None: a job due while another runs starts late instead of being skipped;
+    # with the default of 1 s, the one-minute lightning job starved every other job.
     scheduler = BlockingScheduler(
         timezone="UTC",
-        executors={"default": ThreadPoolExecutor(1)},
-        job_defaults={"coalesce": True, "max_instances": 1},
+        executors={"default": DebugExecutor()},
+        job_defaults={"coalesce": True, "misfire_grace_time": None},
     )
     start = datetime.now(UTC)
     jobs = [
