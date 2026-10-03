@@ -36,11 +36,28 @@ cadastre:
     edge_tolerance_m: 30
     # Gaps up to twice this (roads between parcels) are closed in a parcel union.
     close_gaps_m: 20
+  # `format` picks how the province's fields are read (providers/cadastre_wfs.py).
   sources:
     - province: Entre Ríos
       bbox: [-60.85, -34.1, -57.75, -30.1]
       wfs_url: https://geoserver.ater.gob.ar/geoserver/sit_catastro/ows
       layer: sit_catastro:vwm_parcelario_base
+      format: ater
+      sort_by: partida
+      page_size: 1000
+    - province: Buenos Aires
+      bbox: [-63.4, -41.1, -56.6, -33.2]
+      wfs_url: https://geo.arba.gov.ar/geoserver/idera/wfs
+      layer: idera:Parcela
+      format: arba
+      sort_by: pda
+      page_size: 1000
+    - province: Córdoba
+      bbox: [-65.8, -35.0, -61.7, -29.5]
+      wfs_url: https://idecor-ws.mapascordoba.gob.ar/geoserver/idecor/wfs
+      layer: idecor:parcelas
+      format: idecor
+      sort_by: id
       page_size: 1000
 
 firms:

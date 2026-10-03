@@ -156,6 +156,9 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     tiles: [tileUrl("parcels")],
     minzoom: 13,
     maxzoom: 16,
+    // IDECOR publishes under CC BY-SA 4.0, which asks for credit where the data is shown.
+    attribution:
+      "Cadastre: ATER Entre Ríos, ARBA Buenos Aires, IDECOR Córdoba (CC BY-SA 4.0)",
   });
   map.addLayer({
     id: PARCELS_LAYER,

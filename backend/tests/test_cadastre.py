@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import func, select
 
 from app.models import CadastralParcel, CadastralTile
+from app.providers.cadastre_wfs import READERS
 from app.services.cadastre import ensure_tile, parcel_at, tile_bbox, tile_of
 from app.services.tiles import Layer, build_tile
 
@@ -16,6 +17,8 @@ CONFIG = {
             "bbox": [-60.85, -34.1, -57.75, -30.1],
             "wfs_url": "https://cadastre.test/ows",
             "layer": "sit_catastro:vwm_parcelario_base",
+            "format": "ater",
+            "sort_by": "partida",
             "page_size": 2,
         }
     ],
@@ -96,3 +99,25 @@ def test_parcel_at_point_and_property_line_tiles(session, wfs):
     tile = mapbox_vector_tile.decode(build_tile(session, Layer.PARCELS, 14, x, y, "default", None))
     assert {f["properties"]["partida"] for f in tile["parcels"]["features"]} >= {1}
     assert build_tile(session, Layer.PARCELS, 12, x // 4, y // 4, "default", None) == b""
+
+
+def test_each_province_is_read_from_its_own_fields():
+    geometry = square(-60.0, -34.0, 0.01)
+    arba = READERS["arba"](
+        {"properties": {"pda": "133050545", "tpa": "Rural"}, "geometry": geometry}
+    )
+    assert (arba.department, arba.partida, arba.plano, arba.status) == (133, 50545, None, "Rural")
+    idecor = READERS["idecor"](
+        {
+            "properties": {
+                "Nomenclatura": "1804265890407816",
+                "Nro_Cuenta": 180440540196,
+                "Estado": "BALDIO",
+            },
+            "geometry": geometry,
+        }
+    )
+    assert (idecor.department, idecor.partida, idecor.status) == (18, 180440540196, "BALDIO")
+    # Without a tax account a parcel cannot be told apart from its neighbors: it is skipped.
+    assert READERS["arba"]({"properties": {"pda": None}, "geometry": geometry}) is None
+    assert READERS["idecor"]({"properties": {"Nro_Cuenta": None}, "geometry": geometry}) is None

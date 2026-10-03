@@ -8,15 +8,27 @@ already publish the official parcels.
 | Province | Publisher | Service | Layer | Terms |
 |---|---|---|---|---|
 | Entre Ríos | ATER, Dirección de Catastro | WFS `https://geoserver.ater.gob.ar/geoserver/sit_catastro/ows` | `sit_catastro:vwm_parcelario_base` | Capabilities declare no fees and no access constraints |
+| Buenos Aires | ARBA (geoARBA, member of IDERA) | WFS `https://geo.arba.gov.ar/geoserver/idera/wfs` | `idera:Parcela` | Public IDERA geoservice; no fees |
+| Córdoba | IDECOR | WFS `https://idecor-ws.mapascordoba.gob.ar/geoserver/idecor/wfs` | `idecor:parcelas` | Open data, CC BY-SA 4.0: the map credits the source |
 
 Each parcel has its outline (MultiPolygon), department, `partida` (tax account), `plano`
 (survey plan) and a validation status ("Datos parcialmente validados"). The province's WMS paints
 parcels with an opaque fill, which would hide the imagery, so the product reads the vector data and
 draws its own thin lines.
 
-Other provinces publish their own services (for example IDECOR in Córdoba, ARBA in Buenos Aires).
-Each is one entry in `config/thresholds.yaml` (`cadastre.sources`); without one, the map has no
-property lines there and fields are drawn by hand.
+Each province names its fields differently, so each source in `config/thresholds.yaml`
+(`cadastre.sources`) has a `format` that says how to read them:
+
+| Format | Department | Tax account | Survey plan | Status |
+|---|---|---|---|---|
+| `ater` | `departamento` | `partida` | `plano` | `estado` |
+| `arba` | first 3 digits of `pda` (partido) | rest of `pda` | none | `tpa` (urban, rural) |
+| `idecor` | first 2 digits of `Nomenclatura` | `Nro_Cuenta` | none | `Estado` |
+
+A parcel without a tax account cannot be told apart from its neighbors and is skipped. Santa Fe
+(IDESF) shows parcels in its WMS, which serves images that cannot be fitted to, and its WFS
+address did not answer when checked in October 2026. There, and in provinces without a source,
+the map has no property lines and fields are drawn by hand.
 
 ## Loading on demand
 
