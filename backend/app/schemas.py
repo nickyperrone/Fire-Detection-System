@@ -35,6 +35,21 @@ class TagsIn(BaseModel):
     tags: list[str]
 
 
+class TagOut(BaseModel):
+    id: int
+    label: str
+    color: str
+
+
+class TagsOut(BaseModel):
+    palette: list[str] = Field(description="The colors a tag can take, in order")
+    tags: list[TagOut]
+
+
+class TagColorIn(BaseModel):
+    color: str = Field(description="One of the palette colors, #rrggbb")
+
+
 class SettingsIn(BaseModel):
     """Only the settings given are changed."""
 
