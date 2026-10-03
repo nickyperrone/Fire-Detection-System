@@ -10,7 +10,8 @@ its sources, their timestamps and whether the field could actually be observed.
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
   fire history per field, fields drawn on the official property lines and edited with two pencils,
-  alerts, visibility and priority per field, and colored tags. Field anomalies from Sentinel-2 are
+  alerts by email and in the browser, accounts opened with a link by email, visibility and
+  priority per field, and colored tags. Field anomalies from Sentinel-2 are
   next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
@@ -24,10 +25,16 @@ cd Fire-Detection-System
 cp .env.example .env      # then set FIRMS_MAP_KEY
 make setup                # installs dependencies, starts PostGIS, runs migrations
 make seed                 # loads the sample fields, sections and tags near Larroque
+make claim EMAIL=you@example.com   # gives them to the account you will sign in with
 make run-once             # reads FIRMS and Open-Meteo once and derives everything
+docker compose up -d mail # Mailpit: catches every email at http://localhost:8025
 make api                  # API on http://localhost:8000
 make web                  # in a second terminal: the map on http://localhost:3000
 ```
+
+- Sign in with your address from the map; the link arrives in Mailpit at http://localhost:8025,
+  not in your inbox. To send real email, set the `SMTP_*` variables in `.env`
+  ([09-accounts-and-alerts](docs/09-accounts-and-alerts.md#sending)).
 
 - `FIRMS_MAP_KEY` is free: request it at https://firms.modaps.eosdis.nasa.gov/api/map_key/. Without
   it the fire answer shows `NO_DATA` and the spray answer still works (Open-Meteo needs no key).
@@ -285,27 +292,56 @@ sequenceDiagram
 The checks refuse a piece that leaves the field empty, misses it, changes nothing, cuts a lot
 out of its field, or leaves Argentina, each with a message in the user's language.
 
+### Accounts
+
+Anyone can watch fires on the map. Fields, tags and alerts belong to an account, opened with a
+link by email: no passwords ([09-accounts-and-alerts](docs/09-accounts-and-alerts.md)).
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant App as Map
+    participant API as API
+    participant M as Mail server
+    U->>App: Sign in · primo@example.com
+    App->>API: POST /auth/login
+    API->>API: one-time token, 15 min,<br/>only its hash stored
+    API->>M: "Your sign-in link"
+    M-->>U: email with the link
+    U->>API: GET /auth/callback?token=…
+    API->>API: token used up,<br/>account created on first sign-in
+    API-->>App: cookie fw_session (HttpOnly, 30 days),<br/>back to the map
+    App->>API: fields, tiles, alerts of this account
+```
+
+At most 5 links per address per hour, and the same answer for every address, so the form neither
+floods an inbox nor reveals who uses the app.
+
 ### Per-field settings and alerts
 
 Each field and lot can have alerts on or off, be shown or hidden, and have high, normal or low
-priority ([01-product](docs/01-product.md#settings-per-field)).
+priority ([01-product](docs/01-product.md#settings-per-field)). Alerts go by email and, while the
+app is open, as browser notifications.
 
 ```mermaid
 flowchart LR
-    W["Worker<br/>new fire or lightning"] --> DB[("PostGIS")]
-    DB --> P["Portfolio<br/>polled every 2.5 min"]
-    P --> G{"Danger grew?<br/>fire appeared or closer,<br/>lightning started"}
+    W["Worker<br/>fire or lightning run"] --> DB[("PostGIS")]
+    DB --> G{"Danger grew?<br/>fire appeared or closer,<br/>lightning started"}
     G -- no --> X["nothing"]
     G -- yes --> A{"Alerts on<br/>for this field?"}
     A -- no --> X
-    A -- yes --> N["Browser notification<br/>one per field"]
-    A -. "Phase 3, with login" .-> E["Email"]
-    P --> V{"Visible?"}
+    A -- yes --> E["One email per account and run,<br/>worst first, recorded"]
+    A -- yes --> N["Browser notification<br/>while the app is open"]
+    DB --> V{"Visible?"}
     V -- yes --> M["Map + list,<br/>high priority first"]
     V -- no --> H["Left off the map,<br/>listed under Hidden"]
 ```
 
-Danger already present when the app opens is not announced again; only a change is news.
+- Each email is marked as sent only after the mail server accepts it, so a failed send is retried
+  on the next run instead of being lost.
+- A fire near a field and its lots is one line, not one per lot; lightning is emailed at most
+  once an hour per field.
+- Danger already present is not announced again; only a change is news.
 
 ### Colored tags
 
@@ -353,6 +389,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [06-goes](docs/06-goes.md) | GOES-19 fire every 10 minutes, lightning, colors |
 | [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
 | [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos), loaded on demand; drawings fitted to them |
+| [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
 the tests against a PostGIS service container, and a Docker image build.
