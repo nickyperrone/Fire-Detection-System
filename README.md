@@ -83,7 +83,7 @@ flowchart LR
         GOES["GOES-19 on AWS<br/>fire + lightning"]
         METEO["Open-Meteo<br/>forecast"]
         POWER["NASA POWER<br/>daily reanalysis"]
-        ATER["ATER Entre Ríos<br/>cadastre WFS"]
+        ATER["Provincial cadastres<br/>Entre Ríos, Buenos Aires,<br/>Córdoba (WFS)"]
     end
     subgraph WORKER["Worker: one process, APScheduler"]
         J1["fires · every 5 min"]
@@ -262,8 +262,9 @@ stateDiagram-v2
     Saved --> [*]
 ```
 
-- Property lines come from the Entre Ríos cadastre, fetched per 5 × 5 km tile the first time it is
-  viewed and then served from PostGIS ([08-cadastre](docs/08-cadastre.md)).
+- Property lines come from the provincial cadastres of Entre Ríos, Buenos Aires and Córdoba,
+  fetched per 5 × 5 km tile the first time an area is viewed and then served from PostGIS
+  ([08-cadastre](docs/08-cadastre.md)). Elsewhere fields are drawn by hand.
 - A rough outline around several parcels becomes their exact union; a lot inside a parcel has only
   its nearby corners and edges moved onto the lines. The original drawing is one tap away.
 - The server checks every field: inside Argentina, a lot inside its field, a field around its lots.
@@ -396,18 +397,34 @@ the tests against a PostGIS service container, and a Docker image build.
 
 ## Data sources
 
-| Purpose | Source | Status |
-|---|---|---|
-| Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | Live |
-| Fire every 10 minutes, lightning | GOES-19 ABI fire product and GLM, NOAA bucket on AWS | Live |
-| Ten years of fire per field, forecast labels | FIRMS yearly archive for Argentina | Live |
-| Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | Live |
-| Daily weather history for the forecast | [NASA POWER](https://power.larc.nasa.gov/) (MERRA-2) | Live |
-| Property lines | ATER Entre Ríos cadastre (WFS) | Live |
-| Argentina's boundary | Natural Earth | Live |
-| Field imagery, 10 m | Sentinel-2 L2A from the Earth Search STAC catalog | Next |
-| Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Planned |
-| Radar through clouds, flooding | Sentinel-1 GRD | Planned |
+| Purpose | Source | Terms | Status |
+|---|---|---|---|
+| Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | Free with a key; 5,000 requests per 10 min | Live |
+| Fire every 10 minutes, lightning | GOES-19 ABI fire product and GLM, NOAA Open Data on AWS | Free, no key | Live |
+| Ten years of fire per field, forecast labels | FIRMS yearly archive for Argentina | Free | Live |
+| Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | Free API for **non-commercial use only** | Live |
+| Daily weather history for the forecast | [NASA POWER](https://power.larc.nasa.gov/) (MERRA-2) | Free, no key | Live |
+| Property lines | ATER Entre Ríos, ARBA Buenos Aires, IDECOR Córdoba (WFS) | Public; IDECOR is CC BY-SA 4.0 (credited on the map) | Live |
+| Dark and light basemaps | CARTO Dark Matter and Positron | Free up to 1M requests a month for a business | Live |
+| Satellite basemap | Esri World Imagery | Needs an ArcGIS license for commercial use | Live |
+| Argentina's boundary | Natural Earth | Public domain | Live |
+| Field imagery, 10 m | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Next |
+| Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Free (USGS) | Planned |
+| Radar through clouds, flooding | Sentinel-1 GRD | Free (Copernicus) | Planned |
+
+## What it costs
+
+Everything above is free for a personal or research project, and nothing in the repository needs a
+paid account: email is caught locally by Mailpit, and CI runs on GitHub Actions, free for public
+repositories. Using it for a business changes two things:
+
+- **Open-Meteo:** the free API is non-commercial. A business needs one of its paid plans, or runs
+  Open-Meteo itself (it is open source), or the weather source is replaced.
+- **Esri World Imagery:** the satellite basemap needs an ArcGIS license for commercial use; the
+  alternative is a satellite layer with an open license.
+
+Running it for others also needs a server (database, API, worker) and an SMTP service for email;
+neither is set up yet.
 
 ## Folders
 
