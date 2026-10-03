@@ -9,8 +9,9 @@ its sources, their timestamps and whether the field could actually be observed.
 
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
-  fire history per field, and fields drawn on the official property lines. Field anomalies from
-  Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
+  fire history per field, fields drawn on the official property lines and edited with two pencils,
+  alerts, visibility and priority per field, and colored tags. Field anomalies from Sentinel-2 are
+  next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -158,6 +159,14 @@ erDiagram
         float hectares
         enum kind "FIELD or SECTION"
         jsonb attributes "cadastre partida"
+        bool alerts
+        bool visible
+        enum priority "HIGH NORMAL LOW"
+    }
+    TAG {
+        string key
+        string value
+        string color "palette, no red or green"
     }
     OBSERVATION {
         string dedup_key
@@ -252,6 +261,69 @@ stateDiagram-v2
   its nearby corners and edges moved onto the lines. The original drawing is one tap away.
 - The server checks every field: inside Argentina, a lot inside its field, a field around its lots.
 
+Editing an outline asks the server first, so the card shows the result and any problem before
+anything is saved:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Card
+    participant API as API
+    participant DB as PostGIS
+    U->>C: Add pencil, draws a piece
+    C->>API: PATCH /territories/15/outline · preview: true
+    API->>DB: union or difference, checks, area
+    DB-->>API: 1,281 ha
+    API-->>C: rolled back, nothing saved
+    C-->>U: "+56 ha · Campo de prueba will have 1,281 ha"
+    U->>C: Add to the field
+    C->>API: PATCH /territories/15/outline
+    API->>DB: save, then fire risk again for this field
+    API-->>C: the new field
+```
+
+The checks refuse a piece that leaves the field empty, misses it, changes nothing, cuts a lot
+out of its field, or leaves Argentina, each with a message in the user's language.
+
+### Per-field settings and alerts
+
+Each field and lot can have alerts on or off, be shown or hidden, and have high, normal or low
+priority ([01-product](docs/01-product.md#settings-per-field)).
+
+```mermaid
+flowchart LR
+    W["Worker<br/>new fire or lightning"] --> DB[("PostGIS")]
+    DB --> P["Portfolio<br/>polled every 2.5 min"]
+    P --> G{"Danger grew?<br/>fire appeared or closer,<br/>lightning started"}
+    G -- no --> X["nothing"]
+    G -- yes --> A{"Alerts on<br/>for this field?"}
+    A -- no --> X
+    A -- yes --> N["Browser notification<br/>one per field"]
+    A -. "Phase 3, with login" .-> E["Email"]
+    P --> V{"Visible?"}
+    V -- yes --> M["Map + list,<br/>high priority first"]
+    V -- no --> H["Left off the map,<br/>listed under Hidden"]
+```
+
+Danger already present when the app opens is not announced again; only a change is news.
+
+### Colored tags
+
+Tags such as "casa", "cliente 1" or `crop:soy` each have a color from a palette with no red and no
+green, so a client's field never looks like a fire. The layers menu switches the map between
+coloring by status and by tag ([01-product](docs/01-product.md#tags-and-colors)).
+
+```mermaid
+flowchart TB
+    F["A field on the map"] --> M{"Color fields by"}
+    M -- Status --> S["red: fire or lightning near<br/>green: all clear<br/>gray: no data"]
+    M -- Tags --> T{"Has tags?"}
+    T -- yes --> L["its first tag:<br/>plain labels before key:value,<br/>then alphabetical"]
+    T -- no --> P{"Is a lot?"}
+    P -- yes --> PF["its field's color"]
+    P -- no --> G["gray"]
+```
+
 ### Map loading by zoom
 
 ```mermaid
@@ -272,7 +344,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | Spec | Covers |
 |---|---|
 | [00-conventions](docs/00-conventions.md) | Code and writing rules, commits |
-| [01-product](docs/01-product.md) | User, the three questions, fields, sections, tags, roadmap |
+| [01-product](docs/01-product.md) | User, the three questions, fields, lots, settings, colored tags, roadmap |
 | [02-architecture](docs/02-architecture.md) | Pipeline, data model, processing version, stack, decisions |
 | [03-rules](docs/03-rules.md) | FIRMS normalization, correlation, severity, spray rules, data quality |
 | [04-frontend](docs/04-frontend.md) | Map-first UI, bottom sheet, vector tiles by zoom, explore mode |
