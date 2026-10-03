@@ -20,6 +20,7 @@ export type Snap = Schemas["SnapOut"];
 export type OutlineIn = Schemas["OutlineIn"];
 export type SettingsIn = Schemas["SettingsIn"];
 export type Tags = Schemas["TagsOut"];
+export type Me = Schemas["MeOut"];
 
 export class ApiError extends Error {
   constructor(
@@ -47,7 +48,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       typeof body?.code === "string" ? body.code : null,
     );
   }
-  return (response.status === 204 ? undefined : await response.json()) as T;
+  // 202 and 204 answers have no body.
+  const body = await response.text();
+  return (body ? JSON.parse(body) : undefined) as T;
 }
 
 function tagQuery(tags: string[]): string {
@@ -93,6 +96,13 @@ export const api = {
   sprayConditions: (id: number) =>
     request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
+  me: () => request<Me>("/auth/me"),
+  login: (email: string, locale: string) =>
+    request<void>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, locale }),
+    }),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
   parcelAt: (lat: number, lon: number) =>
     request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
       `/cadastre/parcel?lat=${lat}&lon=${lon}`,

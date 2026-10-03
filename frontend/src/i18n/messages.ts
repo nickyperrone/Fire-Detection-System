@@ -210,9 +210,26 @@ const en = {
     changeColor: (label: string) => `Color of ${label}`,
   },
   colorBy: { label: "Color fields by", status: "Status", tags: "Tags" },
+  signIn: {
+    button: "Sign in",
+    title: "Sign in to Field Watch",
+    why: "We email you a link, no password. Your fields stay in your account and alerts go to that address.",
+    email: "Email",
+    send: "Email me the link",
+    sending: "Sending…",
+    sent: (email: string) => `Check ${email}: the link expires in 15 minutes.`,
+    expired: "That link was already used or expired. Ask for a new one.",
+    failed: "The email could not be sent. Try again in a minute.",
+    close: "Close",
+    account: (email: string) => `Signed in as ${email}`,
+    signOut: "Sign out",
+    signedOutBody:
+      "Sign in with your email to mark your fields, see how far fires are from them and get alerts by email.",
+  },
   settings: {
     title: "Settings",
     alerts: "Alert me of danger nearby",
+    alertsHint: (email: string) => `By email to ${email}, and in this browser.`,
     allowBrowser: "Allow alerts in this browser",
     browserBlocked:
       "This browser blocks alerts from Field Watch; allow them in its site settings.",
@@ -512,9 +529,26 @@ const es: Messages = {
     status: "Estado",
     tags: "Etiquetas",
   },
+  signIn: {
+    button: "Entrar",
+    title: "Entrá a Field Watch",
+    why: "Te mandamos un link por mail, sin contraseña. Tus campos quedan en tu cuenta y los avisos llegan a esa dirección.",
+    email: "Mail",
+    send: "Mandame el link",
+    sending: "Mandando…",
+    sent: (email) => `Revisá ${email}: el link vence en 15 minutos.`,
+    expired: "Ese link ya se usó o venció. Pedí otro.",
+    failed: "No se pudo mandar el mail. Probá de nuevo en un minuto.",
+    close: "Cerrar",
+    account: (email) => `Entraste como ${email}`,
+    signOut: "Salir",
+    signedOutBody:
+      "Entrá con tu mail para marcar tus campos, ver a qué distancia están los fuegos y recibir avisos por mail.",
+  },
   settings: {
     title: "Ajustes",
     alerts: "Avisarme si hay peligro cerca",
+    alertsHint: (email) => `Por mail a ${email} y en este navegador.`,
     allowBrowser: "Permitir avisos en este navegador",
     browserBlocked:
       "Este navegador bloquea los avisos de Field Watch; permitilos en la configuración del sitio.",

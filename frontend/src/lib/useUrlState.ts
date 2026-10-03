@@ -19,6 +19,7 @@ type Changes = Partial<{
   r: string | null;
   p: string | null;
   c: string | null;
+  signin: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
@@ -55,6 +56,8 @@ export function useUrlState() {
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
   const showRisk = params.get("r") === "1";
+  // Set by the API when an email link was used or expired (docs/09-accounts-and-alerts.md).
+  const signinExpired = params.get("signin") === "expired";
   const colorBy: ColorBy = params.get("c") === "tags" ? "tags" : "status";
   // Property lines are on unless the link turns them off.
   const showParcels = params.get("p") !== "0";
@@ -84,6 +87,7 @@ export function useUrlState() {
     showRisk,
     showParcels,
     colorBy,
+    signinExpired,
     basemap,
     initialCamera,
     linkHasCamera,

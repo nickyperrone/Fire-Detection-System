@@ -4,6 +4,80 @@
  */
 
 export interface paths {
+    "/auth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Callback
+         * @description The link in the email: signs in and goes back to the map.
+         */
+        get: operations["callback_auth_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login
+         * @description Emails a sign-in link. The answer is the same for every address (docs/09).
+         */
+        post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/boundary": {
         parameters: {
             query?: never;
@@ -506,6 +580,24 @@ export interface components {
             /** Window Minutes */
             window_minutes: number;
         };
+        /** LoginIn */
+        LoginIn: {
+            /** Email */
+            email: string;
+            /**
+             * Locale
+             * @default es
+             * @enum {string}
+             */
+            locale: "es" | "en";
+        };
+        /** MeOut */
+        MeOut: {
+            /** Email */
+            email: string;
+            /** Locale */
+            locale: string;
+        };
         /** OutlineIn */
         OutlineIn: {
             /**
@@ -832,6 +924,130 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    callback_auth_callback_get: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     boundary_boundary_get: {
         parameters: {
             query?: never;
@@ -981,7 +1197,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1012,7 +1230,9 @@ export interface operations {
             path: {
                 risk_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1043,7 +1263,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1056,6 +1278,15 @@ export interface operations {
                     "application/json": components["schemas"]["TagsOut"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     change_color_tags__tag_id__patch: {
@@ -1065,7 +1296,9 @@ export interface operations {
             path: {
                 tag_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1101,7 +1334,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1130,7 +1365,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1165,7 +1402,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1196,7 +1435,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1225,7 +1466,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1256,7 +1499,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1291,7 +1536,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1322,7 +1569,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1359,7 +1608,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1390,7 +1641,9 @@ export interface operations {
             path: {
                 territory_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1428,7 +1681,9 @@ export interface operations {
                 x: number;
                 y: number;
             };
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PortfolioEntry, Territory } from "@/api/client";
 import {
   useBoundary,
+  useMe,
   usePortfolio,
   useTags,
   useTerritories,
@@ -19,6 +20,7 @@ import { BottomSheet, type Snap } from "./BottomSheet";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldDetail } from "./FieldDetail";
 import { FreshnessPill } from "./FreshnessPill";
+import { AccountButton } from "./AccountButton";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
@@ -26,6 +28,7 @@ import { useFieldDrawing } from "./map/useFieldDrawing";
 import { useDangerAlerts } from "./useDangerAlerts";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { SearchBar } from "./SearchBar";
+import { SignInCard } from "./SignInCard";
 
 type Bounds = [[number, number], [number, number]];
 
@@ -66,10 +69,16 @@ export function FieldWatchApp() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tilesVersion, setTilesVersion] = useState(0);
 
-  const everything = usePortfolio([]);
-  const filtered = usePortfolio(url.tags);
-  const territories = useTerritories();
-  const tags = useTags();
+  const me = useMe();
+  const signedIn = Boolean(me.data);
+  // "expired" when the email link the user came back with no longer works.
+  const [signIn, setSignIn] = useState<"open" | "expired" | null>(() =>
+    url.signinExpired ? "expired" : null,
+  );
+  const everything = usePortfolio([], signedIn);
+  const filtered = usePortfolio(url.tags, signedIn);
+  const territories = useTerritories(signedIn);
+  const tags = useTags(signedIn);
   const boundary = useBoundary();
 
   const territoryById = useMemo(
@@ -273,7 +282,8 @@ export function FieldWatchApp() {
         initialCamera={url.initialCamera}
         territoryStates={territoryStates}
         hiddenIds={hiddenIds}
-        territoriesVersion={tilesVersion}
+        // Field tiles depend on the session cookie: fetch them again on signing in or out.
+        territoriesVersion={tilesVersion * 2 + Number(signedIn)}
         selectedId={url.selectedId}
         interactive={!drawingOn}
         onSelect={onMapSelect}
@@ -306,8 +316,18 @@ export function FieldWatchApp() {
               />
             </div>
             <div className="pointer-events-auto flex items-center justify-between gap-2">
-              <FreshnessPill />
-              <LanguageSwitch />
+              <div className="min-w-0">
+                <FreshnessPill />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <LanguageSwitch />
+                {me.isSuccess && (
+                  <AccountButton
+                    me={me.data}
+                    onSignIn={() => setSignIn("open")}
+                  />
+                )}
+              </div>
             </div>
           </div>
 
@@ -324,7 +344,9 @@ export function FieldWatchApp() {
               colorBy={url.colorBy}
               onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
               onLocate={locate}
-              onAddField={() => setDrawingActive(true)}
+              onAddField={() =>
+                signedIn ? setDrawingActive(true) : setSignIn("open")
+              }
             />
           </div>
 
@@ -333,7 +355,20 @@ export function FieldWatchApp() {
             onSnapChange={setSnap}
             contentKey={String(url.selectedId ?? "portfolio")}
           >
-            {everything.isError ? (
+            {me.isSuccess && !signedIn ? (
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">{t.app.exploreTitle}</h2>
+                <p className="text-sm text-slate-300">
+                  {t.signIn.signedOutBody}
+                </p>
+                <button
+                  onClick={() => setSignIn("open")}
+                  className="h-11 rounded-xl bg-accent px-5 font-semibold text-slate-950"
+                >
+                  {t.signIn.button}
+                </button>
+              </div>
+            ) : everything.isError ? (
               <p className="text-sm text-bad">{t.app.apiDown}</p>
             ) : selected ? (
               <FieldDetail
@@ -373,6 +408,15 @@ export function FieldWatchApp() {
               )
             )}
           </BottomSheet>
+          {signIn && (
+            <SignInCard
+              expired={signIn === "expired"}
+              onClose={() => {
+                setSignIn(null);
+                url.update({ signin: null });
+              }}
+            />
+          )}
         </>
       )}
     </main>

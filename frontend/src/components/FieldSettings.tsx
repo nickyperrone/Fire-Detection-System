@@ -1,7 +1,7 @@
 "use client";
 
 import type { PortfolioEntry, SettingsIn } from "@/api/client";
-import { useChangeSettings } from "@/api/queries";
+import { useChangeSettings, useMe } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 
 import { BellIcon, BellOffIcon, EyeIcon, EyeOffIcon, StarIcon } from "./Icons";
@@ -13,6 +13,7 @@ const PRIORITIES = ["HIGH", "NORMAL", "LOW"] as const;
 export function FieldSettings({ entry }: { entry: PortfolioEntry }) {
   const { t } = useLocale();
   const change = useChangeSettings();
+  const me = useMe();
   const { permission, request } = useNotificationPermission();
   const set = (body: SettingsIn) =>
     change.mutate({ id: entry.territory_id, body });
@@ -29,6 +30,11 @@ export function FieldSettings({ entry }: { entry: PortfolioEntry }) {
             if (!entry.alerts && permission === "default") void request();
           }}
         />
+        {entry.alerts && me.data && (
+          <p className="px-3 pb-2 text-xs text-muted">
+            {t.settings.alertsHint(me.data.email)}
+          </p>
+        )}
         {entry.alerts && permission === "default" && (
           <button
             onClick={() => void request()}
