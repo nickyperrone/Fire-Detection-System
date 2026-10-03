@@ -333,7 +333,7 @@ function EditOutlineForm({ drawing, field, operation, onDone }: EditProps) {
       <p className="text-sm text-slate-300">
         {preview.data
           ? t.edit.result(field.name, formatHectares(t, preview.data.hectares))
-          : t.edit.checking}{" "}
+          : !error && t.edit.checking}{" "}
         {t.draw.adjust}
       </p>
       {error && <p className="text-sm text-bad">{errorText(t, error)}</p>}

@@ -116,6 +116,9 @@ def edit_outline(
     geom = WKTElement(polygon.wkt, srid=4326)
     hectares = session.scalar(select(func.ST_Area(cast(geom, Geography)) / 10_000))
     if abs(hectares - territory.hectares) < MIN_CHANGE_HA:
+        # A piece to remove that only touches the edge does not overlap the field in practice.
+        if operation == "remove":
+            raise TerritoryError("no_overlap", "the piece to remove does not overlap the field")
         raise TerritoryError("no_change", "the piece does not change the field")
     if territory.parent is not None:
         _check_inside(session, geom, territory.parent, section_tolerance_m)

@@ -52,6 +52,7 @@ def test_preview_answers_without_saving(client, field):
     ("operation", "piece", "code"),
     [
         ("remove", (-59.05, -33.00, -59.04, -32.99), "no_overlap"),
+        ("remove", (-59.09, -33.00, -59.08, -32.99), "no_overlap"),  # shares only the east edge
         ("remove", (-59.11, -33.01, -59.08, -32.98), "nothing_left"),
         ("add", (-59.098, -32.998, -59.092, -32.992), "no_change"),
         # The lot is in the west half: cutting the west edge leaves part of it outside.
