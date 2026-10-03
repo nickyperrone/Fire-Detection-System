@@ -46,9 +46,9 @@ on a given week. Each field and each lot has three settings, changed from its ca
 - **Danger** is a fire at any severity band or lightning within its radius. An alert is sent when
   it starts (no fire, then a fire; a fire, then a closer one; no lightning, then lightning), not on
   every refresh while it lasts.
-- **Where alerts go today:** a browser notification while the app is open, after the user allows
-  them (asked the first time a bell is turned on). Email alerts need an account and come with
-  login (Phase 3); they will read the same setting.
+- **Where alerts go:** an email ([09-accounts-and-alerts](09-accounts-and-alerts.md)), and a
+  browser notification while the app is open, after the user allows them (asked the first time a
+  bell is turned on).
 - A lot follows its own settings; a hidden field hides its lots whatever their setting.
 - `PATCH /territories/{id}/settings` changes any of the three; the portfolio and the territory list
   return them.

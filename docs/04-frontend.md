@@ -96,8 +96,9 @@ The map loads what is on screen, at the detail the zoom needs, like Google Maps.
 - Anyone can open the map without an account and see fire events and observations for the covered
   regions, updated as the worker ingests them.
 - Explore mode has no fields, no spray conditions and no notifications.
-- Drawing a field, saving tags and receiving alerts require login (Phase 3). Email alerts are only
-  sent to a verified address of a logged-in user with at least one field.
+- Drawing a field, saving tags and receiving alerts require signing in with a link by email
+  ([09-accounts-and-alerts](09-accounts-and-alerts.md)). Signed out, the bottom sheet invites to
+  sign in where the field list would be, and "+" opens the sign-in card.
 
 ## Stack
 
