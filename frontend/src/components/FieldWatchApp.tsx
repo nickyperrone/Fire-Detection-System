@@ -122,12 +122,14 @@ export function FieldWatchApp() {
     const narrowed = url.tags.length > 0 || url.onlyPicked;
     const entries = everything.data ?? [];
     const byId = new Map(entries.map((e) => [e.territory_id, e]));
-    // With tags, a lot without tags of its own takes its field's color.
-    const tagColor = (e: PortfolioEntry): string | undefined => {
+    // With tags, a lot takes its field's color; only a lot of an untagged field uses its own.
+    const ownColor = (e: PortfolioEntry): string | undefined => {
       const tag = leadingTag(e.tags);
-      if (tag) return tagColors.get(tag);
+      return tag ? tagColors.get(tag) : undefined;
+    };
+    const tagColor = (e: PortfolioEntry): string | undefined => {
       const parent = e.parent_id !== null ? byId.get(e.parent_id) : undefined;
-      return parent ? tagColor(parent) : undefined;
+      return (parent && ownColor(parent)) ?? ownColor(e);
     };
     return new Map<number, TerritoryState>(
       entries.map((e) => [

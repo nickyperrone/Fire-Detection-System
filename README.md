@@ -318,10 +318,11 @@ flowchart TB
     F["A field on the map"] --> M{"Color fields by"}
     M -- Status --> S["red: fire or lightning near<br/>green: all clear<br/>gray: no data"]
     M -- Tags --> T{"Has tags?"}
+    F2["A lot"] --> PT{"Its field<br/>has tags?"}
+    PT -- yes --> PF["its field's color"]
+    PT -- no --> T
     T -- yes --> L["its first tag:<br/>plain labels before key:value,<br/>then alphabetical"]
-    T -- no --> P{"Is a lot?"}
-    P -- yes --> PF["its field's color"]
-    P -- no --> G["gray"]
+    T -- no --> G["gray"]
 ```
 
 ### Map loading by zoom

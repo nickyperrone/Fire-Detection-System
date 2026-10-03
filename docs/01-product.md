@@ -64,8 +64,9 @@ Tags group fields the way the contractor talks about them: "casa", "cliente 1", 
   a "cliente 1" field must never look like a fire.
 - **Color fields by** in the layers menu switches the map between **Status** (red and green, the
   default) and **Tags**. With tags, a field takes the color of its first tag (plain labels such as
-  "casa" before `key:value` tags, then alphabetical); a lot without tags takes its field's color;
-  untagged fields are gray. Fires and lightning keep their colors in both modes.
+  "casa" before `key:value` tags, then alphabetical). A lot takes its field's color, so a client's
+  field reads as one piece; only a lot of an untagged field uses its own tags. Untagged fields are
+  gray. Fires and lightning keep their colors in both modes.
 - The tag chips above the list carry their color dot and work as the legend.
 - A field's tags are edited on its card: remove one with its ×, add one by typing (existing tags are
   suggested). `GET /tags` lists the tags with their colors, `PATCH /tags/{id}` changes a color, and
