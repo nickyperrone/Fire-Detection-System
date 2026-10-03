@@ -21,6 +21,7 @@ import {
   type Basemap,
   FIRE_HALO_LAYER,
   FIRE_LAYER,
+  hideTerritories,
   PARCELS_LAYER,
   RISK_LAYER,
   styleFor,
@@ -48,6 +49,8 @@ type Props = {
   basemap: Basemap;
   initialCamera: MapCamera;
   territoryStates: Map<number, TerritoryState>;
+  /** Fields and lots the user hid; they are not drawn. */
+  hiddenIds: Set<number>;
   territoriesVersion: number;
   selectedId: number | null;
   interactive: boolean;
@@ -108,6 +111,7 @@ export function MapView(props: Props) {
         latest.current.territoryStates,
         latest.current.selectedId,
       );
+      hideTerritories(map, [...latest.current.hiddenIds]);
       showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
     });
     map.on("click", (event) => handleClick(map, event, latest.current));
@@ -192,6 +196,11 @@ export function MapView(props: Props) {
       applyTerritoryStates(map, props.territoryStates, props.selectedId);
     }
   }, [props.territoryStates, props.selectedId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map?.getLayer("field-fill")) hideTerritories(map, [...props.hiddenIds]);
+  }, [props.hiddenIds]);
 
   // MapLibre's stylesheet makes its container position: relative, so the positioning lives on a
   // wrapper and the container only fills it.

@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, type OutlineIn, type TerritoryIn } from "./client";
+import {
+  api,
+  type OutlineIn,
+  type SettingsIn,
+  type TerritoryIn,
+} from "./client";
 
 // The worker reads fires every 5 minutes; polling at half that shows a new pass within minutes.
 const REFRESH_MS = 2.5 * 60 * 1000;
@@ -104,6 +109,15 @@ export function useEditOutline() {
       invalidate();
       client.invalidateQueries({ queryKey: ["risk-events", id] });
     },
+  });
+}
+
+export function useChangeSettings() {
+  const invalidate = useInvalidateTerritories();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: SettingsIn }) =>
+      api.changeSettings(id, body),
+    onSuccess: invalidate,
   });
 }
 

@@ -114,3 +114,41 @@ export const PencilMinusIcon = (p: IconProps) => (
     <path d="M15 17h6" />
   </Icon>
 );
+
+const BELL = (
+  <>
+    <path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4l2-2Z" />
+    <path d="M10 21h4" />
+  </>
+);
+
+export const BellIcon = (p: IconProps) => <Icon {...p}>{BELL}</Icon>;
+
+export const BellOffIcon = (p: IconProps) => (
+  <Icon {...p}>
+    {BELL}
+    <path d="m3 3 18 18" />
+  </Icon>
+);
+
+const EYE = (
+  <>
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </>
+);
+
+export const EyeIcon = (p: IconProps) => <Icon {...p}>{EYE}</Icon>;
+
+export const EyeOffIcon = (p: IconProps) => (
+  <Icon {...p}>
+    {EYE}
+    <path d="m3 3 18 18" />
+  </Icon>
+);
+
+export const StarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z" />
+  </Icon>
+);

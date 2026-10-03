@@ -17,6 +17,7 @@ import { LanguageSwitch } from "./LanguageSwitch";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
+import { useDangerAlerts } from "./useDangerAlerts";
 import { PortfolioPanel } from "./PortfolioPanel";
 import { SearchBar } from "./SearchBar";
 
@@ -71,6 +72,23 @@ export function FieldWatchApp() {
   const editing = editingId !== null ? territoryById.get(editingId) : undefined;
   const drawingOn = drawingActive || editing !== undefined;
   const drawing = useFieldDrawing(map, drawingOn);
+  // A hidden field hides its lots too.
+  const hiddenIds = useMemo(() => {
+    const entries = everything.data ?? [];
+    const off = new Set(
+      entries.filter((e) => !e.visible).map((e) => e.territory_id),
+    );
+    return new Set(
+      entries
+        .filter(
+          (e) =>
+            off.has(e.territory_id) ||
+            (e.parent_id !== null && off.has(e.parent_id)),
+        )
+        .map((e) => e.territory_id),
+    );
+  }, [everything.data]);
+  useDangerAlerts(everything.data, t);
   const allTags = useMemo(
     () => [...new Set((territories.data ?? []).flatMap((t) => t.tags))].sort(),
     [territories.data],
@@ -218,6 +236,7 @@ export function FieldWatchApp() {
         basemap={url.basemap}
         initialCamera={url.initialCamera}
         territoryStates={territoryStates}
+        hiddenIds={hiddenIds}
         territoriesVersion={tilesVersion}
         selectedId={url.selectedId}
         interactive={!drawingOn}
@@ -292,6 +311,7 @@ export function FieldWatchApp() {
             ) : hasFields || url.tags.length ? (
               <PortfolioPanel
                 entries={listed}
+                hidden={hiddenIds}
                 allTags={allTags}
                 activeTags={url.tags}
                 picked={url.picked}

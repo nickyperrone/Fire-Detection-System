@@ -5,10 +5,12 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { formatHectares } from "@/i18n/text";
 
 import { FieldChips, headline } from "./FieldSummary";
-import { CheckIcon } from "./Icons";
+import { BellOffIcon, CheckIcon, StarIcon } from "./Icons";
 
 type Props = {
   entries: PortfolioEntry[];
+  /** Fields and lots the user hid: listed apart, at the end, and left out of the summary. */
+  hidden: Set<number>;
   allTags: string[];
   activeTags: string[];
   picked: number[];
@@ -23,13 +25,14 @@ type Props = {
 
 export function PortfolioPanel(props: Props) {
   const { t } = useLocale();
-  const { entries, picked, onlyPicked } = props;
+  const { picked, onlyPicked, hidden } = props;
+  const entries = props.entries.filter((e) => !hidden.has(e.territory_id));
+  const hiddenEntries = props.entries.filter((e) => hidden.has(e.territory_id));
   const fields = entries.filter((e) => e.kind === "FIELD");
   const withFire = fields.filter((e) => e.fire.severity).length;
   const goodToSpray = entries.filter(
     (e) => e.spray.status === "FAVORABLE",
   ).length;
-  const listed = new Set(entries.map((e) => e.territory_id));
 
   return (
     <div>
@@ -67,57 +70,17 @@ export function PortfolioPanel(props: Props) {
         </div>
       )}
 
-      <ul className="mt-3 space-y-2">
-        {entries.map((entry) => {
-          const isLot = entry.parent_id !== null && listed.has(entry.parent_id);
-          const isPicked = picked.includes(entry.territory_id);
-          return (
-            <li
-              key={entry.territory_id}
-              className={`flex items-stretch rounded-2xl ${isLot ? "ml-5" : ""} ${
-                isPicked
-                  ? "bg-accent/10 ring-1 ring-accent/50"
-                  : "bg-white/[0.04]"
-              }`}
-            >
-              <button
-                role="checkbox"
-                aria-checked={isPicked}
-                aria-label={t.portfolio.select(entry.name)}
-                onClick={() => props.onTogglePick(entry.territory_id)}
-                className="grid w-11 shrink-0 place-items-center"
-              >
-                <span
-                  className={`grid size-5 place-items-center rounded-full border-2 ${
-                    isPicked
-                      ? "border-accent bg-accent text-slate-950"
-                      : "border-slate-500"
-                  }`}
-                >
-                  {isPicked && <CheckIcon className="size-3" />}
-                </span>
-              </button>
-              <button
-                onClick={() => props.onSelect(entry.territory_id)}
-                className="min-w-0 flex-1 py-3 pr-3 text-left"
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate font-medium">{entry.name}</span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {formatHectares(t, entry.hectares)}
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <FieldChips entry={entry} />
-                </div>
-                <p className="mt-1.5 truncate text-[13px] text-slate-400">
-                  {headline(t, entry)}
-                </p>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <EntryList {...props} entries={entries} />
+      {hiddenEntries.length > 0 && (
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm text-muted">
+            {t.portfolio.hidden(hiddenEntries.length)}
+          </summary>
+          <div className="opacity-70">
+            <EntryList {...props} entries={hiddenEntries} />
+          </div>
+        </details>
+      )}
     </div>
   );
 }
@@ -161,5 +124,80 @@ function SelectionBar({
         </button>
       </div>
     </div>
+  );
+}
+
+function EntryList(props: Props) {
+  const { t } = useLocale();
+  const { entries, picked } = props;
+  const listed = new Set(entries.map((e) => e.territory_id));
+  return (
+    <ul className="mt-3 space-y-2">
+      {entries.map((entry) => {
+        const isLot = entry.parent_id !== null && listed.has(entry.parent_id);
+        const isPicked = picked.includes(entry.territory_id);
+        return (
+          <li
+            key={entry.territory_id}
+            className={`flex items-stretch rounded-2xl ${isLot ? "ml-5" : ""} ${
+              isPicked
+                ? "bg-accent/10 ring-1 ring-accent/50"
+                : "bg-white/[0.04]"
+            }`}
+          >
+            <button
+              role="checkbox"
+              aria-checked={isPicked}
+              aria-label={t.portfolio.select(entry.name)}
+              onClick={() => props.onTogglePick(entry.territory_id)}
+              className="grid w-11 shrink-0 place-items-center"
+            >
+              <span
+                className={`grid size-5 place-items-center rounded-full border-2 ${
+                  isPicked
+                    ? "border-accent bg-accent text-slate-950"
+                    : "border-slate-500"
+                }`}
+              >
+                {isPicked && <CheckIcon className="size-3" />}
+              </span>
+            </button>
+            <button
+              onClick={() => props.onSelect(entry.territory_id)}
+              className="min-w-0 flex-1 py-3 pr-3 text-left"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {entry.priority === "HIGH" && (
+                    <span title={t.portfolio.highPriority}>
+                      <StarIcon className="size-3.5 shrink-0 text-accent" />
+                      <span className="sr-only">
+                        {t.portfolio.highPriority}
+                      </span>
+                    </span>
+                  )}
+                  <span className="truncate font-medium">{entry.name}</span>
+                  {!entry.alerts && (
+                    <span title={t.portfolio.alertsOff}>
+                      <BellOffIcon className="size-3.5 shrink-0 text-muted" />
+                      <span className="sr-only">{t.portfolio.alertsOff}</span>
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 text-xs text-muted">
+                  {formatHectares(t, entry.hectares)}
+                </span>
+              </div>
+              <div className="mt-1.5">
+                <FieldChips entry={entry} />
+              </div>
+              <p className="mt-1.5 truncate text-[13px] text-slate-400">
+                {headline(t, entry)}
+              </p>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

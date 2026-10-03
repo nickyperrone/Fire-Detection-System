@@ -587,6 +587,10 @@
       },
       "PortfolioEntryOut": {
         "properties": {
+          "alerts": {
+            "title": "Alerts",
+            "type": "boolean"
+          },
           "anomaly": {
             "$ref": "#/components/schemas/AnomalyAnswerOut"
           },
@@ -621,6 +625,9 @@
             ],
             "title": "Parent Id"
           },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
           "spray": {
             "$ref": "#/components/schemas/SprayAnswerOut"
           },
@@ -634,6 +641,10 @@
           "territory_id": {
             "title": "Territory Id",
             "type": "integer"
+          },
+          "visible": {
+            "title": "Visible",
+            "type": "boolean"
           }
         },
         "required": [
@@ -643,6 +654,9 @@
           "parent_id",
           "hectares",
           "tags",
+          "alerts",
+          "visible",
+          "priority",
           "fire",
           "spray",
           "lightning",
@@ -651,6 +665,15 @@
         ],
         "title": "PortfolioEntryOut",
         "type": "object"
+      },
+      "Priority": {
+        "enum": [
+          "HIGH",
+          "NORMAL",
+          "LOW"
+        ],
+        "title": "Priority",
+        "type": "string"
       },
       "RiskEventOut": {
         "properties": {
@@ -747,6 +770,45 @@
         ],
         "title": "RuleStatus",
         "type": "string"
+      },
+      "SettingsIn": {
+        "description": "Only the settings given are changed.",
+        "properties": {
+          "alerts": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alerts"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Priority"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visible"
+          }
+        },
+        "title": "SettingsIn",
+        "type": "object"
       },
       "Severity": {
         "enum": [
@@ -1154,6 +1216,10 @@
       },
       "TerritoryOut": {
         "properties": {
+          "alerts": {
+            "title": "Alerts",
+            "type": "boolean"
+          },
           "geometry": {
             "additionalProperties": true,
             "title": "Geometry",
@@ -1185,12 +1251,19 @@
             ],
             "title": "Parent Id"
           },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
           "tags": {
             "items": {
               "type": "string"
             },
             "title": "Tags",
             "type": "array"
+          },
+          "visible": {
+            "title": "Visible",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1200,6 +1273,9 @@
           "parent_id",
           "hectares",
           "tags",
+          "alerts",
+          "visible",
+          "priority",
           "geometry"
         ],
         "title": "TerritoryOut",
@@ -1873,6 +1949,58 @@
           }
         },
         "summary": "Risk Events",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/settings": {
+      "patch": {
+        "operationId": "change_settings_territories__territory_id__settings_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerritoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Settings",
         "tags": [
           "territories"
         ]

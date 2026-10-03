@@ -18,6 +18,7 @@ export type Severity = Schemas["Severity"];
 export type SprayStatus = Schemas["SprayStatus"];
 export type Snap = Schemas["SnapOut"];
 export type OutlineIn = Schemas["OutlineIn"];
+export type SettingsIn = Schemas["SettingsIn"];
 
 export class ApiError extends Error {
   constructor(
@@ -65,6 +66,11 @@ export const api = {
     }),
   editOutline: (id: number, body: OutlineIn) =>
     request<Territory>(`/territories/${id}/outline`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  changeSettings: (id: number, body: SettingsIn) =>
+    request<Territory>(`/territories/${id}/settings`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),

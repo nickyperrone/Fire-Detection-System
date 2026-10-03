@@ -198,6 +198,19 @@ const en = {
     showOnly: "Show only these",
     showAll: "Show all",
     clear: "Clear",
+    hidden: (n: number) => `Hidden (${n})`,
+    highPriority: "High priority",
+    alertsOff: "Alerts off",
+  },
+  settings: {
+    title: "Settings",
+    alerts: "Alert me of danger nearby",
+    allowBrowser: "Allow alerts in this browser",
+    browserBlocked:
+      "This browser blocks alerts from Field Watch; allow them in its site settings.",
+    visible: "Show on the map",
+    priority: "Priority",
+    priorities: { HIGH: "High", NORMAL: "Normal", LOW: "Low" },
   },
   search: { placeholder: "Search fields, lots or tags", lot: "lot" },
   freshness: {
@@ -475,6 +488,19 @@ const es: Messages = {
     showOnly: "Ver solo estos",
     showAll: "Ver todos",
     clear: "Limpiar",
+    hidden: (n) => `Ocultos (${n})`,
+    highPriority: "Prioridad alta",
+    alertsOff: "Sin avisos",
+  },
+  settings: {
+    title: "Ajustes",
+    alerts: "Avisarme si hay peligro cerca",
+    allowBrowser: "Permitir avisos en este navegador",
+    browserBlocked:
+      "Este navegador bloquea los avisos de Field Watch; permitilos en la configuración del sitio.",
+    visible: "Mostrar en el mapa",
+    priority: "Prioridad",
+    priorities: { HIGH: "Alta", NORMAL: "Normal", LOW: "Baja" },
   },
   search: { placeholder: "Buscar campos, lotes o etiquetas", lot: "lote" },
   freshness: {

@@ -219,6 +219,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/territories/{territory_id}/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change Settings */
+        patch: operations["change_settings_territories__territory_id__settings_patch"];
+        trace?: never;
+    };
     "/territories/{territory_id}/spray-conditions": {
         parameters: {
             query?: never;
@@ -478,6 +495,8 @@ export interface components {
         };
         /** PortfolioEntryOut */
         PortfolioEntryOut: {
+            /** Alerts */
+            alerts: boolean;
             anomaly: components["schemas"]["AnomalyAnswerOut"];
             fire: components["schemas"]["FireAnswerOut"];
             forecast: components["schemas"]["ForecastAnswerOut"];
@@ -489,12 +508,20 @@ export interface components {
             name: string;
             /** Parent Id */
             parent_id: number | null;
+            priority: components["schemas"]["Priority"];
             spray: components["schemas"]["SprayAnswerOut"];
             /** Tags */
             tags: string[];
             /** Territory Id */
             territory_id: number;
+            /** Visible */
+            visible: boolean;
         };
+        /**
+         * Priority
+         * @enum {string}
+         */
+        Priority: "HIGH" | "NORMAL" | "LOW";
         /** RiskEventOut */
         RiskEventOut: {
             /** Direction */
@@ -535,6 +562,17 @@ export interface components {
          * @enum {string}
          */
         RuleStatus: "PASS" | "CAUTION" | "FAIL" | "UNKNOWN";
+        /**
+         * SettingsIn
+         * @description Only the settings given are changed.
+         */
+        SettingsIn: {
+            /** Alerts */
+            alerts?: boolean | null;
+            priority?: components["schemas"]["Priority"] | null;
+            /** Visible */
+            visible?: boolean | null;
+        };
         /**
          * Severity
          * @enum {string}
@@ -690,6 +728,8 @@ export interface components {
         TerritoryKind: "FIELD" | "SECTION";
         /** TerritoryOut */
         TerritoryOut: {
+            /** Alerts */
+            alerts: boolean;
             /** Geometry */
             geometry: {
                 [key: string]: unknown;
@@ -703,8 +743,11 @@ export interface components {
             name: string;
             /** Parent Id */
             parent_id: number | null;
+            priority: components["schemas"]["Priority"];
             /** Tags */
             tags: string[];
+            /** Visible */
+            visible: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -1143,6 +1186,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskEventOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_settings_territories__territory_id__settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerritoryOut"];
                 };
             };
             /** @description Validation Error */

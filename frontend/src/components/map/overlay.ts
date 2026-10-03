@@ -80,6 +80,34 @@ const lineOpacity: ExpressionSpecification = [
   1,
 ];
 
+const byKind = (kind: string): ExpressionSpecification => [
+  "==",
+  ["get", "kind"],
+  kind,
+];
+
+const TERRITORY_KIND_BY_LAYER = {
+  "field-fill": "FIELD",
+  "section-fill": "SECTION",
+  "field-line": "FIELD",
+  "section-line": "SECTION",
+  "field-label": "FIELD",
+  "section-label": "SECTION",
+} as const;
+
+/** Leaves the given fields and lots off the map. A filter, not feature state, because the
+ * labels are another tile layer and filters also stop them from taking label space. */
+export function hideTerritories(map: MapLibreMap, ids: number[]): void {
+  for (const [layer, kind] of Object.entries(TERRITORY_KIND_BY_LAYER)) {
+    map.setFilter(
+      layer,
+      ids.length
+        ? ["all", byKind(kind), ["!", ["in", ["id"], ["literal", ids]]]]
+        : byKind(kind),
+    );
+  }
+}
+
 const isCluster: ExpressionSpecification = ["has", "event_count"];
 
 export type OverlayOptions = {
@@ -166,11 +194,6 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     maxzoom: 14,
   });
 
-  const byKind = (kind: string): ExpressionSpecification => [
-    "==",
-    ["get", "kind"],
-    kind,
-  ];
   map.addLayer({
     id: "field-fill",
     type: "fill",

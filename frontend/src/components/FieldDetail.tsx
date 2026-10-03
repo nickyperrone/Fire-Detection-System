@@ -18,6 +18,7 @@ import {
 } from "@/i18n/text";
 import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
+import { FieldSettings } from "./FieldSettings";
 import { FieldChips, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
 import { ForecastSection } from "./ForecastSection";
@@ -89,6 +90,11 @@ export function FieldDetail({
           <CloseIcon className="size-4" />
         </button>
       </header>
+
+      <section>
+        <SectionTitle>{t.settings.title}</SectionTitle>
+        <FieldSettings entry={entry} />
+      </section>
 
       <section>
         <SectionTitle icon={<FlameIcon className="size-4" />}>
