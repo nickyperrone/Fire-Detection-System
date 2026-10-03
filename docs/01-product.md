@@ -53,6 +53,24 @@ on a given week. Each field and each lot has three settings, changed from its ca
 - `PATCH /territories/{id}/settings` changes any of the three; the portfolio and the territory list
   return them.
 
+### Tags and colors
+
+Tags group fields the way the contractor talks about them: "casa", "cliente 1", "cliente 2",
+`crop:soy`. Each tag has a color.
+
+- A tag gets a color from a fixed palette when it is first seen, and the user can change it from any
+  field card (tap the tag's dot). The color belongs to the tag, so every field with it changes.
+- The palette has no red and no green: those mean danger and all clear everywhere in the app, and
+  a "cliente 1" field must never look like a fire.
+- **Color fields by** in the layers menu switches the map between **Status** (red and green, the
+  default) and **Tags**. With tags, a field takes the color of its first tag (plain labels such as
+  "casa" before `key:value` tags, then alphabetical); a lot without tags takes its field's color;
+  untagged fields are gray. Fires and lightning keep their colors in both modes.
+- The tag chips above the list carry their color dot and work as the legend.
+- A field's tags are edited on its card: remove one with its ×, add one by typing (existing tags are
+  suggested). `GET /tags` lists the tags with their colors, `PATCH /tags/{id}` changes a color, and
+  `PUT /territories/{id}/tags` replaces a field's tags.
+
 ## Scope: Argentina
 
 The map can be explored anywhere, but everything the product computes is about Argentina:
