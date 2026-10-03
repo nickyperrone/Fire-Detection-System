@@ -16,6 +16,7 @@ from app.models import (
     FireForecast,
     Observation,
     ObservationEventLink,
+    Priority,
     RiskStatus,
     Severity,
     SprayAssessment,
@@ -270,8 +271,12 @@ def next_favorable_window(assessments: list[SprayAssessment]) -> tuple[datetime,
     return (start, end) if start else None
 
 
+PRIORITY_RANK = {Priority.HIGH: 0, Priority.NORMAL: 1, Priority.LOW: 2}
+
+
 def _worst_first(entries: list[PortfolioEntry]) -> list[PortfolioEntry]:
-    """Groups a field with its sections, and orders groups by their worst fire severity."""
+    """Groups a field with its sections, and orders groups by the field's priority, then by their
+    worst fire severity."""
     groups: dict[int, list[PortfolioEntry]] = defaultdict(list)
     for entry in entries:
         groups[entry.territory.parent_id or entry.territory.id].append(entry)
@@ -281,6 +286,10 @@ def _worst_first(entries: list[PortfolioEntry]) -> list[PortfolioEntry]:
 
     ordered = sorted(
         groups.values(),
-        key=lambda g: (-max(rank(e) for e in g), g[0].territory.name),
+        key=lambda g: (
+            PRIORITY_RANK[g[0].territory.priority],
+            -max(rank(e) for e in g),
+            g[0].territory.name,
+        ),
     )
     return [e for group in ordered for e in group]

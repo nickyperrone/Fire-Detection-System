@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.models import (
     DataQuality,
     FireEventStatus,
+    Priority,
     RiskStatus,
     Severity,
     SprayStatus,
@@ -34,6 +35,14 @@ class TagsIn(BaseModel):
     tags: list[str]
 
 
+class SettingsIn(BaseModel):
+    """Only the settings given are changed."""
+
+    alerts: bool | None = None
+    visible: bool | None = None
+    priority: Priority | None = None
+
+
 class TerritoryOut(BaseModel):
     id: int
     name: str
@@ -41,6 +50,9 @@ class TerritoryOut(BaseModel):
     parent_id: int | None
     hectares: float
     tags: list[str]
+    alerts: bool
+    visible: bool
+    priority: Priority
     geometry: dict
 
 
@@ -136,6 +148,9 @@ class PortfolioEntryOut(BaseModel):
     parent_id: int | None
     hectares: float
     tags: list[str]
+    alerts: bool
+    visible: bool
+    priority: Priority
     fire: FireAnswerOut
     spray: SprayAnswerOut
     lightning: LightningAnswerOut

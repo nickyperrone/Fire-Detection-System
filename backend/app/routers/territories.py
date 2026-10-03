@@ -12,6 +12,7 @@ from app.schemas import (
     FireHistoryOut,
     OutlineIn,
     RiskEventOut,
+    SettingsIn,
     SprayHourOut,
     TagsIn,
     TerritoryIn,
@@ -41,6 +42,9 @@ def territory_out(territory: Territory) -> TerritoryOut:
         parent_id=territory.parent_id,
         hectares=round(territory.hectares, 1),
         tags=sorted(tag.label for tag in territory.tags),
+        alerts=territory.alerts,
+        visible=territory.visible,
+        priority=territory.priority,
         geometry=geojson(territory.geom),
     )
 
@@ -138,6 +142,20 @@ def change_outline(
         datetime.now(UTC),
     )
     return result
+
+
+@router.patch("/{territory_id}/settings", response_model=TerritoryOut)
+def change_settings(
+    session: SessionDep,
+    settings: SettingsDep,
+    territory_id: int,
+    body: SettingsIn,
+):
+    territory = owned(session, settings, territory_id)
+    for name, value in body.model_dump(exclude_none=True).items():
+        setattr(territory, name, value)
+    session.commit()
+    return territory_out(territory)
 
 
 @router.put("/{territory_id}/tags", response_model=TerritoryOut)

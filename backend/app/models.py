@@ -50,6 +50,12 @@ class TerritoryKind(StrEnum):
     SECTION = "SECTION"
 
 
+class Priority(StrEnum):
+    HIGH = "HIGH"
+    NORMAL = "NORMAL"
+    LOW = "LOW"
+
+
 class Confidence(StrEnum):
     LOW = "low"
     NOMINAL = "nominal"
@@ -134,6 +140,10 @@ class Territory(Base):
     geom = mapped_column(Geometry("MULTIPOLYGON", srid=4326, spatial_index=False), nullable=False)
     hectares: Mapped[float] = mapped_column(Float)
     attributes: Mapped[dict] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    # Settings chosen by the user (docs/01-product.md#settings-per-field).
+    alerts: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    visible: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    priority: Mapped[Priority] = mapped_column(_enum(Priority), server_default=Priority.NORMAL)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     tags: Mapped[list[Tag]] = relationship(secondary="territory_tag", lazy="selectin")

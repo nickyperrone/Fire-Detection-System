@@ -140,3 +140,30 @@ def test_fields_must_be_inside_argentina(session):
         allowed_area=ARGENTINA,
     )
     assert near_border.hectares > 0
+
+
+def test_settings_change_only_what_is_given_and_order_the_portfolio(client):
+    def create(name, west):
+        body = {"name": name, "geometry": rect(west, -33.0, west + 0.01, -32.99)}
+        return client.post("/territories", json=body).json()
+
+    first = create("A field", -59.10)
+    second = create("B field", -59.08)
+    assert (first["alerts"], first["visible"], first["priority"]) == (True, True, "NORMAL")
+
+    changed = client.patch(
+        f"/territories/{second['id']}/settings", json={"priority": "HIGH", "alerts": False}
+    ).json()
+    assert (changed["alerts"], changed["visible"], changed["priority"]) == (False, True, "HIGH")
+    hidden = client.patch(f"/territories/{first['id']}/settings", json={"visible": False}).json()
+    assert (hidden["visible"], hidden["priority"]) == (False, "NORMAL")
+
+    # High priority comes first, ahead of the alphabet.
+    names = [e["name"] for e in client.get("/portfolio").json()]
+    assert names == ["B field", "A field"]
+    assert (
+        client.patch(
+            f"/territories/{first['id']}/settings", json={"priority": "URGENT"}
+        ).status_code
+        == 422
+    )
