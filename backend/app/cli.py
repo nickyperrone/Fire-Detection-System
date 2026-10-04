@@ -14,6 +14,7 @@ from app.models import DataQuality
 from app.services.auth import normalize_email
 from app.services.fire_history import load_history
 from app.services.pipeline import (
+    answer_territories,
     run_fire_pipeline,
     run_forecast_pipeline,
     run_goes_fire_pipeline,
@@ -130,6 +131,7 @@ def main() -> None:
                 allowed_area(config["allowed_area"], config["allowed_area_tolerance_m"]),
             )
             session.commit()
+            answer_territories(session, client, thresholds, [t.id for t in created])
             print(f"loaded {len(created)} territories")
         if args.command in ("ingest-fires", "run-once"):
             print(json.dumps(run_fire_pipeline(session, client, settings, thresholds), indent=2))

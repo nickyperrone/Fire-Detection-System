@@ -2,6 +2,7 @@ import os
 from email.message import EmailMessage
 from pathlib import Path
 
+import httpx
 import pytest
 import yaml
 from alembic.config import Config
@@ -15,7 +16,7 @@ from app.boundaries import allowed_area
 from app.db import get_session
 from app.main import app
 from app.models import Base
-from app.routers.dependencies import mail_sender, require_owner
+from app.routers.dependencies import http_client, mail_sender, require_owner
 from app.services.territories import DEFAULT_OWNER
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -69,6 +70,9 @@ def anonymous(session, outbox):
     """The API with the test database and an outbox instead of SMTP, signed out."""
     app.dependency_overrides[get_session] = lambda: session
     app.dependency_overrides[mail_sender] = lambda: outbox.append
+    # No test reaches the internet: outside services answer "unavailable" unless a test says more.
+    unavailable = httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(503)))
+    app.dependency_overrides[http_client] = lambda: unavailable
     yield TestClient(app)
     app.dependency_overrides.clear()
 

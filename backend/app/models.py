@@ -349,6 +349,10 @@ class CellForecast(Base):
     factors: Mapped[list[dict]] = mapped_column(JSONB)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     model_version: Mapped[str] = mapped_column(String(60))
+    # Whether every cell had weather on that run; a field drawn later reports it too.
+    data_quality: Mapped[DataQuality] = mapped_column(
+        _enum(DataQuality), server_default=DataQuality.GOOD
+    )
 
 
 class FireForecast(Base):

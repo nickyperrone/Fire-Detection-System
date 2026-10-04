@@ -228,13 +228,12 @@ def issue_forecast(
                     "factors": factors(values[i], config["factors"], order),
                     "issued_at": now,
                     "model_version": model_version,
+                    "data_quality": quality,
                 }
             )
     session.execute(delete(CellForecast))
     session.execute(insert(CellForecast).values(cell_rows))
-    fields = _territory_forecasts(
-        session, grid, cells, values, probabilities, models, config, today, now, quality, version
-    )
+    fields = forecast_territories(session, grid, config, version)
     session.commit()
     return {
         "cells": len(cells),
@@ -244,21 +243,24 @@ def issue_forecast(
     }
 
 
-def _territory_forecasts(
+def forecast_territories(
     session: Session,
     grid: Grid,
-    cells: list[tuple[int, int]],
-    values: list[dict[str, float]],
-    probabilities: dict[int, np.ndarray],
-    models: dict[int, dict],
     config: dict,
-    today: date,
-    now: datetime,
-    quality: DataQuality,
     version: str,
+    territory_ids: list[int] | None = None,
 ) -> int:
-    """A field's probability: at least one fire in any cell within the radius, 1 - Π(1 - p).
-    Its factors are those of its riskiest cell."""
+    """Each field's forecast from the stored cell forecasts: at least one fire in any cell within
+    the radius, 1 - Π(1 - p), with the factors of its riskiest cell. `territory_ids` limits it to
+    fields just drawn or changed, which then do not wait for the next hourly run."""
+    stored = session.scalars(select(CellForecast)).all()
+    if not stored:
+        return 0
+    cells = sorted({(c.row, c.col) for c in stored})
+    index = {cell: i for i, cell in enumerate(cells)}
+    by_horizon: dict[int, list[CellForecast]] = defaultdict(lambda: [None] * len(cells))
+    for c in stored:
+        by_horizon[c.horizon_days][index[(c.row, c.col)]] = c
     centers = [grid.center(r, c) for r, c in cells]
     rows = session.execute(
         TERRITORY_CELLS_SQL,
@@ -269,32 +271,35 @@ def _territory_forecasts(
             "radius_m": config["radius_m"],
         },
     ).all()
-    by_territory: dict[int, list[int]] = defaultdict(list)
+    near: dict[int, list[int]] = defaultdict(list)
     for r in rows:
-        by_territory[r.territory_id].append(r.idx)
+        if territory_ids is None or r.territory_id in territory_ids:
+            near[r.territory_id].append(r.idx)
 
-    session.execute(delete(FireForecast))
+    replaced = delete(FireForecast)
+    if territory_ids is not None:
+        replaced = replaced.where(FireForecast.territory_id.in_(territory_ids))
+    session.execute(replaced)
     out = []
-    for territory_id, idx in by_territory.items():
-        for h, p in probabilities.items():
-            combined = float(1 - np.prod(1 - p[idx]))
-            riskiest = idx[int(np.argmax(p[idx]))]
-            bundle = models[h]
-            order = feature_order(bundle)
+    for territory_id, idx in near.items():
+        for horizon, forecasts in by_horizon.items():
+            p = np.array([forecasts[i].probability for i in idx])
+            combined = float(1 - np.prod(1 - p))
+            riskiest = forecasts[idx[int(np.argmax(p))]]
             out.append(
                 {
                     "territory_id": territory_id,
-                    "horizon_days": h,
-                    "valid_from": today + timedelta(days=1),
+                    "horizon_days": horizon,
+                    "valid_from": riskiest.valid_from,
                     "probability": combined,
                     "band": band_for(combined, config["bands"]),
-                    "factors": factors(values[riskiest], config["factors"], order),
-                    "data_quality": quality,
-                    "issued_at": now,
-                    "model_version": f"hgb-{bundle['trained_at'][:10]}",
+                    "factors": riskiest.factors,
+                    "data_quality": riskiest.data_quality,
+                    "issued_at": riskiest.issued_at,
+                    "model_version": riskiest.model_version,
                     "processing_version": version,
                 }
             )
     if out:
         session.execute(insert(FireForecast).values(out))
-    return len(by_territory)
+    return len(near)

@@ -1,6 +1,8 @@
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import Cookie, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -34,6 +36,13 @@ def mail_sender(settings: SettingsDep) -> SendEmail:
     return smtp_sender(settings)
 
 
+def http_client() -> Iterator[httpx.Client]:
+    """For requests to outside services; tests replace it with one that answers locally."""
+    with httpx.Client() as client:
+        yield client
+
+
+HttpDep = Annotated[httpx.Client, Depends(http_client)]
 UserDep = Annotated[User | None, Depends(current_user)]
 OwnerDep = Annotated[str, Depends(require_owner)]
 MailDep = Annotated[SendEmail, Depends(mail_sender)]

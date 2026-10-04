@@ -12,7 +12,7 @@ from app.forecast.dataset import weather_point
 from app.forecast.live_weather import LOCAL_TZ, refresh_weather
 from app.forecast.recent_fires import PROVIDER as RECENT_PROVIDER
 from app.forecast.recent_fires import top_up
-from app.forecast.serve import cells_of, forecast_grid, issue_forecast
+from app.forecast.serve import cells_of, forecast_grid, forecast_territories, issue_forecast
 from app.models import IngestionRun, RunStatus
 from app.services.alerts import send_alerts
 from app.services.field_risk import assess_active_fire_events
@@ -121,3 +121,21 @@ def run_alert_pipeline(session: Session, settings: Settings, thresholds: dict) -
         processing_version(thresholds),
         datetime.now(UTC),
     )
+
+
+def answer_territories(
+    session: Session, client: httpx.Client, thresholds: dict, territory_ids: list[int]
+) -> dict:
+    """Spray conditions and fire forecast for fields just drawn or reshaped, so they have answers
+    at once instead of after the next hourly run."""
+    version = processing_version(thresholds)
+    spray = assess_spray(session, client, thresholds, version, datetime.now(UTC), territory_ids)
+    config = thresholds["forecast"]
+    grid = forecast_grid(
+        tuple(thresholds["region"]["bbox"]),
+        config["cell_degrees"],
+        thresholds["territories"]["allowed_area"],
+    )
+    forecasts = forecast_territories(session, grid, config, version, territory_ids)
+    session.commit()
+    return {"spray": spray.status.value, "forecast_fields": forecasts}

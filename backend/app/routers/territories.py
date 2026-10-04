@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.boundaries import allowed_area
 from app.config import get_thresholds
 from app.models import Territory
-from app.routers.dependencies import OwnerDep, SessionDep, TagsQuery
+from app.routers.dependencies import HttpDep, OwnerDep, SessionDep, TagsQuery
 from app.schemas import (
     FireHistoryOut,
     OutlineIn,
@@ -21,6 +21,7 @@ from app.schemas import (
 from app.services.field_risk import assess_active_fire_events, compass, reassess_territory
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
+from app.services.pipeline import answer_territories
 from app.services.spray_conditions import list_spray_hours
 from app.services.territories import (
     create_territory,
@@ -69,6 +70,7 @@ def list_(
 def create(
     session: SessionDep,
     owner: OwnerDep,
+    http: HttpDep,
     body: TerritoryIn,
 ):
     config = get_thresholds()["territories"]
@@ -89,6 +91,7 @@ def create(
     assess_active_fire_events(
         session, thresholds["field_risk"], processing_version(thresholds), datetime.now(UTC)
     )
+    answer_territories(session, http, thresholds, [territory.id])
     return territory_out(territory)
 
 
@@ -116,6 +119,7 @@ def change_outline(
     session: SessionDep,
     owner: OwnerDep,
     territory_id: int,
+    http: HttpDep,
     body: OutlineIn,
 ):
     territory = owned(session, owner, territory_id)
@@ -141,6 +145,8 @@ def change_outline(
         processing_version(thresholds),
         datetime.now(UTC),
     )
+    # A reshaped field has another centroid and other cells within its radius.
+    answer_territories(session, http, thresholds, [territory.id])
     return result
 
 

@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from dataclasses import asdict
 from datetime import datetime
 
@@ -19,14 +20,17 @@ def grid_point(latitude: float, longitude: float, grid: float) -> tuple[float, f
     return round(round(latitude / grid) * grid, 4), round(round(longitude / grid) * grid, 4)
 
 
-def territory_points(session: Session, grid: float) -> dict[int, tuple[float, float]]:
-    rows = session.execute(
-        select(
-            Territory.id,
-            func.ST_Y(func.ST_Centroid(Territory.geom)),
-            func.ST_X(func.ST_Centroid(Territory.geom)),
-        )
-    ).all()
+def territory_points(
+    session: Session, grid: float, territory_ids: Collection[int] | None = None
+) -> dict[int, tuple[float, float]]:
+    query = select(
+        Territory.id,
+        func.ST_Y(func.ST_Centroid(Territory.geom)),
+        func.ST_X(func.ST_Centroid(Territory.geom)),
+    )
+    if territory_ids is not None:
+        query = query.where(Territory.id.in_(territory_ids))
+    rows = session.execute(query).all()
     return {row[0]: grid_point(row[1], row[2], grid) for row in rows}
 
 
@@ -39,11 +43,17 @@ def fetch_all(client: httpx.Client, points: list[tuple[float, float]], hours: in
 
 
 def assess_spray(
-    session: Session, client: httpx.Client, thresholds: dict, version: str, now: datetime
+    session: Session,
+    client: httpx.Client,
+    thresholds: dict,
+    version: str,
+    now: datetime,
+    territory_ids: Collection[int] | None = None,
 ) -> IngestionRun:
-    """Fetch the forecast for every territory and store one assessment per profile and hour."""
+    """Fetch the forecast for every territory (or only `territory_ids`) and store one assessment
+    per profile and hour."""
     weather = thresholds["weather"]
-    by_territory = territory_points(session, weather["grid_degrees"])
+    by_territory = territory_points(session, weather["grid_degrees"], territory_ids)
     points = sorted(set(by_territory.values()))
     run = IngestionRun(provider="open_meteo", product="forecast", started_at=now)
     try:
