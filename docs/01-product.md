@@ -25,6 +25,23 @@ different answers:
 | `CLOUD_OBSCURED` | Imagery exists but clouds cover too much of the field |
 | `NO_DATA` | No successful read yet |
 
+### Weather per field
+
+Spraying conditions say whether to spray; the contractor also wants the weather itself, for every
+field being watched, their own or a client's.
+
+- **In the list:** one line per field and lot with the weather now: temperature, wind speed and
+  where it comes from, gusts, and rain expected in the next 24 h when there is some
+  ("22° · wind from S 12 km/h · gusts 23 · 4 mm in 24 h").
+- **On the field card**, a Weather section: now (temperature, humidity, wind, gusts, cloud cover)
+  and the next 48 h every 3 hours (temperature, wind and gusts, rain and its probability),
+  scrollable sideways.
+- Same source and hour as the spray answer (Open-Meteo, the field's point on a 0.02° grid,
+  refreshed hourly), so the weather and the spray verdict never disagree. When it is older than
+  the spray data quality allows, it is shown gray with its age, never as current.
+- Wind direction is where the wind **comes from**, as in any forecast; the spray card already
+  says where drift goes.
+
 ## Fields, sections and tags
 
 - A **field** is a polygon drawn on the map or imported from GeoJSON/KML. Its area in hectares is
