@@ -51,6 +51,15 @@ export function localTime(t: Messages, iso: string, withDay = false): string {
   }).format(new Date(iso));
 }
 
+/** A calendar date ("2026-03-14") as day and month, e.g. "14 mar". */
+export function localDate(t: Messages, isoDate: string): string {
+  return new Intl.DateTimeFormat(t.intl, {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${isoDate}T00:00:00Z`));
+}
+
 export function localHourNumber(iso: string): number {
   const hour = new Intl.DateTimeFormat("en-GB", {
     timeZone: LOCAL_TZ,

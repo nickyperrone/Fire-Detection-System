@@ -138,6 +138,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/fields/detect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Detect
+         * @description The outline of the field under a point, from a year of Sentinel-2 images (docs/10).
+         */
+        post: operations["detect_fields_detect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fire-events": {
         parameters: {
             query?: never;
@@ -408,6 +428,38 @@ export interface components {
          * @enum {string}
          */
         DataQuality: "GOOD" | "PARTIAL" | "STALE" | "CLOUD_OBSCURED" | "NO_DATA";
+        /** DetectIn */
+        DetectIn: {
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+        };
+        /** DetectOut */
+        DetectOut: {
+            /**
+             * Dates
+             * @description Clear Sentinel-2 dates the outline was found in
+             */
+            dates: number;
+            /**
+             * First
+             * Format: date
+             */
+            first: string;
+            /**
+             * Geometry
+             * @description GeoJSON Polygon, EPSG:4326
+             */
+            geometry: {
+                [key: string]: unknown;
+            };
+            /**
+             * Last
+             * Format: date
+             */
+            last: string;
+        };
         /** FireAnswerOut */
         FireAnswerOut: {
             /** Acquired At */
@@ -1124,6 +1176,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_fields_detect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DetectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectOut"];
                 };
             };
             /** @description Validation Error */

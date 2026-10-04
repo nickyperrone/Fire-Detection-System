@@ -24,6 +24,61 @@
         "title": "DataQuality",
         "type": "string"
       },
+      "DetectIn": {
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "DetectIn",
+        "type": "object"
+      },
+      "DetectOut": {
+        "properties": {
+          "dates": {
+            "description": "Clear Sentinel-2 dates the outline was found in",
+            "title": "Dates",
+            "type": "integer"
+          },
+          "first": {
+            "format": "date",
+            "title": "First",
+            "type": "string"
+          },
+          "geometry": {
+            "additionalProperties": true,
+            "description": "GeoJSON Polygon, EPSG:4326",
+            "title": "Geometry",
+            "type": "object"
+          },
+          "last": {
+            "format": "date",
+            "title": "Last",
+            "type": "string"
+          }
+        },
+        "required": [
+          "geometry",
+          "dates",
+          "first",
+          "last"
+        ],
+        "title": "DetectOut",
+        "type": "object"
+      },
       "FireAnswerOut": {
         "properties": {
           "acquired_at": {
@@ -1727,6 +1782,66 @@
         "summary": "Snap",
         "tags": [
           "cadastre"
+        ]
+      }
+    },
+    "/fields/detect": {
+      "post": {
+        "description": "The outline of the field under a point, from a year of Sentinel-2 images (docs/10).",
+        "operationId": "detect_fields_detect_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detect",
+        "tags": [
+          "fields"
         ]
       }
     },

@@ -12,25 +12,33 @@ import {
 } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 
-import { api } from "@/api/client";
+import { api, ApiError } from "@/api/client";
 import { simplifyRing } from "@/lib/geometry";
 
 export type DrawnPolygon = { type: "Polygon"; coordinates: number[][][] };
 
 /**
  * "parcel": tap an official parcel and use its outline (docs/08-cadastre.md).
+ * "detect": tap a field and find its outline in satellite images (docs/10-field-detection.md).
  * "trace": drag a finger along the edge. "corners": tap each corner.
  */
-export type DrawTool = "parcel" | "trace" | "corners";
+export type DrawTool = "parcel" | "detect" | "trace" | "corners";
 
 const MODE: Record<DrawTool, string> = {
-  // Terra Draw only shows the shape; taps are handled here, by asking for the parcel under them.
+  // Terra Draw only shows the shape; taps are handled here, by asking the API for an outline.
   parcel: "static",
+  detect: "static",
   trace: "freehand",
   corners: "polygon",
 };
 
-export type Notice = "too_small" | "no_parcel";
+const TAP_TOOLS: DrawTool[] = ["parcel", "detect"];
+
+export type Notice =
+  "too_small" | "no_parcel" | "no_field_found" | "no_images" | "detect_failed";
+
+/** Where a detected outline came from: how many clear Sentinel-2 dates, and their range. */
+export type DetectInfo = { dates: number; first: string; last: string };
 
 /** A hand-drawn shape fitted to the property lines (docs/08-cadastre.md#in-the-map). */
 export type Fit = {
@@ -59,8 +67,10 @@ export type FieldDrawing = {
   restart: () => void;
   /** Why the last tap or shape did not give a field, if it did not. */
   notice: Notice | null;
-  /** Looking up the parcel under a tap. */
+  /** Looking up the parcel, or detecting the field, under a tap. */
   searching: boolean;
+  /** Set when the outline was found in satellite images by the detect tool. */
+  detected: DetectInfo | null;
   /** The official parcel the shape came from: the one tapped, or the only one it was fitted to. */
   parcel: ParcelInfo | null;
   /** Asking the server to fit a closed hand-drawn shape to the property lines. */
@@ -90,7 +100,7 @@ function metersPerPixel(map: MapLibreMap): number {
 /** Panning stays on for the parcel tool (it only taps) and is off while tracing or tapping
  * corners, where a press that moves a few pixels would pan instead of drawing. */
 function setPanning(map: MapLibreMap, tool: DrawTool) {
-  if (tool === "parcel") map.dragPan.enable();
+  if (TAP_TOOLS.includes(tool)) map.dragPan.enable();
   else map.dragPan.disable();
 }
 
@@ -170,6 +180,7 @@ export function useFieldDrawing(
   const [tool, setToolState] = useState<DrawTool>("parcel");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [searching, setSearching] = useState(false);
+  const [detected, setDetected] = useState<DetectInfo | null>(null);
   const [parcel, setParcel] = useState<ParcelInfo | null>(null);
   const [fitting, setFitting] = useState(false);
   const [fit, setFit] = useState<Fit | null>(null);
@@ -188,127 +199,164 @@ export function useFieldDrawing(
 
   useEffect(() => {
     if (!map || !active) return;
-    // While drawing, a press on the map always means drawing: with panning on, a tap that moves
-    // a few pixels pans the map instead. Zoom still works; double-click zoom would fight with
-    // closing the shape.
-    // The parcel tool only taps, so the map can still be dragged to find the parcel.
-    setPanning(map, toolRef.current);
-    map.doubleClickZoom.disable();
-    const draw = buildDraw(map);
-    drawRef.current = draw;
-    draw.start();
-    draw.setMode(MODE[toolRef.current]);
+    const startDrawing = (): (() => void) => {
+      // While drawing, a press on the map always means drawing: with panning on, a tap that moves
+      // a few pixels pans the map instead. Zoom still works; double-click zoom would fight with
+      // closing the shape.
+      // The parcel tool only taps, so the map can still be dragged to find the parcel.
+      setPanning(map, toolRef.current);
+      map.doubleClickZoom.disable();
+      const draw = buildDraw(map);
+      drawRef.current = draw;
+      draw.start();
+      draw.setMode(MODE[toolRef.current]);
 
-    const polygonOf = (id: string | number): DrawnPolygon | null => {
-      const feature = draw.getSnapshotFeature(id);
-      return feature?.geometry.type === "Polygon"
-        ? (feature.geometry as DrawnPolygon)
-        : null;
-    };
-    const close = (id: string | number, shape: DrawnPolygon) => {
-      closedIdRef.current = id;
-      draw.setMode("select");
-      draw.selectFeature(id);
-      setNotice(null);
-      setPolygon(shape);
-      setHectares(area(shape) / 10_000);
-    };
+      const polygonOf = (id: string | number): DrawnPolygon | null => {
+        const feature = draw.getSnapshotFeature(id);
+        return feature?.geometry.type === "Polygon"
+          ? (feature.geometry as DrawnPolygon)
+          : null;
+      };
+      const close = (id: string | number, shape: DrawnPolygon) => {
+        closedIdRef.current = id;
+        draw.setMode("select");
+        draw.selectFeature(id);
+        setNotice(null);
+        setPolygon(shape);
+        setHectares(area(shape) / 10_000);
+      };
 
-    const fitToPropertyLines = async (
-      id: string | number,
-      drawn: DrawnPolygon,
-    ) => {
-      setFitting(true);
-      try {
-        const result = await api.snap(drawn);
-        // The shape may have been discarded while the server answered.
-        if (closedIdRef.current !== id || result.method === "none") return;
-        const parcels = result.parcels as ParcelInfo[];
-        shapesRef.current = {
-          drawn,
-          fitted: result.geometry as DrawnPolygon,
-          parcel: parcels.length === 1 ? parcels[0] : null,
-        };
-        showShape(draw, id, true, shapesRef.current);
-        setParcel(shapesRef.current.parcel);
-        setFit({
-          method: result.method as Fit["method"],
-          parcels: parcels.length,
-          applied: true,
-        });
-      } catch {
-        // Fitting is a convenience: without it the drawing stays as it was made.
-      } finally {
-        setFitting(false);
-      }
-    };
+      const fitToPropertyLines = async (
+        id: string | number,
+        drawn: DrawnPolygon,
+      ) => {
+        setFitting(true);
+        try {
+          const result = await api.snap(drawn);
+          // The shape may have been discarded while the server answered.
+          if (closedIdRef.current !== id || result.method === "none") return;
+          const parcels = result.parcels as ParcelInfo[];
+          shapesRef.current = {
+            drawn,
+            fitted: result.geometry as DrawnPolygon,
+            parcel: parcels.length === 1 ? parcels[0] : null,
+          };
+          showShape(draw, id, true, shapesRef.current);
+          setParcel(shapesRef.current.parcel);
+          setFit({
+            method: result.method as Fit["method"],
+            parcels: parcels.length,
+            applied: true,
+          });
+        } catch {
+          // Fitting is a convenience: without it the drawing stays as it was made.
+        } finally {
+          setFitting(false);
+        }
+      };
 
-    const onTap = async (event: MapMouseEvent) => {
-      if (toolRef.current !== "parcel" || closedIdRef.current !== null) return;
-      setSearching(true);
-      try {
-        const found = await api.parcelAt(event.lngLat.lat, event.lngLat.lng);
-        const shape = outerShape(found.geometry);
+      const show = (shape: DrawnPolygon) => {
         const [added] = draw.addFeatures([
           { type: "Feature", geometry: shape, properties: { mode: "polygon" } },
         ]);
         if (!added.valid) throw new Error(added.reason);
-        setParcel(found.properties as ParcelInfo);
         close(added.id as string | number, shape);
-      } catch {
-        setNotice("no_parcel");
-      } finally {
-        setSearching(false);
-      }
-    };
-    map.on("click", onTap);
+      };
 
-    draw.on("change", (ids) => {
-      setNotice(null);
-      const closedId = closedIdRef.current;
-      const shape =
-        closedId !== null
-          ? polygonOf(closedId)
-          : ids.map(polygonOf).find(Boolean);
-      if (!shape) return;
-      setHectares(area(shape) / 10_000);
-      if (closedId !== null) setPolygon(shape);
-    });
-    draw.on("finish", (id, context) => {
-      if (closedIdRef.current !== null || context.action !== "draw") return;
-      let shape = polygonOf(id);
-      if (!shape || area(shape) / 10_000 < MIN_FIELD_HA) {
-        draw.clear();
-        draw.setMode(MODE[toolRef.current]);
+      const onTap = async (event: MapMouseEvent) => {
+        const tool = toolRef.current;
+        if (!TAP_TOOLS.includes(tool) || closedIdRef.current !== null) return;
+        const { lat, lng } = event.lngLat;
+        setNotice(null);
+        setSearching(true);
+        try {
+          if (tool === "parcel") {
+            const found = await api.parcelAt(lat, lng);
+            setParcel(found.properties as ParcelInfo);
+            show(outerShape(found.geometry));
+          } else {
+            const found = await api.detectField(lat, lng);
+            setDetected({
+              dates: found.dates,
+              first: found.first,
+              last: found.last,
+            });
+            show(found.geometry as DrawnPolygon);
+          }
+        } catch (error) {
+          const code = error instanceof ApiError ? error.code : null;
+          setNotice(
+            tool === "parcel"
+              ? "no_parcel"
+              : code === "no_field_found" || code === "no_images"
+                ? code
+                : "detect_failed",
+          );
+        } finally {
+          setSearching(false);
+        }
+      };
+      map.on("click", onTap);
+
+      draw.on("change", (ids) => {
+        setNotice(null);
+        const closedId = closedIdRef.current;
+        const shape =
+          closedId !== null
+            ? polygonOf(closedId)
+            : ids.map(polygonOf).find(Boolean);
+        if (!shape) return;
+        setHectares(area(shape) / 10_000);
+        if (closedId !== null) setPolygon(shape);
+      });
+      draw.on("finish", (id, context) => {
+        if (closedIdRef.current !== null || context.action !== "draw") return;
+        let shape = polygonOf(id);
+        if (!shape || area(shape) / 10_000 < MIN_FIELD_HA) {
+          draw.clear();
+          draw.setMode(MODE[toolRef.current]);
+          setHectares(0);
+          setNotice("too_small");
+          return;
+        }
+        if (toolRef.current === "trace") {
+          const ring = simplifyRing(
+            shape.coordinates[0],
+            TRACE_TOLERANCE_PX * metersPerPixel(map),
+          );
+          shape = { type: "Polygon", coordinates: [ring] };
+          draw.updateFeatureGeometry(id, shape);
+        }
+        close(id, shape);
+        void fitToPropertyLines(id, shape);
+      });
+      return () => {
+        map.off("click", onTap);
+        draw.stop();
+        drawRef.current = null;
+        closedIdRef.current = null;
+        map.dragPan.enable();
+        map.doubleClickZoom.enable();
+        setPolygon(null);
         setHectares(0);
-        setNotice("too_small");
-        return;
-      }
-      if (toolRef.current === "trace") {
-        const ring = simplifyRing(
-          shape.coordinates[0],
-          TRACE_TOLERANCE_PX * metersPerPixel(map),
-        );
-        shape = { type: "Polygon", coordinates: [ring] };
-        draw.updateFeatureGeometry(id, shape);
-      }
-      close(id, shape);
-      void fitToPropertyLines(id, shape);
-    });
+        setParcel(null);
+        setDetected(null);
+        setNotice(null);
+        setFit(null);
+        setFitting(false);
+        shapesRef.current = null;
+      };
+    };
+    let stopDrawing: (() => void) | null = null;
+    const start = () => {
+      stopDrawing = startDrawing();
+    };
+    // Terra Draw adds layers to the style, so it waits when "+" is tapped while the map loads.
+    if (map.isStyleLoaded()) start();
+    else map.once("idle", start);
     return () => {
-      map.off("click", onTap);
-      draw.stop();
-      drawRef.current = null;
-      closedIdRef.current = null;
-      map.dragPan.enable();
-      map.doubleClickZoom.enable();
-      setPolygon(null);
-      setHectares(0);
-      setParcel(null);
-      setNotice(null);
-      setFit(null);
-      setFitting(false);
-      shapesRef.current = null;
+      map.off("idle", start);
+      stopDrawing?.();
     };
   }, [map, active]);
 
@@ -334,6 +382,7 @@ export function useFieldDrawing(
     setHectares(0);
     setNotice(null);
     setParcel(null);
+    setDetected(null);
     setFit(null);
     shapesRef.current = null;
   }, []);
@@ -360,6 +409,7 @@ export function useFieldDrawing(
     restart,
     notice,
     searching,
+    detected,
     parcel,
     fitting,
     fit,

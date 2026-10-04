@@ -21,6 +21,7 @@ export type OutlineIn = Schemas["OutlineIn"];
 export type SettingsIn = Schemas["SettingsIn"];
 export type Tags = Schemas["TagsOut"];
 export type Me = Schemas["MeOut"];
+export type Detected = Schemas["DetectOut"];
 
 export class ApiError extends Error {
   constructor(
@@ -103,6 +104,11 @@ export const api = {
       body: JSON.stringify({ email, locale }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  detectField: (lat: number, lon: number) =>
+    request<Detected>("/fields/detect", {
+      method: "POST",
+      body: JSON.stringify({ lat, lon }),
+    }),
   parcelAt: (lat: number, lon: number) =>
     request<GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon>>(
       `/cadastre/parcel?lat=${lat}&lon=${lon}`,

@@ -10,13 +10,13 @@ import {
 } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { Messages } from "@/i18n/messages";
-import { formatHectares } from "@/i18n/text";
+import { formatHectares, localDate } from "@/i18n/text";
 import { useSettled } from "@/lib/useSettled";
 
 import { PencilMinusIcon, PencilPlusIcon } from "./Icons";
 import type { DrawTool, FieldDrawing } from "./map/useFieldDrawing";
 
-const TOOLS: DrawTool[] = ["parcel", "trace", "corners"];
+const TOOLS: DrawTool[] = ["parcel", "detect", "trace", "corners"];
 
 type Operation = OutlineIn["operation"];
 const PENCILS: { operation: Operation; Icon: typeof PencilPlusIcon }[] = [
@@ -154,7 +154,9 @@ export function DrawFieldOverlay({
             onDone={onDone}
           />
         ) : drawing.searching ? (
-          <p className="mt-1 text-sm text-slate-300">{t.draw.searching}</p>
+          <p className="mt-1 text-sm text-slate-300">
+            {drawing.tool === "detect" ? t.draw.detecting : t.draw.searching}
+          </p>
         ) : drawing.notice ? (
           <p className="mt-1 text-sm text-bad">
             {t.draw.notices[drawing.notice]}
@@ -213,6 +215,15 @@ function SaveFieldForm({
       }}
     >
       <FitRow drawing={drawing} />
+      {drawing.detected && (
+        <p className="text-sm text-slate-300">
+          {t.draw.detected(
+            drawing.detected.dates,
+            localDate(t, drawing.detected.first),
+            localDate(t, drawing.detected.last),
+          )}
+        </p>
+      )}
       <p className="text-sm text-slate-300">
         {drawing.parcel &&
           `${t.draw.fromParcel(drawing.parcel.partida, drawing.parcel.plano)} `}

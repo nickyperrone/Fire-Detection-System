@@ -265,18 +265,28 @@ const en = {
     trace: "Trace",
     corners: "Corners",
     parcel: "Parcel",
+    detect: "Detect",
     hints: {
       parcel:
-        "Tap the field on the map: its official parcel outline (Entre Ríos cadastre) is used.",
+        "Tap the field on the map: its official parcel outline from the provincial cadastre is used.",
+      detect:
+        "Tap inside the field: its outline is found in a year of satellite images.",
       trace:
         "Press on the edge of the field and drag your finger all around it. Lift to close.",
       corners: "Tap each corner. Tap the first corner again to close.",
     },
     zoomHint: "Zoom with two fingers or the wheel.",
     searching: "Looking up the parcel…",
+    detecting: "Detecting the field in satellite images…",
+    detected: (dates: number, first: string, last: string) =>
+      `Detected in Sentinel-2 images (${dates} dates, ${first} to ${last}). Check the outline.`,
     notices: {
       too_small: "That shape is too small. Go around the whole field.",
-      no_parcel: "No cadastral parcel there. Try Trace or Corners.",
+      no_parcel: "No cadastral parcel there. Try Detect, Trace or Corners.",
+      no_field_found:
+        "No clear field boundary around that point. Try Trace or Corners.",
+      no_images: "No clear satellite images there in the last year.",
+      detect_failed: "The images could not be read. Try again in a minute.",
     },
     fromParcel: (partida: number, plano: number | null) =>
       `Parcel ${partida}${plano ? `, plan ${plano}` : ""}.`,
@@ -585,19 +595,30 @@ const es: Messages = {
     trace: "Trazar",
     corners: "Esquinas",
     parcel: "Parcela",
+    detect: "Detectar",
     hints: {
       parcel:
-        "Tocá el campo en el mapa: se usa el borde oficial de la parcela (catastro de Entre Ríos).",
+        "Tocá el campo en el mapa: se usa el borde oficial de la parcela del catastro provincial.",
+      detect:
+        "Tocá adentro del campo: su borde se encuentra en un año de imágenes satelitales.",
       trace:
         "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
       corners: "Tocá cada esquina. Tocá la primera otra vez para cerrar.",
     },
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
     searching: "Buscando la parcela…",
+    detecting: "Detectando el campo en imágenes satelitales…",
+    detected: (dates, first, last) =>
+      `Detectado en imágenes Sentinel-2 (${dates} fechas, del ${first} al ${last}). Revisá el borde.`,
     notices: {
       too_small: "La forma es muy chica. Recorré todo el campo.",
       no_parcel:
-        "No hay una parcela catastral ahí. Probá con Trazar o Esquinas.",
+        "No hay una parcela catastral ahí. Probá con Detectar, Trazar o Esquinas.",
+      no_field_found:
+        "No se ve un borde claro alrededor de ese punto. Probá con Trazar o Esquinas.",
+      no_images: "No hay imágenes satelitales despejadas ahí en el último año.",
+      detect_failed:
+        "No se pudieron leer las imágenes. Probá de nuevo en un minuto.",
     },
     fromParcel: (partida, plano) =>
       `Partida ${partida}${plano ? `, plano ${plano}` : ""}.`,
