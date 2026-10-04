@@ -197,3 +197,20 @@ auth:
 alerts:
   # A field gets at most one lightning email in this time, however long the storm lasts.
   lightning_quiet_minutes: 60
+
+# Field outlines by computer vision (docs/10-field-detection.md).
+field_detection:
+  window_m: 4000
+  pixels: 400
+  months: 12
+  max_scene_cloud_percent: 10
+  max_window_cloud_share: 0.05
+  smoothing_sigma: 0.7
+  # Root mean square NDVI difference between a pixel's year and the tap's, to be the same field.
+  similarity: 0.1
+  opening_px: 2
+  simplify_m: 10
+  read_threads: 4
+  cache_days: 7
+  # Benchmark: a parcel counts as one field when this share of it has the same history.
+  benchmark_purity: 0.8

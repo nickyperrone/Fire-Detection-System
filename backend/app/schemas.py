@@ -50,6 +50,18 @@ class TagColorIn(BaseModel):
     color: str = Field(description="One of the palette colors, #rrggbb")
 
 
+class DetectIn(BaseModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+class DetectOut(BaseModel):
+    geometry: dict = Field(description="GeoJSON Polygon, EPSG:4326")
+    dates: int = Field(description="Clear Sentinel-2 dates the outline was found in")
+    first: date
+    last: date
+
+
 class LoginIn(BaseModel):
     email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     locale: Literal["es", "en"] = "es"

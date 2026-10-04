@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.routers import auth, cadastre, fires, health, portfolio, tags, territories, tiles
+from app.routers import auth, cadastre, fields, fires, health, portfolio, tags, territories, tiles
 from app.services.territories import TerritoryError
 
 app = FastAPI(
@@ -17,6 +17,7 @@ app.include_router(tiles.router)
 app.include_router(cadastre.router)
 app.include_router(tags.router)
 app.include_router(auth.router)
+app.include_router(fields.router)
 
 
 @app.exception_handler(TerritoryError)
