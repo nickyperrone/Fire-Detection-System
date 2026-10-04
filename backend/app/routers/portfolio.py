@@ -34,6 +34,7 @@ def portfolio(
             priority=e.territory.priority,
             fire=asdict(e.fire),
             spray=asdict(e.spray),
+            weather=asdict(e.weather),
             lightning=asdict(e.lightning),
             forecast=asdict(e.forecast),
             anomaly=asdict(e.anomaly),

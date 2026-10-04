@@ -83,6 +83,23 @@ class ForecastAnswer:
 
 
 @dataclass
+class WeatherAnswer:
+    """The weather at the field's forecast point now, and rain in the next 24 hours."""
+
+    data_quality: DataQuality
+    valid_at: datetime | None = None
+    temperature_c: float | None = None
+    relative_humidity_pct: float | None = None
+    wind_speed_kmh: float | None = None
+    # Where the wind comes from, as in any forecast.
+    wind_from: str | None = None
+    wind_gusts_kmh: float | None = None
+    cloud_cover_pct: float | None = None
+    rain_24h_mm: float | None = None
+    rain_probability_pct: float | None = None
+
+
+@dataclass
 class AnomalyAnswer:
     data_quality: DataQuality = DataQuality.NO_DATA
     message: str = "vegetation and water change detection is not available yet"
@@ -93,6 +110,7 @@ class PortfolioEntry:
     territory: Territory
     fire: FireAnswer
     spray: SprayAnswer
+    weather: WeatherAnswer
     lightning: LightningAnswer
     forecast: ForecastAnswer
     anomaly: AnomalyAnswer
@@ -130,6 +148,7 @@ def build_portfolio(
             territory=t,
             fire=_fire_answer(risks.get(t.id, []), received, fire_dq, last_read_at),
             spray=_spray_answer(assessments.get(t.id, []), profile, quality, now),
+            weather=_weather_answer(assessments.get(t.id, []), quality, now),
             lightning=_lightning_answer(
                 lightning.get(t.id), lightning_dq, thresholds["lightning"]["window_minutes"]
             ),
@@ -256,6 +275,40 @@ def _spray_answer(
     answer.problems = [r for r in current.rules if r["status"] != "PASS"]
     answer.drift_toward = drift_direction(current.weather.get("wind_direction_deg"))
     answer.next_favorable = next_favorable_window(assessments)
+    return answer
+
+
+# Hours of rain counted ahead in the weather answer.
+RAIN_HOURS = 24
+
+
+def _weather_answer(
+    assessments: list[SprayAssessment], quality: dict, now: datetime
+) -> WeatherAnswer:
+    """From the same hourly forecast as the spray answer, so the two never disagree."""
+    current = assessments[0] if assessments else None
+    answer = WeatherAnswer(
+        data_quality=spray_quality(current, quality["weather_stale_after_hours"], now)
+    )
+    if current is None:
+        return answer
+    w = current.weather
+    ahead = [a.weather for a in assessments[:RAIN_HOURS]]
+    rain = [h["precipitation_mm"] for h in ahead if h.get("precipitation_mm") is not None]
+    chance = [
+        h["precipitation_probability_pct"]
+        for h in ahead
+        if h.get("precipitation_probability_pct") is not None
+    ]
+    answer.valid_at = current.valid_at
+    answer.temperature_c = w.get("temperature_c")
+    answer.relative_humidity_pct = w.get("relative_humidity_pct")
+    answer.wind_speed_kmh = w.get("wind_speed_kmh")
+    answer.wind_from = compass(w.get("wind_direction_deg"))
+    answer.wind_gusts_kmh = w.get("wind_gusts_kmh")
+    answer.cloud_cover_pct = w.get("cloud_cover_pct")
+    answer.rain_24h_mm = round(sum(rain), 1) if rain else None
+    answer.rain_probability_pct = max(chance) if chance else None
     return answer
 
 

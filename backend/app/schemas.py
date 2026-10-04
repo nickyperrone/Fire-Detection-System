@@ -153,6 +153,19 @@ class SprayAnswerOut(BaseModel):
     next_favorable: tuple[datetime, datetime] | None
 
 
+class WeatherAnswerOut(BaseModel):
+    data_quality: DataQuality
+    valid_at: datetime | None
+    temperature_c: float | None
+    relative_humidity_pct: float | None
+    wind_speed_kmh: float | None
+    wind_from: str | None = Field(description="Compass point the wind comes from")
+    wind_gusts_kmh: float | None
+    cloud_cover_pct: float | None
+    rain_24h_mm: float | None
+    rain_probability_pct: float | None = Field(description="Highest in the next 24 hours")
+
+
 class LightningAnswerOut(BaseModel):
     data_quality: DataQuality
     window_minutes: int
@@ -196,6 +209,7 @@ class PortfolioEntryOut(BaseModel):
     priority: Priority
     fire: FireAnswerOut
     spray: SprayAnswerOut
+    weather: WeatherAnswerOut
     lightning: LightningAnswerOut
     forecast: ForecastAnswerOut
     anomaly: AnomalyAnswerOut
