@@ -26,6 +26,10 @@ history:
 forecast:
 	$(BACKEND) python -m app.cli forecast
 
+# Scores field detection against the cadastre and writes docs/reports/field-detection.md.
+field-detection-benchmark:
+	$(BACKEND) python -m app.vision.benchmark
+
 forecast-train:
 	$(BACKEND) python -m app.forecast.train
 

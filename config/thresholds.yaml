@@ -209,7 +209,10 @@ field_detection:
   # Root mean square NDVI difference between a pixel's year and the tap's, to be the same field.
   similarity: 0.1
   opening_px: 2
-  simplify_m: 10
+  closing_px: 3
+  simplify_m: 20
+  # A shape filling this share of its minimum rotated rectangle becomes the rectangle.
+  rectangle_fill: 0.9
   read_threads: 4
   cache_days: 7
   # Benchmark: a parcel counts as one field when this share of it has the same history.

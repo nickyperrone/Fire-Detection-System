@@ -18,13 +18,15 @@ from rasterio.features import shapes
 from rasterio.transform import rowcol
 from rasterio.warp import transform, transform_geom
 from scipy import ndimage
-from shapely.geometry import mapping, shape
+from shapely import set_precision
+from shapely.geometry import Polygon, mapping, shape
 from shapely.ops import unary_union
 from skimage.filters import gaussian
-from skimage.morphology import binary_opening, disk
+from skimage.morphology import disk
 
 from app.providers.sentinel2 import CLOUDY_CLASSES, Window, monthly_scenes, read_window
 
+COORDINATE_PRECISION = 1e-7
 # Side of the square around the tap whose median history is the field's reference, in pixels.
 SEED_SIZE = 5
 
@@ -88,7 +90,9 @@ def grow_field(ndvi: np.ndarray, seed: tuple[int, int], config: dict) -> np.ndar
     patch = ndvi[:, r - half : r + half + 1, c - half : c + half + 1]
     reference = np.median(patch.reshape(len(ndvi), -1), axis=1)
     distance = np.sqrt(((ndvi - reference[:, None, None]) ** 2).mean(axis=0))
-    similar = binary_opening(distance < config["similarity"], disk(config["opening_px"]))
+    similar = ndimage.binary_opening(
+        distance < config["similarity"], structure=disk(config["opening_px"])
+    )
     labels, _ = ndimage.label(similar)
     if labels[r, c] == 0:
         raise DetectionError("no_field_found")
@@ -99,7 +103,14 @@ def grow_field(ndvi: np.ndarray, seed: tuple[int, int], config: dict) -> np.ndar
     return field
 
 
-def outline(field: np.ndarray, history: CropHistory, simplify_m: float) -> dict:
+def outline(field: np.ndarray, history: CropHistory, config: dict) -> dict:
+    """The region as a polygon in degrees: smoothed, simplified, and squared when it is a
+    rectangle, as most fields here are."""
+    # Closing fills the notches that weedy patches and single pixels leave in the edge; it can
+    # also close a gap into a hole, so holes are filled after it.
+    field = ndimage.binary_fill_holes(
+        ndimage.binary_closing(field, structure=disk(config["closing_px"]))
+    )
     pieces = [
         shape(geometry)
         for geometry, value in shapes(
@@ -107,8 +118,16 @@ def outline(field: np.ndarray, history: CropHistory, simplify_m: float) -> dict:
         )
         if value == 1
     ]
-    polygon = unary_union(pieces).simplify(simplify_m)
-    return transform_geom(history.crs, "EPSG:4326", mapping(polygon))
+    merged = unary_union(pieces)
+    # A field is one piece without holes: the largest piece's outer ring.
+    largest = max(getattr(merged, "geoms", [merged]), key=lambda piece: piece.area)
+    polygon = Polygon(largest.exterior).simplify(config["simplify_m"])
+    rectangle = polygon.minimum_rotated_rectangle
+    if polygon.area >= config["rectangle_fill"] * rectangle.area:
+        polygon = rectangle
+    degrees = shape(transform_geom(history.crs, "EPSG:4326", mapping(polygon)))
+    # About 1 cm: the reprojection leaves 15 decimals, which map drawing tools reject.
+    return mapping(set_precision(degrees, COORDINATE_PRECISION))
 
 
 def load_history(
@@ -161,4 +180,4 @@ def detect_field(
 ) -> Detection:
     history = cached_history(client, lat, lon, config, today, cache_dir)
     field = grow_field(history.ndvi, history.pixel(lat, lon), config)
-    return Detection(outline(field, history, config["simplify_m"]), history.dates)
+    return Detection(outline(field, history, config), history.dates)

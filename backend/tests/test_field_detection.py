@@ -22,7 +22,9 @@ CONFIG = {
     "smoothing_sigma": 0.7,
     "similarity": 0.1,
     "opening_px": 2,
-    "simplify_m": 10,
+    "closing_px": 3,
+    "simplify_m": 20,
+    "rectangle_fill": 0.9,
 }
 # A year of NDVI for three kinds of land: soy, wheat then soy, and pasture.
 SOY = [0.2, 0.2, 0.3, 0.6, 0.85, 0.8, 0.4, 0.2]
@@ -70,6 +72,19 @@ def test_cloudy_dates_are_dropped():
     assert error.value.code == "no_images"
 
 
+def test_the_outline_has_no_holes():
+    mask = np.zeros((60, 60), bool)
+    mask[10:50, 10:50] = True
+    mask[25:35, 25:35] = False  # a lagoon in the middle of the field
+    history = CropHistory(
+        np.zeros((1, 60, 60)),
+        [date(2026, 1, 1)],
+        Affine(10, 0, 305000, 0, -10, 6350000),
+        CRS.from_epsg(32721),
+    )
+    assert len(outline(mask, history, CONFIG)["coordinates"]) == 1
+
+
 def test_the_outline_is_a_polygon_in_degrees_with_the_field_area():
     mask = np.zeros((60, 60), bool)
     mask[15:45, 10:30] = True
@@ -80,9 +95,12 @@ def test_the_outline_is_a_polygon_in_degrees_with_the_field_area():
         Affine(10, 0, 305000, 0, -10, 6350000),
         CRS.from_epsg(32721),
     )
-    geometry = outline(mask, history, simplify_m=10)
+    geometry = outline(mask, history, CONFIG)
     assert geometry["type"] == "Polygon"
+    # A rectangle of pixels comes back as its four corners, closed.
+    assert len(geometry["coordinates"][0]) == 5
     lon, lat = geometry["coordinates"][0][0]
+    assert all(len(f"{c:.10f}".rstrip("0").split(".")[1]) <= 7 for c in (lon, lat))
     assert -60 < lon < -58 and -34 < lat < -32
     # 30 x 20 pixels of 100 m2: 6 ha, checked on the equal-area UTM grid via a rough degree scale.
     polygon = shape(geometry)
