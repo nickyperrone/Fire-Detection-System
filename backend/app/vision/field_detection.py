@@ -122,7 +122,10 @@ def outline(field: np.ndarray, history: CropHistory, config: dict) -> dict:
     # A field is one piece without holes: the largest piece's outer ring.
     largest = max(getattr(merged, "geoms", [merged]), key=lambda piece: piece.area)
     polygon = Polygon(largest.exterior).simplify(config["simplify_m"])
-    rectangle = polygon.minimum_rotated_rectangle
+    # GEOS warns on collinear edges while searching orientations; the rectangle is still valid
+    # (checked on every benchmark outline).
+    with np.errstate(invalid="ignore", divide="ignore"):
+        rectangle = polygon.minimum_rotated_rectangle
     if polygon.area >= config["rectangle_fill"] * rectangle.area:
         polygon = rectangle
     degrees = shape(transform_geom(history.crs, "EPSG:4326", mapping(polygon)))
