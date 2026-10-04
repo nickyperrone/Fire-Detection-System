@@ -7,12 +7,16 @@ Satellite monitoring for the fields of a crop-spraying contractor around Larroqu
 spraying conditions favorable, and is something unusual happening in the field. Every answer shows
 its sources, their timestamps and whether the field could actually be observed.
 
+Field outlines can be **detected with computer vision**: tap inside a field and its boundary is
+found by segmenting a year of Sentinel-2 satellite images
+([how and how well](#computer-vision-field-outlines-from-satellite-images)).
+
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
   fire history per field, fields drawn on the official property lines and edited with two pencils,
   alerts by email and in the browser, accounts opened with a link by email, visibility and
-  priority per field, and colored tags. Field anomalies from Sentinel-2 are
-  next. See the [roadmap](docs/01-product.md#roadmap).
+  priority per field, colored tags, and field outlines detected by computer vision. Field anomalies
+  from Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -250,8 +254,10 @@ humidity and the cell's usual fire months. The full report is in
 stateDiagram-v2
     [*] --> Tool
     Tool --> Parcel: tap a parcel
+    Tool --> Detect: tap inside a field
     Tool --> Hand: trace or tap corners
     Parcel --> Closed: official outline, tax account kept
+    Detect --> Closed: outline found by computer vision
     Hand --> Fitting: shape closes
     Fitting --> Closed: whole parcels, nearby edges, or as drawn
     Closed --> Closed: "Use my drawing" / "Fit to property lines"
@@ -264,7 +270,8 @@ stateDiagram-v2
 
 - Property lines come from the provincial cadastres of Entre Ríos, Buenos Aires and Córdoba,
   fetched per 5 × 5 km tile the first time an area is viewed and then served from PostGIS
-  ([08-cadastre](docs/08-cadastre.md)). Elsewhere fields are drawn by hand.
+  ([08-cadastre](docs/08-cadastre.md)). Elsewhere, or where a parcel is not the field, the
+  Detect tool finds the outline in satellite images (next section).
 - A rough outline around several parcels becomes their exact union; a lot inside a parcel has only
   its nearby corners and edges moved onto the lines. The original drawing is one tap away.
 - The server checks every field: inside Argentina, a lot inside its field, a field around its lots.
@@ -362,6 +369,54 @@ flowchart TB
     T -- no --> G["gray"]
 ```
 
+### Computer vision: field outlines from satellite images
+
+Where there is no cadastre, or one parcel is farmed as two lots, the **Detect** tool finds the
+field's outline with computer vision ([10-field-detection](docs/10-field-detection.md)). A field is
+the land farmed the same way: over a year, every 10 m pixel of a field goes through the same crop
+history (sown, green, ripe, harvested), and the field next door goes through another, even when
+both look alike on one date. The method segments the image by that history.
+
+```mermaid
+flowchart LR
+    T["Tap inside<br/>a field"] --> S["STAC search<br/>Sentinel-2 L2A,<br/>last 12 months"]
+    S --> R["Read only a 4 × 4 km<br/>window per date<br/>(Cloud-Optimized GeoTIFF)"]
+    R --> C["Drop cloudy dates<br/>(scene classification)"]
+    C --> N["NDVI per date:<br/>a crop history<br/>per pixel"]
+    N --> G["Region growing:<br/>pixels with the tap's<br/>history, connected"]
+    G --> M["Morphology:<br/>opening, closing,<br/>holes filled"]
+    M --> P["Polygon, simplified,<br/>squared when it is<br/>a rectangle"]
+    P --> E["Editable outline<br/>on the map"]
+```
+
+- Classic computer vision: image segmentation by region growing on a multi-temporal NDVI stack,
+  with mathematical morphology and boundary regularization. There is no model to train, and it
+  runs on the API server's CPU.
+- About 11 s the first time a place is read (12 dates, 4 in parallel), then cached for a week;
+  finding the outline itself takes 0.03 s.
+
+**How well it works.** Measured against the official cadastre with
+`make field-detection-benchmark` ([report](docs/reports/field-detection.md)). Of 90 random rural
+parcels, 50 hold more than one field (two crops, a pasture and a crop) and cannot be used as an
+answer key; on the 40 that are one field, the score is the overlap (IoU) between the detected
+outline and the parcel:
+
+```mermaid
+xychart-beta
+    title "Median IoU with the cadastral parcel (1 = perfect)"
+    x-axis ["Buenos Aires (7)", "Entre Ríos (9)", "Córdoba (24)", "All (40)"]
+    y-axis "IoU" 0 --> 1
+    bar [0.82, 0.57, 0.40, 0.53]
+```
+
+- 35 % of outlines overlap the parcel by 0.7 or more, enough to only check the corners; 5 % find no
+  boundary and the app asks to draw by hand.
+- It is an aid, not the truth: the card says the outline came from images and every point can be
+  dragged. Fields with patchy weeds, or neighbours sown with the same crop on the same dates,
+  are where it fails.
+- Next step, measured with the same benchmark: a segmentation network trained on field
+  boundaries.
+
 ### Map loading by zoom
 
 ```mermaid
@@ -389,7 +444,8 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [05-fire-forecast](docs/05-fire-forecast.md) | Fire probability per field for 24–72 h: data, model, evaluation |
 | [06-goes](docs/06-goes.md) | GOES-19 fire every 10 minutes, lightning, colors |
 | [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
-| [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos), loaded on demand; drawings fitted to them |
+| [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos, Buenos Aires, Córdoba), loaded on demand; drawings fitted to them |
+| [10-field-detection](docs/10-field-detection.md) | Field outlines by computer vision from a year of Sentinel-2 images, and its benchmark |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
@@ -408,7 +464,8 @@ the tests against a PostGIS service container, and a Docker image build.
 | Dark and light basemaps | CARTO Dark Matter and Positron | Free up to 1M requests a month for a business | Live |
 | Satellite basemap | Esri World Imagery | Needs an ArcGIS license for commercial use | Live |
 | Argentina's boundary | Natural Earth | Public domain | Live |
-| Field imagery, 10 m | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Next |
+| Field outlines by computer vision | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Live |
+| Field anomalies, 10 m | Sentinel-2 L2A | Free (Copernicus) | Next |
 | Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Free (USGS) | Planned |
 | Radar through clouds, flooding | Sentinel-1 GRD | Free (Copernicus) | Planned |
 
@@ -437,6 +494,7 @@ neither is set up yet.
 | `backend/app/providers/` | FIRMS, GOES, Open-Meteo and cadastre clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray, GOES, lightning, history, cadastre, portfolio |
 | `backend/app/forecast/` | Fire Weather Index, training data, model training and live serving |
+| `backend/app/vision/` | Computer vision: field outlines from Sentinel-2, and their benchmark |
 | `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
