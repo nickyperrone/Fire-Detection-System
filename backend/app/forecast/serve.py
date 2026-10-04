@@ -34,15 +34,22 @@ MONTH_FIRE_DAYS_SQL = text(f"""
       AND extract(year FROM {LOCAL_DAY}) BETWEEN :first_year AND :last_year
     GROUP BY 1, 2
 """)
+# The box test (`&&`, served by the spatial index) discards far cells before the exact
+# distance on the spheroid, which is the slow part.
 TERRITORY_CELLS_SQL = text("""
     SELECT t.id AS territory_id, c.idx
     FROM territory t,
          unnest(CAST(:lons AS float8[]), CAST(:lats AS float8[]), CAST(:idx AS int[]))
              AS c(lon, lat, idx)
-    WHERE ST_DWithin(
-        t.geom::geography, ST_SetSRID(ST_MakePoint(c.lon, c.lat), 4326)::geography, :radius_m
-    )
+    WHERE (CAST(:ids AS bigint[]) IS NULL OR t.id = ANY(CAST(:ids AS bigint[])))
+      AND t.geom && ST_Expand(ST_SetSRID(ST_MakePoint(c.lon, c.lat), 4326), :radius_deg)
+      AND ST_DWithin(
+          t.geom::geography, ST_SetSRID(ST_MakePoint(c.lon, c.lat), 4326)::geography, :radius_m
+      )
 """)
+# Degrees that cover the radius in any direction: a degree of longitude is shorter than one of
+# latitude, by cos(latitude); 0.75 holds down to 41° S.
+METERS_PER_DEGREE_LON_MIN = 111_320 * 0.75
 
 
 @lru_cache
@@ -269,12 +276,13 @@ def forecast_territories(
             "lats": [lat for lat, _ in centers],
             "idx": list(range(len(cells))),
             "radius_m": config["radius_m"],
+            "radius_deg": config["radius_m"] / METERS_PER_DEGREE_LON_MIN,
+            "ids": territory_ids,
         },
     ).all()
     near: dict[int, list[int]] = defaultdict(list)
     for r in rows:
-        if territory_ids is None or r.territory_id in territory_ids:
-            near[r.territory_id].append(r.idx)
+        near[r.territory_id].append(r.idx)
 
     replaced = delete(FireForecast)
     if territory_ids is not None:
