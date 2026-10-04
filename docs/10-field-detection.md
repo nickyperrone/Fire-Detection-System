@@ -21,8 +21,12 @@ different one, even when both look alike on a single date. So:
    field is the connected set of pixels, around the tap, whose curve is within a distance `τ`
    (root mean square difference of NDVI) of the reference, after a morphological opening that cuts
    one-pixel bridges, with holes (a tree, a puddle) filled.
-4. **Outline.** The region becomes a polygon, simplified to 10 m and returned in EPSG:4326. Then it
-   goes through the same checks and fitting as a hand drawing.
+4. **Outline.** A morphological closing fills the notches that weedy patches leave in the edge,
+   holes are filled, and the region becomes one polygon without holes, simplified to 20 m. Most
+   fields here are rectangles: when the shape fills at least 90 % of its minimum rotated
+   rectangle, the rectangle is used (boundary regularization), which gives four clean corners to
+   drag instead of a staircase of pixels. Coordinates are rounded to 7 decimals (about 1 cm).
+   Then it goes through the same checks as any drawing.
 
 A region that reaches the window's edge has no clear boundary (a big pasture, a lagoon, an urban
 area): the answer is `no_field_found` and the user draws by hand. A field larger than the window
@@ -49,8 +53,9 @@ detected from images and asks to check it, and every point can still be dragged.
 
 - Draw mode has **Detect** next to Parcel, Trace and Corners. A tap shows "Detecting the field in
   satellite images…" (a few seconds: 12 dates are read in parallel), then the outline.
-- The card says "Detected from Sentinel-2 images (12 dates). Check the outline." and offers
-  **Fit to property lines** where there are some.
+- The card says "Detected in Sentinel-2 images (12 dates, 12 Oct to 25 Sept). Check the
+  outline." A detected outline is not fitted to property lines: it shows what the images say, and
+  the Parcel tool is there for the cadastre's answer.
 - `POST /fields/detect {lat, lon}` answers the polygon, the number of dates used and their range,
   or `no_field_found` / `no_images` (no clear dates in the last 12 months).
 - Results are cached per tapped 100 m cell for a week: tapping the same field again is instant.
