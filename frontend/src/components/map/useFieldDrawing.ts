@@ -351,11 +351,13 @@ export function useFieldDrawing(
     const start = () => {
       stopDrawing = startDrawing();
     };
-    // Terra Draw adds layers to the style, so it waits when "+" is tapped while the map loads.
-    if (map.isStyleLoaded()) start();
-    else map.once("idle", start);
+    // Terra Draw adds layers to the style, so it waits when "+" is tapped while the style loads.
+    // Not "idle": a pulsing fire keeps the map repainting, and idle would never come. Our own
+    // sources are added on style load, so their presence means the style is ready.
+    if (map.getSource("territories")) start();
+    else map.once("style.load", start);
     return () => {
-      map.off("idle", start);
+      map.off("style.load", start);
       stopDrawing?.();
     };
   }, [map, active]);
