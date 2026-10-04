@@ -694,6 +694,7 @@ export interface components {
             territory_id: number;
             /** Visible */
             visible: boolean;
+            weather: components["schemas"]["WeatherAnswerOut"];
         };
         /**
          * Priority
@@ -966,6 +967,34 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WeatherAnswerOut */
+        WeatherAnswerOut: {
+            /** Cloud Cover Pct */
+            cloud_cover_pct: number | null;
+            data_quality: components["schemas"]["DataQuality"];
+            /** Rain 24H Mm */
+            rain_24h_mm: number | null;
+            /**
+             * Rain Probability Pct
+             * @description Highest in the next 24 hours
+             */
+            rain_probability_pct: number | null;
+            /** Relative Humidity Pct */
+            relative_humidity_pct: number | null;
+            /** Temperature C */
+            temperature_c: number | null;
+            /** Valid At */
+            valid_at: string | null;
+            /**
+             * Wind From
+             * @description Compass point the wind comes from
+             */
+            wind_from: string | null;
+            /** Wind Gusts Kmh */
+            wind_gusts_kmh: number | null;
+            /** Wind Speed Kmh */
+            wind_speed_kmh: number | null;
         };
     };
     responses: never;

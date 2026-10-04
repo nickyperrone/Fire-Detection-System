@@ -152,3 +152,9 @@ export const StarIcon = (p: IconProps) => (
     <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z" />
   </Icon>
 );
+
+export const WindIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7" />
+  </Icon>
+);

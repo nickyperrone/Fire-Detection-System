@@ -4,6 +4,7 @@ type Schemas = components["schemas"];
 export type PortfolioEntry = Schemas["PortfolioEntryOut"];
 export type FireAnswer = Schemas["FireAnswerOut"];
 export type SprayAnswer = Schemas["SprayAnswerOut"];
+export type Weather = Schemas["WeatherAnswerOut"];
 export type LightningAnswer = Schemas["LightningAnswerOut"];
 export type Territory = Schemas["TerritoryOut"];
 export type TerritoryIn = Schemas["TerritoryIn"];

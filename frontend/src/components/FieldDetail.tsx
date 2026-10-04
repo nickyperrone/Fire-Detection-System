@@ -30,8 +30,10 @@ import {
   HistoryIcon,
   PencilPlusIcon,
   SprayIcon,
+  WindIcon,
 } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
+import { WeatherSection } from "./Weather";
 import { TagEditor } from "./TagEditor";
 
 const TONE_TEXT: Record<Tone, string> = {
@@ -180,6 +182,13 @@ export function FieldDetail({
             <p className="text-slate-400">{t.lightning.why}</p>
           </div>
         )}
+      </section>
+
+      <section>
+        <SectionTitle icon={<WindIcon className="size-4" />}>
+          {t.weather.title}
+        </SectionTitle>
+        <WeatherSection weather={entry.weather} hours={hours.data ?? []} />
       </section>
 
       <section>

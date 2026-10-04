@@ -742,6 +742,9 @@
           "visible": {
             "title": "Visible",
             "type": "boolean"
+          },
+          "weather": {
+            "$ref": "#/components/schemas/WeatherAnswerOut"
           }
         },
         "required": [
@@ -756,6 +759,7 @@
           "priority",
           "fire",
           "spray",
+          "weather",
           "lightning",
           "forecast",
           "anomaly"
@@ -1478,6 +1482,129 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WeatherAnswerOut": {
+        "properties": {
+          "cloud_cover_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cloud Cover Pct"
+          },
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "rain_24h_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rain 24H Mm"
+          },
+          "rain_probability_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Highest in the next 24 hours",
+            "title": "Rain Probability Pct"
+          },
+          "relative_humidity_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Humidity Pct"
+          },
+          "temperature_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature C"
+          },
+          "valid_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid At"
+          },
+          "wind_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Compass point the wind comes from",
+            "title": "Wind From"
+          },
+          "wind_gusts_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Gusts Kmh"
+          },
+          "wind_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Speed Kmh"
+          }
+        },
+        "required": [
+          "data_quality",
+          "valid_at",
+          "temperature_c",
+          "relative_humidity_pct",
+          "wind_speed_kmh",
+          "wind_from",
+          "wind_gusts_kmh",
+          "cloud_cover_pct",
+          "rain_24h_mm",
+          "rain_probability_pct"
+        ],
+        "title": "WeatherAnswerOut",
         "type": "object"
       }
     }

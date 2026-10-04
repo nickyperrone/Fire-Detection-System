@@ -226,6 +226,20 @@ const en = {
     signedOutBody:
       "Sign in with your email to mark your fields, see how far fires are from them and get alerts by email.",
   },
+  weather: {
+    title: "Weather",
+    noData: "No weather for this field yet.",
+    wind: (from: string, kmh: string) => `wind from ${from} ${kmh} km/h`,
+    gusts: (kmh: string) => `gusts ${kmh}`,
+    rain24h: (mm: string) => `${mm} mm in 24 h`,
+    humidity: (pct: string) => `humidity ${pct} %`,
+    clouds: (pct: string) => `clouds ${pct} %`,
+    rainChance: (pct: string) => `up to ${pct} % chance of rain`,
+    noRain: "no rain in the next 24 h",
+    from: (age: string) => `forecast from ${age}`,
+    next48: "Next 48 h",
+    stripLegend: "Temperature, wind/gusts in km/h, rain.",
+  },
   settings: {
     title: "Settings",
     alerts: "Alert me of danger nearby",
@@ -555,6 +569,20 @@ const es: Messages = {
     signOut: "Salir",
     signedOutBody:
       "Entrá con tu mail para marcar tus campos, ver a qué distancia están los fuegos y recibir avisos por mail.",
+  },
+  weather: {
+    title: "Clima",
+    noData: "Todavía no hay clima para este campo.",
+    wind: (from, kmh) => `viento del ${from} ${kmh} km/h`,
+    gusts: (kmh) => `ráfagas ${kmh}`,
+    rain24h: (mm) => `${mm} mm en 24 h`,
+    humidity: (pct) => `humedad ${pct} %`,
+    clouds: (pct) => `nubes ${pct} %`,
+    rainChance: (pct) => `hasta ${pct} % de probabilidad de lluvia`,
+    noRain: "sin lluvia en las próximas 24 h",
+    from: (age) => `pronóstico de ${age}`,
+    next48: "Próximas 48 h",
+    stripLegend: "Temperatura, viento/ráfagas en km/h, lluvia.",
   },
   settings: {
     title: "Ajustes",

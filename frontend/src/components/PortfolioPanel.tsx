@@ -5,6 +5,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { formatHectares } from "@/i18n/text";
 
 import { FieldChips, headline } from "./FieldSummary";
+import { WeatherLine } from "./Weather";
 import { BellOffIcon, CheckIcon, StarIcon } from "./Icons";
 
 type Props = {
@@ -196,6 +197,7 @@ function EntryList(props: Props) {
               <div className="mt-1.5">
                 <FieldChips entry={entry} />
               </div>
+              <WeatherLine weather={entry.weather} />
               <p className="mt-1.5 truncate text-[13px] text-slate-400">
                 {headline(t, entry)}
               </p>
