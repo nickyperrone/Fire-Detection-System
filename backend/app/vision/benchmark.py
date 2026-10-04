@@ -25,6 +25,7 @@ from app.db import session_factory
 from app.vision.field_detection import (
     CropHistory,
     DetectionError,
+    cache_path,
     cached_history,
     grow_field,
     outline,
@@ -103,7 +104,9 @@ def summary(cases: list[Case], similarity: float) -> tuple[int, float, float, fl
     )
 
 
-def write_report(cases: list[Case], config: dict, seconds: float, today: str) -> None:
+def write_report(
+    cases: list[Case], config: dict, reads: list[float], compute: list[float], today: str
+) -> None:
     single = [c for c in cases if c.purity >= config["benchmark_purity"]]
     lines = [
         "# Field detection benchmark",
@@ -120,7 +123,13 @@ def write_report(cases: list[Case], config: dict, seconds: float, today: str) ->
         "and the parcel. 1 is a perfect match; 0.7 or more is an outline that only needs its "
         "corners checked.",
         '- "No field found" is an honest failure: the app asks to draw by hand.',
-        f"- Time: {seconds / max(len(cases), 1):.1f} s per parcel, image reads included.",
+        f"- Time: {np.median(compute):.2f} s to find an outline once the images are read; "
+        + (
+            f"{np.median(reads):.0f} s (median of {len(reads)}) to read a place's year of images "
+            "the first time."
+            if reads
+            else "every place's images were already cached on this run."
+        ),
         "",
         "## Single-field parcels",
         "",
@@ -160,19 +169,27 @@ def main() -> None:
     with session_factory()() as session:
         rows = session.execute(SAMPLE_SQL, {"per_province": args.per_province}).all()
     cases: list[Case] = []
-    started = time.time()
+    reads: list[float] = []
+    compute: list[float] = []
     with httpx.Client() as client:
         for row in rows:
             tap = shape(json.loads(row.geometry)).representative_point()
+            cached = cache_path(tap.y, tap.x, CACHE_DIR).exists()
+            started = time.time()
             try:
                 history = cached_history(client, tap.y, tap.x, config, today, CACHE_DIR)
             except DetectionError as exc:
                 log.info("%s %s: %s", row.province, row.partida, exc.code)
                 continue
+            if not cached:
+                reads.append(time.time() - started)
+            started = time.time()
             case = evaluate(row, history, config)
+            # Each case grows the field once per candidate similarity.
+            compute.append((time.time() - started) / len(SIMILARITIES))
             cases.append(case)
             log.info("%s %s purity %.2f iou %s", row.province, row.partida, case.purity, case.ious)
-    write_report(cases, config, time.time() - started, today.isoformat())
+    write_report(cases, config, reads, compute, today.isoformat())
     print(f"wrote {REPORT}")
 
 

@@ -146,6 +146,11 @@ def load_history(
     return crop_history(windows, config)
 
 
+def cache_path(lat: float, lon: float, cache_dir: Path) -> Path:
+    """Where the window around the tap's 100 m cell is kept."""
+    return cache_dir / f"{round(lat, 3):.3f}_{round(lon, 3):.3f}.npz"
+
+
 def cached_history(
     client: httpx.Client, lat: float, lon: float, config: dict, today: date, cache_dir: Path
 ) -> CropHistory:
@@ -154,7 +159,7 @@ def cached_history(
     Taps in the same cell share a window, so tapping a field again does not read the images again.
     """
     cell_lat, cell_lon = round(lat, 3), round(lon, 3)
-    path = cache_dir / f"{cell_lat:.3f}_{cell_lon:.3f}.npz"
+    path = cache_path(lat, lon, cache_dir)
     if path.exists() and time.time() - path.stat().st_mtime < config["cache_days"] * 86400:
         saved = np.load(path)
         return CropHistory(
