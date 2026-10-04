@@ -106,6 +106,32 @@ ingested (explore mode). Explore mode sends no notifications. Alerts need a logi
   It is shown as an estimated risk, never as a detection.
 - A single pixel is not a fire. Confidence and the list of confirming sensors are always shown.
 
+## Benchmark: FieldData
+
+[FieldData](https://www.fielddata.ag/) is an Argentine farm management product used on about 5,000
+farms (its own figure, October 2026). It is the closest product a contractor here would compare
+Field Watch with, so it is the benchmark for what a field app should do well.
+
+| | FieldData | Field Watch |
+|---|---|---|
+| Main input | The team writes to a WhatsApp bot (tasks, supplies, invoices) | Satellites and weather, no typing |
+| Fields | Paddocks listed by crop with hectares, on a web map | Drawn on the official property lines, by parcel, or detected from imagery |
+| Fire near a field | No | FIRMS and GOES-19, every 5–10 minutes, with distance and direction |
+| Spraying conditions | No | Hourly, 48 h, with the rule that failed |
+| Fire forecast | No | 1–3 days, calibrated against three baselines |
+| Livestock, supplies, finances | Yes | No: out of scope |
+| Reports | Weekly WhatsApp summary, Excel export | Email alerts when danger grows |
+
+What Field Watch takes from it:
+
+- **Crop totals by hectares** ("Corn 2,927 ha: Lizzy, Jorge, Santa María") are a quick read of a
+  portfolio; the tag chips should show the hectares they cover.
+- **A weekly summary** for the owner, by email: fires seen near each field, spray windows used and
+  missed.
+- **Excel export** of fields, lots, tags and their answers, for the accountant or the client.
+
+What it does not take: WhatsApp as the channel. Alerts and summaries go by email and in the app.
+
 ## Roadmap
 
 | Phase | Scope |
