@@ -80,5 +80,8 @@ Plain SMTP, so the provider can change without code changes. Settings come from 
 
 - **Development:** `docker compose up -d mail` starts Mailpit, which catches every email and shows
   it at http://localhost:8025. Nothing leaves the computer, and sign-in links are opened from there.
-- **Production:** any SMTP service. A Gmail account with an app password works for a handful of
-  users; Amazon SES or a transactional provider is the choice for more.
+- **Production: Resend** over SMTP: `smtp.resend.com`, port 587 with STARTTLS, user `resend`,
+  password a Resend API key, kept only in `.env`. The sender must be on a domain verified in
+  Resend (DNS records it gives); until then its test sender `onboarding@resend.dev` only delivers
+  to the Resend account's own address. The free plan sends 100 emails a day, 3,000 a month.
+  Any other SMTP service works the same way, without code changes.
