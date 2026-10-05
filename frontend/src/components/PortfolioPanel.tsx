@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { PortfolioEntry } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatHectares } from "@/i18n/text";
-import { allFine, attention, type Tone, TONE_HEX } from "@/lib/status";
+import { allFine, attention, hazardTone, TONE_HEX } from "@/lib/status";
 import { weatherLine } from "@/lib/weather";
 
 import { FieldChips, headline } from "./FieldSummary";
@@ -164,17 +164,13 @@ function groups(entries: PortfolioEntry[]): Group[] {
     );
 }
 
-function tone(entry: PortfolioEntry): Tone {
-  if (allFine(entry)) return "good";
-  return attention(entry) < 4 ? "bad" : "unknown";
-}
-
+/** The field's state, the same color it has on the map (docs/01-product.md#field-states). */
 function Dot({ entry }: { entry: PortfolioEntry }) {
   return (
     <span
       aria-hidden
       className="size-2 shrink-0 rounded-full"
-      style={{ background: TONE_HEX[tone(entry)] }}
+      style={{ background: TONE_HEX[hazardTone(entry.fire, entry.lightning)] }}
     />
   );
 }

@@ -19,6 +19,7 @@ import {
 import {
   attention,
   fireTone,
+  hazardTone,
   lightningTone,
   sprayTone,
   type Tone,
@@ -68,6 +69,9 @@ type Props = {
   /** Opens another field or lot, or the list with null. */
   onOpen: (id: number | null) => void;
   onEditOutline: () => void;
+  /** The box to add a tag is open, e.g. from "+ Etiqueta" in the map legend. */
+  addingTag: boolean;
+  onAddingTagChange: (adding: boolean) => void;
 };
 
 /** A field's or lot's own page (docs/12-field-page.md): where it sits, its answers, its photos,
@@ -80,6 +84,8 @@ export function FieldPage({
   onTab,
   onOpen,
   onEditOutline,
+  addingTag,
+  onAddingTagChange,
 }: Props) {
   const { t } = useLocale();
 
@@ -113,10 +119,17 @@ export function FieldPage({
         </h2>
         <p className="mt-0.5 text-sm text-muted tabular-nums">
           {formatHectares(t, entry.hectares)}
-          {entry.tags.length > 0 && ` · ${entry.tags.join(" · ")}`}
         </p>
         <div className="mt-3">
           <FieldChips entry={entry} />
+        </div>
+        <div className="mt-3">
+          <TagEditor
+            key={entry.territory_id}
+            entry={entry}
+            adding={addingTag}
+            onAddingChange={onAddingTagChange}
+          />
         </div>
         <Tabs tab={tab} onTab={onTab} />
       </header>
@@ -353,11 +366,6 @@ function Settings({
     <>
       <FieldSettings entry={entry} />
 
-      <section>
-        <SectionTitle>{t.tags.title}</SectionTitle>
-        <TagEditor entry={entry} />
-      </section>
-
       {isField && (
         <section>
           <SectionTitle>{t.page.lots}</SectionTitle>
@@ -420,7 +428,7 @@ function LotList({
               aria-hidden
               className="size-2 shrink-0 rounded-full"
               style={{
-                background: TONE_HEX[attention(lot) < 4 ? "bad" : "good"],
+                background: TONE_HEX[hazardTone(lot.fire, lot.lightning)],
               }}
             />
             <span className="min-w-0 flex-1 truncate text-sm font-medium">

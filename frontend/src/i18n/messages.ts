@@ -279,6 +279,25 @@ const en = {
     changeColor: (label: string) => `Color of ${label}`,
   },
   colorBy: { label: "Color fields by", status: "Status", tags: "Tags" },
+  states: {
+    danger: "Danger",
+    clear: "No danger",
+    unknown: "No data",
+    dangerWhy:
+      "Fire within 10 km in 24 h, or lightning within 10 km in the last hour",
+    clearWhy: "Satellites read, nothing near",
+    unknownWhy: "A satellite source could not be read or is late",
+  } as Record<
+    "danger" | "clear" | "unknown" | "dangerWhy" | "clearWhy" | "unknownWhy",
+    string
+  >,
+  legend: {
+    label: "Map legend",
+    untagged: "Untagged",
+    addTag: "Tag",
+    openToTag: "Open a field to tag it",
+    more: "What the colors mean",
+  },
   signIn: {
     button: "Sign in",
     title: "Sign in to Field Watch",
@@ -704,6 +723,22 @@ const es: Messages = {
     label: "Colorear campos por",
     status: "Estado",
     tags: "Etiquetas",
+  },
+  states: {
+    danger: "Peligro",
+    clear: "Sin peligro",
+    unknown: "Sin datos",
+    dangerWhy:
+      "Fuego a menos de 10 km en 24 h, o rayos a menos de 10 km en la última hora",
+    clearWhy: "Satélites leídos, nada cerca",
+    unknownWhy: "No se pudo leer un satélite o llegó tarde",
+  },
+  legend: {
+    label: "Leyenda del mapa",
+    untagged: "Sin etiqueta",
+    addTag: "Etiqueta",
+    openToTag: "Abrí un campo para etiquetarlo",
+    more: "Qué significa cada color",
   },
   signIn: {
     button: "Entrar",

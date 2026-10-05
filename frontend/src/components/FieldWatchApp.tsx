@@ -22,6 +22,7 @@ import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldPage } from "./FieldPage";
 import { MapButtons } from "./MapButtons";
+import { MapLegend } from "./MapLegend";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
 import { useDangerAlerts } from "./useDangerAlerts";
@@ -70,6 +71,7 @@ export function FieldWatchApp() {
   // The field whose outline is being edited; drawing then makes a piece to add or remove.
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tilesVersion, setTilesVersion] = useState(0);
+  const [addingTag, setAddingTag] = useState(false);
 
   const me = useMe();
   const signedIn = Boolean(me.data);
@@ -212,6 +214,7 @@ export function FieldWatchApp() {
   const open = useCallback(
     (id: number | null) => {
       url.update({ f: id === null ? null : String(id), tab: null }, true);
+      setAddingTag(false);
       setSnap(id === null ? "peek" : "half");
       const territory = id === null ? undefined : territoryById.get(id);
       if (territory) frame([territory]);
@@ -345,6 +348,25 @@ export function FieldWatchApp() {
                 onPick={(t) => open(t.id)}
               />
             </div>
+            {signedIn && hasFields && (
+              // On a phone it stops short of the map buttons on the right.
+              <div className="pointer-events-auto mr-[60px] mt-2 md:mr-0">
+                <MapLegend
+                  colorBy={url.colorBy}
+                  onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
+                  tags={allTags.map((label) => ({
+                    label,
+                    color: tagColors.get(label) ?? TONE_HEX.unknown,
+                  }))}
+                  canTag={selected !== null}
+                  onAddTag={() => {
+                    url.update({ tab: null }, true);
+                    setAddingTag(true);
+                    if (snap === "peek") setSnap("half");
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="absolute right-3 top-[72px] z-10 md:top-3">
@@ -357,8 +379,6 @@ export function FieldWatchApp() {
               onToggleParcels={() =>
                 url.update({ p: url.showParcels ? "0" : null })
               }
-              colorBy={url.colorBy}
-              onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
               onGoToFields={() =>
                 signedIn ? frame(fields) : setSignIn("open")
               }
@@ -405,6 +425,8 @@ export function FieldWatchApp() {
                 onTab={openTab}
                 onOpen={open}
                 onEditOutline={() => setEditingId(selected.territory_id)}
+                addingTag={addingTag}
+                onAddingTagChange={setAddingTag}
               />
             ) : hasFields || url.tags.length ? (
               <PortfolioPanel
