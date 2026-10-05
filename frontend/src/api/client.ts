@@ -144,8 +144,7 @@ export const api = {
     }),
   anomalies: (id: number) =>
     request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
-  snapshots: (id: number) =>
-    request<Snapshots>(`/territories/${id}/snapshots`),
+  snapshots: (id: number) => request<Snapshots>(`/territories/${id}/snapshots`),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),
 };

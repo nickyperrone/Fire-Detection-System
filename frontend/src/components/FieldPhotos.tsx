@@ -15,19 +15,11 @@ import { useSnapshots } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import type { Messages } from "@/i18n/messages";
 import { formatNumber, localDate } from "@/i18n/text";
+import { monthStarts, newestClear } from "@/lib/photos";
 
 import { ChevronIcon, CloseIcon, CompareIcon, ExpandIcon } from "./Icons";
 
 const VIEWS: SnapshotView[] = ["true_color", "greenness"];
-// A photo opens first when clouds cover less than this share of the field.
-const CLEAR_SHARE = 0.1;
-
-/** The newest photo without clouds over the field, or the newest one. */
-function newestClear(snapshots: Snapshot[]): number {
-  const clear = snapshots.findLastIndex((s) => s.cloud_share < CLEAR_SHARE);
-  return clear >= 0 ? clear : snapshots.length - 1;
-}
-
 /** The satellite photos of a field, one per clear pass (docs/12-field-page.md#satellite-photos).
  * On a lot's page they are its field's photos, with the lot highlighted. */
 export function FieldPhotos({ territoryId }: { territoryId: number }) {
@@ -489,19 +481,6 @@ function GreennessChart({
       </div>
     </figure>
   );
-}
-
-/** First days of the months after `from`, up to `to` ("2026-05-01", …). */
-function monthStarts(from: string, to: string): string[] {
-  const out: string[] = [];
-  let [year, month] = from.split("-").map(Number);
-  for (;;) {
-    month += 1;
-    if (month > 12) [year, month] = [year + 1, 1];
-    const start = `${year}-${String(month).padStart(2, "0")}-01`;
-    if (start > to) return out;
-    out.push(start);
-  }
 }
 
 function Strip({
