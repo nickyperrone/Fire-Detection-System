@@ -167,3 +167,30 @@ def test_settings_change_only_what_is_given_and_order_the_portfolio(client):
         ).status_code
         == 422
     )
+
+
+def test_lots_are_listed_as_people_number_them(session):
+    field = create_territory(
+        session,
+        owner="default",
+        name="Campo",
+        geometry=rect(-59.10, -33.00, -59.09, -32.99),
+        section_tolerance_m=5,
+        allowed_area=ARGENTINA,
+    )
+    for i, name in enumerate(["Lote 10", "Lote 2", "lote 1"]):
+        create_territory(
+            session,
+            owner="default",
+            name=name,
+            geometry=rect(-59.10 + i * 0.003, -33.00, -59.097 + i * 0.003, -32.99),
+            parent_id=field.id,
+            section_tolerance_m=5,
+            allowed_area=ARGENTINA,
+        )
+    assert [t.name for t in list_territories(session, "default")] == [
+        "Campo",
+        "lote 1",
+        "Lote 2",
+        "Lote 10",
+    ]

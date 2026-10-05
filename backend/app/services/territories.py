@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 
 from geoalchemy2 import Geography, WKTElement
@@ -199,12 +200,16 @@ def list_territories(session: Session, owner: str, tags: Sequence[str] = ()) -> 
         if value is not None:
             tag_filter = tag_filter.where(Tag.value == value)
         query = query.where(Territory.id.in_(tag_filter))
-    query = query.order_by(
-        func.coalesce(Territory.parent_id, Territory.id),
-        Territory.parent_id.nulls_first(),
-        Territory.name,
+    territories = session.scalars(query).all()
+    return sorted(
+        territories,
+        key=lambda t: (t.parent_id or t.id, t.parent_id is not None, _natural(t.name)),
     )
-    return list(session.scalars(query))
+
+
+def _natural(name: str) -> list[int | str]:
+    """ "Lote 2" before "Lote 10", as people number lots."""
+    return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", name)]
 
 
 def load_feature_collection(
