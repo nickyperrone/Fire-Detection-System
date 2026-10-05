@@ -19,8 +19,9 @@ outline** from a tap, by segmenting a year of images
   alerts by email and in the browser, accounts opened with a link by email, visibility and
   priority per field, colored tags, field outlines detected by computer vision, the weather now
   and for 48 hours per field, daily or weekly summaries by email, unusual patches in each
-  field found in Sentinel-2 images, and a page per field with its satellite photos over time. See
-  the [roadmap](docs/01-product.md#roadmap).
+  field found in Sentinel-2 images, a page per field with its satellite photos over time, and
+  GOES-19's clouds and rain on the map every 10 minutes. See the
+  [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -102,6 +103,7 @@ flowchart LR
         J5["forecast · hourly"]
         J6["unusual patches · 6 h"]
         J7["field photos · 6 h"]
+        J8["clouds and rain · 10 min"]
     end
     DB[("PostgreSQL + PostGIS")]
     subgraph READ["Read side"]
@@ -111,12 +113,13 @@ flowchart LR
     end
     WEB["Next.js + MapLibre<br/>phone first"]
     FIRMS --> J1
-    GOES --> J2 & J3
+    GOES --> J2 & J3 & J8
     METEO --> J4 & J5
     POWER --> J5
     S2 --> J6 & J7
     J1 & J2 & J3 & J4 & J5 & J6 & J7 --> DB
-    J7 -- "PNG per pass" --> FILES[("data/snapshots")]
+    J7 -- "PNG per pass" --> FILES[("data/snapshots,<br/>data/weather")]
+    J8 -- "PNG per scan" --> FILES
     FILES --> API
     ATER -- "on demand,<br/>per map tile" --> API
     DB --> API & TILES & CLI
@@ -521,6 +524,34 @@ flowchart LR
 - **Files, not database rows.** Photos are PNG files; the table keeps the date, the cloud share,
   the greenness per lot and the image grid used to draw the outlines.
 
+### How fresh the satellite look is, and clouds and rain
+
+Two kinds of satellites watch the fields ([06-goes](docs/06-goes.md)):
+
+| | GOES-19 (geostationary) | VIIRS and MODIS through FIRMS (polar) |
+|---|---|---|
+| Looks at the region | every 10 minutes | a few times a day |
+| Published | minutes later | about 3 h later |
+| Pixel | about 2 km | 375 m to 1 km |
+| Good for | catching a fire early, clouds, rain, lightning | small fires, exact position |
+
+The status dock shows when a satellite last looked, which is GOES-19's newest scan (usually under
+20 minutes), not the newest fire detection: no detection means nothing burned, not that nobody
+looked.
+
+"Nubes y lluvia" in the layers menu paints GOES-19's latest scan over the center and east of the
+country: white clouds, more solid the higher their tops, and rain in blues and violet.
+
+```mermaid
+flowchart LR
+    S3["noaa-goes19 on AWS<br/>every 10 min"] --> H["Cloud top height<br/>ABI-L2-ACHAF, 10 km"]
+    S3 --> R["Rainfall rate<br/>ABI-L2-RRQPEF, 2 km"]
+    H & R --> W["Only the box's window<br/>of each full-disk file"]
+    W --> G["Reprojected to a grid<br/>even in Web Mercator;<br/>cloud edges interpolated"]
+    G --> P["One transparent PNG<br/>+ scan times"]
+    P --> M["Image over the box<br/>on the map, under the fields"]
+```
+
 ### Map loading by zoom
 
 ```mermaid
@@ -565,7 +596,7 @@ the tests against a PostGIS service container, and a Docker image build.
 | Purpose | Source | Terms | Status |
 |---|---|---|---|
 | Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | Free with a key; 5,000 requests per 10 min | Live |
-| Fire every 10 minutes, lightning | GOES-19 ABI fire product and GLM, NOAA Open Data on AWS | Free, no key | Live |
+| Fire every 10 minutes, lightning, clouds and rain | GOES-19 ABI fire, cloud top height and rainfall rate products and GLM, NOAA Open Data on AWS | Free, no key | Live |
 | Ten years of fire per field, forecast labels | FIRMS yearly archive for Argentina | Free | Live |
 | Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | Free API for **non-commercial use only** | Live |
 | Daily weather history for the forecast | [NASA POWER](https://power.larc.nasa.gov/) (MERRA-2) | Free, no key | Live |
