@@ -6,7 +6,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 
 export type Snap = "peek" | "half" | "full";
 
-const PEEK_PX = 168;
+export const PEEK_PX = 168;
 const FRACTION: Record<Exclude<Snap, "peek">, number> = {
   half: 0.48,
   full: 0.9,

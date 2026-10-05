@@ -295,6 +295,15 @@ const en = {
     stale: (age: string) => `Satellite data old · checked ${age}`,
     partial: "some sensors failed",
   },
+  dock: {
+    label: "Status",
+    data: "Satellite data",
+    offline: "Offline",
+    noData: "No data",
+    fields: (count: number, ha: string) =>
+      `${count} ${count === 1 ? "field" : "fields"} · ${ha} ha`,
+    switchTo: "Cambiar a español",
+  },
   buttons: {
     layers: "Map layers",
     locate: "Go to my location",
@@ -665,6 +674,15 @@ const es: Messages = {
     checked: (age) => `revisado ${age}`,
     stale: (age) => `Datos satelitales viejos · revisado ${age}`,
     partial: "fallaron algunos sensores",
+  },
+  dock: {
+    label: "Estado",
+    data: "Datos satelitales",
+    offline: "Sin conexión",
+    noData: "Sin datos",
+    fields: (count, ha) =>
+      `${count} ${count === 1 ? "campo" : "campos"} · ${ha} ha`,
+    switchTo: "Switch to English",
   },
   buttons: {
     layers: "Capas del mapa",

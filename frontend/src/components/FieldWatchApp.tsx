@@ -18,11 +18,9 @@ import { leadingTag } from "@/lib/tags";
 import { formatCamera, useUrlState } from "@/lib/useUrlState";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
+import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldDetail } from "./FieldDetail";
-import { FreshnessPill } from "./FreshnessPill";
-import { AccountButton } from "./AccountButton";
-import { LanguageSwitch } from "./LanguageSwitch";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
@@ -311,30 +309,16 @@ export function FieldWatchApp() {
         />
       ) : (
         <>
-          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-col gap-2 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
             <div className="pointer-events-auto">
               <SearchBar
                 territories={territories.data ?? []}
                 onPick={(t) => open(t.id)}
               />
             </div>
-            <div className="pointer-events-auto flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <FreshnessPill />
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <LanguageSwitch />
-                {me.isSuccess && (
-                  <AccountButton
-                    me={me.data}
-                    onSignIn={() => setSignIn("open")}
-                  />
-                )}
-              </div>
-            </div>
           </div>
 
-          <div className="absolute right-3 top-[120px] z-10 md:top-3">
+          <div className="absolute right-3 top-[72px] z-10 md:top-3">
             <MapButtons
               basemap={url.basemap}
               onBasemap={(b) => url.update({ b })}
@@ -414,6 +398,12 @@ export function FieldWatchApp() {
               )
             )}
           </BottomSheet>
+          <Dock
+            me={me.isSuccess ? me.data : undefined}
+            entries={everything.data ?? []}
+            covered={snap !== "peek"}
+            onSignIn={() => setSignIn("open")}
+          />
           {signIn && (
             <SignInCard
               expired={signIn === "expired"}
