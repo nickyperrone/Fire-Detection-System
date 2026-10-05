@@ -10,6 +10,7 @@ from app.models import (
     RiskStatus,
     Severity,
     SprayStatus,
+    SummaryFrequency,
     TerritoryKind,
 )
 from app.services.spray_rules import RuleStatus
@@ -76,6 +77,11 @@ class LoginIn(BaseModel):
 class MeOut(BaseModel):
     email: str
     locale: str
+    summary: SummaryFrequency
+
+
+class MeIn(BaseModel):
+    summary: SummaryFrequency
 
 
 class SettingsIn(BaseModel):

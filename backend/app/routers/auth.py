@@ -2,9 +2,10 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, HTTPException, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import get_thresholds
+from app.models import User
 from app.routers.dependencies import (
     SESSION_COOKIE,
     MailDep,
@@ -12,10 +13,11 @@ from app.routers.dependencies import (
     SettingsDep,
     UserDep,
 )
-from app.schemas import LoginIn, MeOut
+from app.schemas import LoginIn, MeIn, MeOut
 from app.services.auth import create_login_link, end_session, normalize_email, use_login_link
 from app.services.email_text import login_email
 from app.services.mail import SEND_ERRORS, message
+from app.services.summary import send_summary
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -57,11 +59,39 @@ def callback(session: SessionDep, settings: SettingsDep, token: str):
     return response
 
 
-@router.get("/me", response_model=MeOut)
-def me(user: UserDep):
+def _signed_in(user: User | None) -> User:
     if user is None:
         raise HTTPException(401, "not signed in")
-    return MeOut(email=user.email, locale=user.locale)
+    return user
+
+
+@router.get("/me", response_model=MeOut)
+def me(user: UserDep):
+    user = _signed_in(user)
+    return MeOut(email=user.email, locale=user.locale, summary=user.summary)
+
+
+@router.patch("/me", response_model=MeOut)
+def change_me(session: SessionDep, user: UserDep, body: MeIn):
+    user = _signed_in(user)
+    user.summary = body.summary
+    session.commit()
+    return MeOut(email=user.email, locale=user.locale, summary=user.summary)
+
+
+@router.post("/me/summary", status_code=202)
+def summary_now(session: SessionDep, settings: SettingsDep, send: MailDep, user: UserDep):
+    """Sends the account's summary at once (docs/09-accounts-and-alerts.md#summaries)."""
+    user = _signed_in(user)
+    try:
+        sent = send_summary(session, send, settings, get_thresholds(), user, datetime.now(UTC))
+    except SEND_ERRORS as exc:
+        raise HTTPException(503, "the summary could not be sent") from exc
+    if not sent:
+        return JSONResponse(
+            status_code=422, content={"detail": "the account has no fields", "code": "no_fields"}
+        )
+    return Response(status_code=202)
 
 
 @router.post("/logout", status_code=204)

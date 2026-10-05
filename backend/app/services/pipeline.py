@@ -22,6 +22,7 @@ from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
 from app.services.mail import smtp_sender
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
+from app.services.summary import send_due_summaries
 from app.versioning import processing_version
 
 
@@ -139,3 +140,12 @@ def answer_territories(
     forecasts = forecast_territories(session, grid, config, version, territory_ids)
     session.commit()
     return {"spray": spray.status.value, "forecast_fields": forecasts}
+
+
+def run_summary_pipeline(
+    session: Session, client: httpx.Client, settings: Settings, thresholds: dict
+) -> dict:
+    """Daily and weekly summaries of the accounts that are due (docs/09)."""
+    return send_due_summaries(
+        session, smtp_sender(settings), settings, thresholds, datetime.now(UTC)
+    )

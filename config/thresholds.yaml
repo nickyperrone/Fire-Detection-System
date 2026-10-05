@@ -187,6 +187,8 @@ worker:
   lightning_interval_minutes: 1
   forecast_interval_minutes: 60
   weather_interval_minutes: 60
+  # Checks which accounts are due a daily or weekly summary (docs/09).
+  summary_interval_minutes: 15
 
 # Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
 auth:

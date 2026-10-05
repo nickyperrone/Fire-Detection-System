@@ -55,7 +55,8 @@ def use_login_link(session: Session, token: str, config: dict, now: datetime) ->
     link.used_at = now
     user = session.scalar(select(User).where(User.email == link.email))
     if user is None:
-        user = User(email=link.email, locale=link.locale)
+        # The first summary comes at the next scheduled time, not right after signing up.
+        user = User(email=link.email, locale=link.locale, summary_sent_at=now)
         session.add(user)
     user.locale = link.locale
     user.last_login_at = now

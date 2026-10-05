@@ -52,6 +52,12 @@ class TerritoryKind(StrEnum):
     SECTION = "SECTION"
 
 
+class SummaryFrequency(StrEnum):
+    WEEKLY = "WEEKLY"
+    DAILY = "DAILY"
+    OFF = "OFF"
+
+
 class Priority(StrEnum):
     HIGH = "HIGH"
     NORMAL = "NORMAL"
@@ -434,6 +440,11 @@ class User(Base):
     locale: Mapped[str] = mapped_column(String(5))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # docs/09-accounts-and-alerts.md#summaries
+    summary: Mapped[SummaryFrequency] = mapped_column(
+        _enum(SummaryFrequency), server_default=SummaryFrequency.WEEKLY
+    )
+    summary_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class LoginLink(Base):

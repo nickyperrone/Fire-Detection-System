@@ -16,6 +16,7 @@ from app.services.pipeline import (
     run_goes_fire_pipeline,
     run_lightning_pipeline,
     run_spray_pipeline,
+    run_summary_pipeline,
 )
 
 log = logging.getLogger("worker")
@@ -72,6 +73,10 @@ def main() -> None:
         (
             job("forecast", run_forecast_pipeline, with_settings=True),
             intervals["forecast_interval_minutes"],
+        ),
+        (
+            job("summaries", run_summary_pipeline, with_settings=True),
+            intervals["summary_interval_minutes"],
         ),
     ]
     for run, minutes in jobs:

@@ -25,7 +25,11 @@ def test_a_link_by_email_signs_in_once_and_creates_the_account(anonymous, outbox
     assert response.headers["location"] == "http://localhost:3000/"
     cookie = response.headers["set-cookie"]
     assert cookie.startswith("fw_session=") and "HttpOnly" in cookie and "SameSite=lax" in cookie
-    assert anonymous.get("/auth/me").json() == {"email": "primo@example.com", "locale": "es"}
+    assert anonymous.get("/auth/me").json() == {
+        "email": "primo@example.com",
+        "locale": "es",
+        "summary": "WEEKLY",
+    }
 
     # Only the hash is stored, and the link is used up.
     token = re.search(r"token=(\S+)", outbox[0].get_content()).group(1)
