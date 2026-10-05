@@ -57,6 +57,13 @@ more than two taps.
   satellite basemaps in the layers button; satellite is what a contractor uses to recognize a field.
   One accent color, large type for the three answers, system font stack. Smooth camera moves
   (`flyTo`) when selecting a field, like a navigation app.
+- **Fields stand out on every basemap**: a dark edge under each outline keeps red, green and tag
+  colors readable over crops of any color on the satellite photo; outlines and labels grow with
+  zoom; the selected field glows white.
+- **Motion is short and subtle**: the selected field's glow fades in after the camera arrives,
+  content rises in when the sheet changes, list rows appear in a quick cascade, and buttons give a
+  small press. Fires breathe like a live location dot. Everything holds still for people who set
+  their system to reduce motion.
 - **Data freshness is always visible**: a small pill under the search bar names the most recent
   satellite pass processed and when we last checked ("Last pass VIIRS NOAA-21 · 2 h ago · checked
   3 min ago"). The two times differ because FIRMS publishes passes over Argentina hours later; the
