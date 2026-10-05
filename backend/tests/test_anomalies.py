@@ -201,3 +201,28 @@ def test_lots_are_checked_apart_and_their_field_gathers_them(client, session, th
 
 def rect(w, s, e, n):
     return {"type": "Polygon", "coordinates": [[[w, s], [e, s], [e, n], [w, n], [w, s]]]}
+
+
+def test_an_unreadable_scene_leaves_only_its_date_out(tmp_path, monkeypatch, client, session):
+    from rasterio.errors import RasterioIOError
+
+    from app.models import Territory
+    from app.providers.sentinel2 import Box, Scene
+    from app.services import anomalies
+
+    field_id = client.post(
+        "/territories", json={"name": "A", "geometry": rect(-59.10, -33.00, -59.09, -32.99)}
+    ).json()["id"]
+    scenes = [Scene(TODAY - timedelta(days=d), 5.0, {}) for d in (10, 5, 0)]
+    monkeypatch.setattr(anomalies, "search", lambda *args: scenes)
+
+    def read_box(scene, *args):
+        if scene.acquired == TODAY - timedelta(days=5):
+            raise RasterioIOError("read timed out")
+        bands = {name: np.zeros((4, 4), "float32") for name in anomalies.BANDS}
+        return Box(bands, TRANSFORM, CRS21)
+
+    monkeypatch.setattr(anomalies, "read_box", read_box)
+    territory = session.get(Territory, field_id)
+    days = [day for day, _ in anomalies.field_boxes(None, territory, CONFIG, TODAY, tmp_path)]
+    assert days == [TODAY - timedelta(days=10), TODAY]

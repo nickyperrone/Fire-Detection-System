@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 import httpx
 from apscheduler.executors.debug import DebugExecutor
+from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from app.config import get_settings, get_thresholds
@@ -48,45 +49,53 @@ def main() -> None:
     # One job at a time, on the main thread: FIRMS and GOES both correlate fire events and must not
     # interleave, and netCDF only silences HDF5's error printing on the main thread (in another
     # thread every GOES file logs a page of harmless diagnostics).
+    # Reading Sentinel-2 for every lot can take many minutes, so it runs in its own thread:
+    # a fire must never wait for an image. It shares nothing with the fire jobs.
     # coalesce: a job that fell behind runs once, not once per missed interval.
     # misfire_grace_time=None: a job due while another runs starts late instead of being skipped;
     # with the default of 1 s, the one-minute lightning job starved every other job.
     scheduler = BlockingScheduler(
         timezone="UTC",
-        executors={"default": DebugExecutor()},
+        executors={"default": DebugExecutor(), "images": ThreadPoolExecutor(1)},
         job_defaults={"coalesce": True, "misfire_grace_time": None},
     )
     start = datetime.now(UTC)
     jobs = [
         (
+            job("anomalies", run_anomaly_pipeline),
+            intervals["anomaly_interval_minutes"],
+            "images",
+        ),
+        (
             job("firms", run_fire_pipeline, with_settings=True, then_alert=True),
             intervals["fire_interval_minutes"],
+            "default",
         ),
         (
             job("goes fire", run_goes_fire_pipeline, then_alert=True),
             intervals["goes_fire_interval_minutes"],
+            "default",
         ),
         (
             job("lightning", run_lightning_pipeline, then_alert=True),
             intervals["lightning_interval_minutes"],
+            "default",
         ),
-        (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"]),
+        (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"], "default"),
         (
             job("forecast", run_forecast_pipeline, with_settings=True),
             intervals["forecast_interval_minutes"],
-        ),
-        (
-            job("anomalies", run_anomaly_pipeline),
-            intervals["anomaly_interval_minutes"],
+            "default",
         ),
         (
             job("summaries", run_summary_pipeline, with_settings=True),
             intervals["summary_interval_minutes"],
+            "default",
         ),
     ]
-    for run, minutes in jobs:
+    for run, minutes, executor in jobs:
         # next_run_time=now runs each job once at startup instead of waiting a full interval.
-        scheduler.add_job(run, "interval", minutes=minutes, next_run_time=start)
+        scheduler.add_job(run, "interval", minutes=minutes, next_run_time=start, executor=executor)
     scheduler.start()
 
 

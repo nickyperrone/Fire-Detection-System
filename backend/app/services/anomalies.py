@@ -15,6 +15,7 @@ from affine import Affine
 from geoalchemy2 import WKTElement
 from geoalchemy2.shape import to_shape
 from rasterio.crs import CRS
+from rasterio.errors import RasterioIOError
 from rasterio.features import rasterize
 from rasterio.warp import transform_geom
 from shapely.geometry import mapping, shape
@@ -77,17 +78,22 @@ def field_boxes(
         )
     )
 
-    def box_for(scene: Scene) -> tuple[date, Box]:
+    def box_for(scene: Scene) -> tuple[date, Box] | None:
         path = folder / f"{scene.acquired.isoformat()}.npz"
         if path.exists():
             return scene.acquired, _load(path)
-        box = read_box(scene, bounds, RESOLUTION_M, BANDS)
+        try:
+            box = read_box(scene, bounds, RESOLUTION_M, BANDS)
+        except RasterioIOError as exc:
+            # One unreadable scene leaves its date out this time; the next run reads it again.
+            log.warning("scene %s of territory %s not read: %s", scene.acquired, territory.id, exc)
+            return None
         _save(path, box)
         return scene.acquired, box
 
     # More parallel reads than this stall on the bucket instead of finishing sooner.
     with ThreadPoolExecutor(config["read_threads"]) as pool:
-        return list(pool.map(box_for, scenes))
+        return [found for found in pool.map(box_for, scenes) if found is not None]
 
 
 def analyze_field(
