@@ -64,13 +64,25 @@ more than two taps.
   content rises in when the sheet changes, list rows appear in a quick cascade, and buttons give a
   small press. Fires breathe like a live location dot. Everything holds still for people who set
   their system to reduce motion.
-- **Data freshness is always visible**: a small pill under the search bar names the most recent
-  satellite pass processed and when we last checked ("Last pass VIIRS NOAA-21 · 2 h ago · checked
-  3 min ago"). The two times differ because FIRMS publishes passes over Argentina hours later; the
-  pill turns gray with the reason when the source is `STALE` or failing.
-- **Language**: a small ES/EN switch in the top bar. Spanish by default for Argentine browsers. The
-  choice is kept in the browser. The API returns codes and numbers, never sentences, so every text
-  the user reads is translated in the frontend.
+- **A status dock floats at the bottom**: one small glass bar, centered over the map, that answers
+  "am I signed in and is the data fresh" at a glance. From left to right:
+  - **Satellite data**: a dot (green when fresh, gray when `STALE`, `NO_DATA` or the API is
+    unreachable) and the age of the newest satellite pass processed ("12 min ago"). Tapping it
+    opens the detail: the pass ("Last pass VIIRS NOAA-21 · 2 h ago") and when we last checked
+    ("checked 3 min ago"). The two times differ because FIRMS publishes passes over Argentina hours
+    later.
+  - **Portfolio**, signed in: how many fields and hectares are monitored ("3 fields · 412 ha").
+  - **Language**: ES or EN; tapping switches. Spanish by default for Argentine browsers, the choice
+    is kept in the browser. The API returns codes and numbers, never sentences, so every text the
+    user reads is translated in the frontend.
+  - **Account**: "Sign in" while signed out; signed in, the account's initial with a green dot,
+    which opens the address, the summary frequency and sign out.
+
+  The glass follows Apple's Liquid Glass: the map shows through blurred and more saturated, a light
+  rim catches the top edge, and panels open upwards out of the bar. People who ask their system for
+  less transparency get a solid bar. On a phone the dock sits just above the sheet and slides away
+  while the sheet is open higher, so it never covers a field's answers; on a computer it is
+  centered over the map, beside the panel.
 
 ## Opening and scope
 
