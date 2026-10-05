@@ -27,7 +27,7 @@ export function SignInCard({ expired, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="sign-in-title"
         onClick={(e) => e.stopPropagation()}
-        className="glass w-full max-w-md space-y-3 rounded-t-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:rounded-3xl"
+        className="rise-in glass w-full max-w-md space-y-3 rounded-t-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:rounded-3xl"
       >
         <h2 id="sign-in-title" className="text-lg font-semibold">
           {t.signIn.title}

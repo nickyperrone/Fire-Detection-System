@@ -45,6 +45,7 @@ export const FIRE_HALO_LAYER = "fire-halo";
 export const LIGHTNING_LAYER = "lightning-ring";
 export const RISK_LAYER = "risk-fill";
 export const PARCELS_LAYER = "parcel-line";
+export const SELECTED_GLOW_LAYER = "field-glow";
 
 // Set per field by the app: its status tone, or its tag color when coloring by tags.
 const territoryColor: ExpressionSpecification = [
@@ -77,6 +78,27 @@ const lineOpacity: ExpressionSpecification = [
   1,
 ];
 
+/** Field outlines grow with zoom, and a highlighted field's is thicker at every zoom. */
+function fieldWidth(extra = 0): ExpressionSpecification {
+  const at = (normal: number, picked: number): ExpressionSpecification => [
+    "case",
+    highlighted,
+    picked + extra,
+    normal + extra,
+  ];
+  return [
+    "interpolate",
+    ["linear"],
+    ["zoom"],
+    8,
+    at(1.2, 2.5),
+    12,
+    at(2, 4),
+    16,
+    at(3.5, 6),
+  ];
+}
+
 const byKind = (kind: string): ExpressionSpecification => [
   "==",
   ["get", "kind"],
@@ -87,6 +109,8 @@ const TERRITORY_KIND_BY_LAYER = {
   "field-fill": "FIELD",
   "section-fill": "SECTION",
   "field-line": "FIELD",
+  "field-casing": "FIELD",
+  [SELECTED_GLOW_LAYER]: "FIELD",
   "section-line": "SECTION",
   "field-label": "FIELD",
   "section-label": "SECTION",
@@ -216,7 +240,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     source: "territories",
     "source-layer": "territories",
     filter: byKind("FIELD"),
-    paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.18) },
+    paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.22) },
   });
   map.addLayer({
     id: "section-fill",
@@ -226,6 +250,35 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     filter: byKind("SECTION"),
     paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.12) },
   });
+  // The selected field glows; MapView fades it in on selection (selection is feature state,
+  // which does not animate by itself).
+  map.addLayer({
+    id: SELECTED_GLOW_LAYER,
+    type: "line",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("FIELD"),
+    paint: {
+      "line-color": "#ffffff",
+      "line-width": fieldWidth(8),
+      "line-blur": 6,
+      "line-opacity": 0,
+    },
+  });
+  // A dark edge under each outline keeps red and green readable over fields of any color in the
+  // satellite photo, and over the light basemap.
+  map.addLayer({
+    id: "field-casing",
+    type: "line",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("FIELD"),
+    paint: {
+      "line-color": "#0b0e13",
+      "line-width": fieldWidth(2.5),
+      "line-opacity": ["*", 0.55, lineOpacity],
+    },
+  });
   map.addLayer({
     id: "field-line",
     type: "line",
@@ -234,7 +287,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     filter: byKind("FIELD"),
     paint: {
       "line-color": territoryColor,
-      "line-width": ["case", highlighted, 3.5, 2],
+      "line-width": fieldWidth(),
       "line-opacity": lineOpacity,
     },
   });
@@ -254,7 +307,8 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
   const labelPaint = {
     "text-color": "#f3f6fa",
     "text-halo-color": "#0b0e13",
-    "text-halo-width": 1.4,
+    "text-halo-width": 1.8,
+    "text-halo-blur": 0.5,
   };
   // Field names while the field is small on screen, lot names once the lots are readable.
   map.addLayer({
@@ -263,12 +317,13 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     source: "territories",
     "source-layer": "territory_labels",
     filter: byKind("FIELD"),
-    minzoom: 10,
+    minzoom: 9,
     maxzoom: 13,
     layout: {
       "text-field": ["get", "name"],
       "text-font": LABEL_FONT,
-      "text-size": 13,
+      "text-size": ["interpolate", ["linear"], ["zoom"], 9, 12, 13, 15],
+      "text-letter-spacing": 0.02,
     },
     paint: labelPaint,
   });

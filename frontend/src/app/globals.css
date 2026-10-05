@@ -43,3 +43,41 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Motion: short and subtle, like a navigation app. Content rises in when it changes; buttons
+ * give a small press. Nothing moves for people who ask their system for less motion. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise-in {
+  animation: rise-in 220ms ease-out both;
+}
+
+button {
+  transition:
+    transform 120ms ease-out,
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    opacity 150ms ease-out;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

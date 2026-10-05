@@ -452,7 +452,10 @@ flowchart LR
 ```
 
 The map asks only for the vector tiles on screen, shows lower-zoom tiles while closer ones arrive,
-and caches them, like Google Maps. Colors are red when something is wrong and green when all is
+and caches them, like Google Maps. Each field has a dark edge under its outline so it reads over
+crops of any color on the satellite photo, and the selected one glows; motion (the glow fading in,
+the card rising, the list cascading) is short and stops for anyone who asks their system for less
+motion. Colors are red when something is wrong and green when all is
 fine, everywhere. The decision log and the stack are in [02-architecture](docs/02-architecture.md).
 
 ## How it is built: spec first

@@ -23,6 +23,7 @@ import {
   hideTerritories,
   PARCELS_LAYER,
   RISK_LAYER,
+  SELECTED_GLOW_LAYER,
   styleFor,
   TERRITORY_LAYERS,
 } from "./overlay";
@@ -115,6 +116,8 @@ export function MapView(props: Props) {
         latest.current.selectedId,
       );
       hideTerritories(map, [...latest.current.hiddenIds]);
+      // A new basemap rebuilds the layers; the selected field keeps its glow.
+      if (latest.current.selectedId !== null) fadeInGlow(map);
       showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
     });
     map.on("click", (event) => handleClick(map, event, latest.current));
@@ -199,6 +202,13 @@ export function MapView(props: Props) {
       applyTerritoryStates(map, props.territoryStates, props.selectedId);
     }
   }, [props.territoryStates, props.selectedId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map?.getLayer(SELECTED_GLOW_LAYER) || props.selectedId === null)
+      return;
+    return fadeInGlow(map);
+  }, [props.selectedId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -330,6 +340,34 @@ function showFire(
     .setLngLat(event.lngLat)
     .setDOMContent(content)
     .addTo(map);
+}
+
+const GLOW_OPACITY = 0.55;
+const GLOW_MS = 450;
+
+/** Fades the selected field's glow in, so the eye finds it after the camera moves. */
+function fadeInGlow(map: MapLibreMap): () => void {
+  const set = (opacity: number) =>
+    map.setPaintProperty(SELECTED_GLOW_LAYER, "line-opacity", [
+      "case",
+      ["boolean", ["feature-state", "selected"], false],
+      opacity,
+      0,
+    ]);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    set(GLOW_OPACITY);
+    return () => {};
+  }
+  let frame = 0;
+  const start = performance.now();
+  const tick = (time: number) => {
+    const progress = Math.min((time - start) / GLOW_MS, 1);
+    // Ease out: quick at first, settling at the end.
+    set(GLOW_OPACITY * (1 - (1 - progress) ** 3));
+    if (progress < 1) frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(frame);
 }
 
 /** Slow breathing halo on fires, like a live location dot. Throttled to about 20 frames per second. */

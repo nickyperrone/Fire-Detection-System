@@ -104,7 +104,10 @@ export function BottomSheet({
         ref={content}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 md:pt-4"
       >
-        {children}
+        {/* Keyed by what is shown, so opening a field or going back to the list rises in. */}
+        <div key={contentKey} className="rise-in">
+          {children}
+        </div>
       </div>
     </section>
   );

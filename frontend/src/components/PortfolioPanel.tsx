@@ -133,19 +133,25 @@ function SelectionBar({
   );
 }
 
+const STAGGERED_ROWS = 12;
+
 function EntryList(props: Props) {
   const { t } = useLocale();
   const { entries, picked } = props;
   const listed = new Set(entries.map((e) => e.territory_id));
   return (
     <ul className="mt-3 space-y-2">
-      {entries.map((entry) => {
+      {entries.map((entry, index) => {
         const isLot = entry.parent_id !== null && listed.has(entry.parent_id);
         const isPicked = picked.includes(entry.territory_id);
         return (
           <li
             key={entry.territory_id}
-            className={`flex items-stretch rounded-2xl ${isLot ? "ml-5" : ""} ${
+            // A short cascade; rows past the first screen appear without waiting.
+            style={{
+              animationDelay: `${Math.min(index, STAGGERED_ROWS) * 25}ms`,
+            }}
+            className={`rise-in flex items-stretch rounded-2xl ${isLot ? "ml-5" : ""} ${
               isPicked
                 ? "bg-accent/10 ring-1 ring-accent/50"
                 : "bg-white/[0.04]"

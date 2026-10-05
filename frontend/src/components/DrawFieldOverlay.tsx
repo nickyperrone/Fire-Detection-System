@@ -133,7 +133,7 @@ export function DrawFieldOverlay({
         )}
       </div>
 
-      <section className="glass fixed inset-x-3 bottom-3 z-20 mx-auto max-h-[60dvh] max-w-xl overflow-y-auto rounded-3xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <section className="rise-in glass fixed inset-x-3 bottom-3 z-20 mx-auto max-h-[60dvh] max-w-xl overflow-y-auto rounded-3xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <p className="text-3xl font-semibold tabular-nums">
           {sign}
           {formatHectares(t, drawing.hectares)}
