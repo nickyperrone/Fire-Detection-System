@@ -143,7 +143,8 @@ def _when(moment: datetime, locale: str, hour: bool = True) -> str:
     return f"{day} {local:%H:%M}" if hour else day
 
 
-def _field_lines(item: "FieldSummary", locale: str) -> list[str]:
+def _field_lines(item: "FieldSummary", locale: str, patches: bool = True) -> list[str]:
+    """`patches` is False for a lot: its field already lists them, naming the lot."""
     es = locale == "es"
     lines = []
     if item.fire_days:
@@ -179,7 +180,7 @@ def _field_lines(item: "FieldSummary", locale: str) -> list[str]:
             if es
             else "Spraying: no good window in the next 48 h."
         )
-    for patch in item.entry.anomaly.patches:
+    for patch in item.entry.anomaly.patches if patches else []:
         what = ANOMALY_KINDS[locale][patch.kind]
         where = "" if patch.where == "center" else DIRECTIONS[locale].get(patch.where, "")
         place = (
@@ -193,6 +194,8 @@ def _field_lines(item: "FieldSummary", locale: str) -> list[str]:
             locale,
             hour=False,
         )
+        if patch.lot:
+            place = f"{place} de {patch.lot}" if es else f"{place} of {patch.lot}"
         lines.append(
             f"Algo raro: {what} en {area} ha {place} ({seen})."
             if es
@@ -235,13 +238,16 @@ def summary_email(
             if es
             else f"no fires near your {len(fields)} fields"
         )
-    lines = {item.entry.territory.id: _field_lines(item, locale) for item in items}
+    # Without patches: a field lists its lots' patches once, naming the lot, so lots are
+    # compared with their field on everything else.
+    lines = {item.entry.territory.id: _field_lines(item, locale, patches=False) for item in items}
     blocks = []
     for item in items:
         t = item.entry.territory
         if t.parent_id is not None:
             continue
-        block = [f"{t.name} ({t.hectares:.0f} ha)", *(f"  {line}" for line in lines[t.id])]
+        block = [f"{t.name} ({t.hectares:.0f} ha)"]
+        block += [f"  {line}" for line in _field_lines(item, locale)]
         block.append(f"  {app_url}/?f={t.id}")
         # A lot that says the same as its field is named, not repeated.
         lots = [i.entry.territory for i in items if i.entry.territory.parent_id == t.id]

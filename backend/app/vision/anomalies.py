@@ -158,10 +158,12 @@ def find_patches(
     if not dates:
         return Finding(DataQuality.NO_DATA, None, [])
     latest, earlier = dates[-1], dates[:-1]
-    if (today - latest.day).days > config["clear_within_days"]:
-        return Finding(DataQuality.CLOUD_OBSCURED, latest.day, [])
     if len(earlier) < config["min_baseline_dates"]:
         return Finding(DataQuality.PARTIAL, latest.day, [])
+    # Clouds since the last clear date: what that date showed is still reported, with its date,
+    # but the field is not called fine today.
+    recent = (today - latest.day).days <= config["clear_within_days"]
+    quality = DataQuality.GOOD if recent else DataQuality.CLOUD_OBSCURED
 
     min_dates = config["min_baseline_dates"]
     patches: list[Patch] = []
@@ -186,4 +188,4 @@ def find_patches(
         burnt = burn >= config["burnt_min_drop"]
     patches += _patches(burnt, burn, "burnt", field, transform, crs, config)
 
-    return Finding(DataQuality.GOOD, latest.day, patches, earlier[-1].day)
+    return Finding(quality, latest.day, patches, earlier[-1].day)

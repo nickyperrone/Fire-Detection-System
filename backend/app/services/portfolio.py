@@ -104,6 +104,8 @@ class AnomalyPatch:
     kind: str
     area_ha: float
     where: str
+    # The lot it is in, when the answer is a field's made of its lots.
+    lot: str | None = None
 
 
 @dataclass
@@ -171,29 +173,41 @@ def build_portfolio(
     return _worst_first(entries)
 
 
-# A lot takes its field's check, and the patches of its field that reach into it.
+# A territory answers through what was analyzed for it: itself, or its lots when it has them.
 ANOMALIES_SQL = text("""
-    SELECT t.id AS territory_id, c.data_quality, c.last_clear,
-           a.kind, a.where, a.area_ha
+    SELECT t.id AS territory_id, u.id AS unit_id, u.name AS unit,
+           c.data_quality, c.last_clear, a.kind, a.where, a.area_ha
     FROM territory t
-    JOIN field_anomaly_check c ON c.territory_id = coalesce(t.parent_id, t.id)
-    LEFT JOIN field_anomaly a
-      ON a.territory_id = c.territory_id
-     AND (t.parent_id IS NULL OR ST_Intersects(a.geom, t.geom))
+    JOIN territory u ON u.id = t.id OR u.parent_id = t.id
+    JOIN field_anomaly_check c ON c.territory_id = u.id
+    LEFT JOIN field_anomaly a ON a.territory_id = u.id
     WHERE t.id = ANY(:ids)
     ORDER BY t.id, a.area_ha DESC
 """)
+# The worst state among a field's lots is the field's: it is only fine if every lot was seen.
+QUALITY_ORDER = [
+    DataQuality.GOOD,
+    DataQuality.PARTIAL,
+    DataQuality.CLOUD_OBSCURED,
+    DataQuality.STALE,
+    DataQuality.NO_DATA,
+]
 
 
 def _anomalies(session: Session, ids: list[int]) -> dict[int, AnomalyAnswer]:
     answers: dict[int, AnomalyAnswer] = {}
     for row in session.execute(ANOMALIES_SQL, {"ids": ids}):
-        answer = answers.setdefault(
-            row.territory_id,
-            AnomalyAnswer(data_quality=DataQuality(row.data_quality), observed_on=row.last_clear),
-        )
+        quality = DataQuality(row.data_quality)
+        answer = answers.setdefault(row.territory_id, AnomalyAnswer(data_quality=quality))
+        if QUALITY_ORDER.index(quality) > QUALITY_ORDER.index(answer.data_quality):
+            answer.data_quality = quality
+        if row.last_clear and (answer.observed_on is None or row.last_clear > answer.observed_on):
+            answer.observed_on = row.last_clear
         if row.kind is not None:
-            answer.patches.append(AnomalyPatch(row.kind, row.area_ha, row.where))
+            lot = row.unit if row.unit_id != row.territory_id else None
+            answer.patches.append(AnomalyPatch(row.kind, row.area_ha, row.where, lot))
+    for answer in answers.values():
+        answer.patches.sort(key=lambda p: p.area_ha, reverse=True)
     return answers
 
 

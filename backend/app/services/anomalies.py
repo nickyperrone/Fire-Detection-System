@@ -22,7 +22,7 @@ from shapely.ops import unary_union
 from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
-from app.models import DataQuality, FieldAnomaly, FieldAnomalyCheck, Territory, TerritoryKind
+from app.models import DataQuality, FieldAnomaly, FieldAnomalyCheck, Territory
 from app.providers.sentinel2 import Box, Scene, clearest_per_day, read_box, search
 from app.vision.anomalies import BANDS, Finding, Patch, field_date, find_patches
 
@@ -123,8 +123,8 @@ FIRE_NEAR_PATCH_SQL = text("""
 
 def confirm_burns(session: Session, finding: Finding, radius_m: float) -> Finding:
     """A burnt-looking patch is called burnt only with a fire detection near it between the two
-    clear dates: freshly tilled or sprayed-off ground darkens the same index. Otherwise it is a
-    less-green change, reported once even when the less-green test flagged the same ground."""
+    clear dates: freshly tilled or sprayed-off ground darkens the same index. Unconfirmed, it is
+    not reported; if the ground also lost green, the less-green patch reports it."""
     if finding.previous_clear is None:
         return finding
     since = datetime.combine(finding.previous_clear, time.min, UTC)
@@ -137,19 +137,12 @@ def confirm_burns(session: Session, finding: Finding, radius_m: float) -> Findin
         )
 
     burnt = [p for p in finding.patches if p.kind == "burnt" and fire_near(p)]
-    unconfirmed = [p for p in finding.patches if p.kind == "burnt" and p not in burnt]
     others = [p for p in finding.patches if p.kind != "burnt"]
     if burnt:
         # A confirmed burn is the whole story of that ground.
         area = unary_union([shape(p.geometry) for p in burnt])
         others = [p for p in others if not shape(p.geometry).intersects(area)]
-    less_green = unary_union([shape(p.geometry) for p in others if p.kind == "less_green"])
-    relabeled = [
-        replace(p, kind="less_green")
-        for p in unconfirmed
-        if less_green.is_empty or not shape(p.geometry).intersects(less_green)
-    ]
-    return replace(finding, patches=burnt + others + relabeled)
+    return replace(finding, patches=burnt + others)
 
 
 def store_finding(
@@ -189,10 +182,16 @@ def check_fields(
     now: datetime,
     cache_root: Path,
 ) -> dict:
-    """Every field (lots take their field's patches), one at a time."""
-    fields = session.scalars(select(Territory).where(Territory.kind == TerritoryKind.FIELD)).all()
+    """Every lot, and every field without lots, one at a time. "The rest of the field" is the
+    rest of the lot: lots are sown and harvested apart, and one being harvested is not news."""
+    has_lots = select(Territory.parent_id).where(Territory.parent_id.is_not(None))
+    units = session.scalars(select(Territory).where(Territory.id.not_in(has_lots))).all()
+    # A field that has been split into lots since its last check answers through them now.
+    for table in (FieldAnomaly, FieldAnomalyCheck):
+        session.execute(delete(table).where(table.territory_id.in_(has_lots)))
+    session.commit()
     checked = failed = patches = 0
-    for territory in fields:
+    for territory in units:
         try:
             finding = confirm_burns(
                 session,
@@ -210,14 +209,13 @@ def check_fields(
     return {"fields_checked": checked, "fields_failed": failed, "patches": patches}
 
 
-# A lot shows the patches of its field that reach into it, clipped to the lot.
+# A field with lots shows its lots' patches; a lot or a field without lots, its own.
 ANOMALY_FEATURES_SQL = text("""
-    SELECT a.kind, a.area_ha, a.where, a.observed_on,
-           ST_AsGeoJSON(CASE WHEN t.parent_id IS NULL THEN a.geom
-                             ELSE ST_Intersection(a.geom, t.geom) END, 7) AS geometry
-    FROM territory t
-    JOIN field_anomaly a ON a.territory_id = coalesce(t.parent_id, t.id)
-    WHERE t.id = :id AND (t.parent_id IS NULL OR ST_Intersects(a.geom, t.geom))
+    SELECT a.kind, a.area_ha, a.where, a.observed_on, u.name AS unit,
+           ST_AsGeoJSON(a.geom, 7) AS geometry
+    FROM territory u
+    JOIN field_anomaly a ON a.territory_id = u.id
+    WHERE u.id = :id OR u.parent_id = :id
     ORDER BY a.area_ha DESC
 """)
 
@@ -234,6 +232,7 @@ def field_anomaly_features(session: Session, territory_id: int) -> dict:
                     "kind": r.kind,
                     "area_ha": r.area_ha,
                     "where": r.where,
+                    "unit": r.unit,
                     "observed_on": r.observed_on.isoformat(),
                 },
             }

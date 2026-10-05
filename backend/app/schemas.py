@@ -203,6 +203,7 @@ class AnomalyPatchOut(BaseModel):
     kind: str = Field(description="less_green, water or burnt")
     area_ha: float
     where: str = Field(description="Compass point from the field's center, or center")
+    lot: str | None = Field(None, description="The lot it is in, for a field split into lots")
 
 
 class AnomalyAnswerOut(BaseModel):

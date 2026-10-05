@@ -87,6 +87,11 @@ def test_without_a_recent_clear_date_or_a_baseline_nothing_is_called_fine():
         DataQuality.CLOUD_OBSCURED,
         TODAY - timedelta(days=15),
     )
+    # What the last clear date showed is still reported, with that date.
+    northeast = (slice(12, 30), slice(50, 68))
+    seen = find([day(50, 0.3), day(40, 0.45), day(30, 0.6), day(15, 0.75, northeast, ndvi=0.3)])
+    assert seen.data_quality == DataQuality.CLOUD_OBSCURED
+    assert [p.kind for p in seen.patches] == ["less_green"]
     assert find([day(10, 0.6), day(1, 0.7)]).data_quality == DataQuality.PARTIAL
     assert find([]).data_quality == DataQuality.NO_DATA
 
@@ -141,8 +146,8 @@ def test_a_burn_needs_a_fire_detection_between_the_two_dates(session):
     assert [p.kind for p in confirm_burns(session, finding(burnt, less_green), 1000).patches] == [
         "less_green"
     ]
-    # Alone, an unconfirmed burn is still reported, as less green.
-    assert [p.kind for p in confirm_burns(session, finding(burnt), 1000).patches] == ["less_green"]
+    # Alone, a darker patch with no fire seen is tilled or sprayed-off ground: not reported.
+    assert confirm_burns(session, finding(burnt), 1000).patches == []
     # A fire detected next to it between the two dates confirms it, and it replaces the other.
     detection(session, -59.098, datetime(2026, 9, 30, 15, tzinfo=UTC))
     assert [p.kind for p in confirm_burns(session, finding(burnt, less_green), 1000).patches] == [
@@ -150,51 +155,48 @@ def test_a_burn_needs_a_fire_detection_between_the_two_dates(session):
     ]
 
 
-def test_a_stored_patch_reaches_the_field_its_lots_the_map_and_the_summary(
-    client, session, thresholds, outbox
-):
+def test_lots_are_checked_apart_and_their_field_gathers_them(client, session, thresholds, outbox):
     field = client.post(
         "/territories",
         json={"name": "La Esperanza", "geometry": rect(-59.10, -33.00, -59.09, -32.99)},
     ).json()
-    west = client.post(
-        "/territories",
-        json={
-            "name": "Oeste",
-            "geometry": rect(-59.10, -33.00, -59.095, -32.99),
-            "parent_id": field["id"],
-        },
-    ).json()
-    east = client.post(
-        "/territories",
-        json={
-            "name": "Este",
-            "geometry": rect(-59.095, -33.00, -59.09, -32.99),
-            "parent_id": field["id"],
-        },
-    ).json()
-    # A dry patch in the west half only.
+    lots = {
+        name: client.post(
+            "/territories",
+            json={"name": name, "geometry": rect(*box), "parent_id": field["id"]},
+        ).json()
+        for name, box in {
+            "Oeste": (-59.10, -33.00, -59.095, -32.99),
+            "Este": (-59.095, -33.00, -59.09, -32.99),
+        }.items()
+    }
+    # A dry patch in the west lot; the east lot was seen and is fine.
     dry = Patch("less_green", 12.0, 3.1, "W", rect(-59.099, -32.998, -59.096, -32.994))
-    store_finding(
-        session, field["id"], Finding(DataQuality.GOOD, TODAY, [dry]), datetime.now(UTC), "test"
-    )
+    now = datetime.now(UTC)
+    store_finding(session, lots["Oeste"]["id"], Finding(DataQuality.GOOD, TODAY, [dry]), now, "t")
+    store_finding(session, lots["Este"]["id"], Finding(DataQuality.GOOD, TODAY, []), now, "t")
 
     answers = {e["name"]: e["anomaly"] for e in client.get("/portfolio").json()}
+    assert answers["La Esperanza"]["data_quality"] == "GOOD"
     assert answers["La Esperanza"]["patches"] == [
-        {"kind": "less_green", "area_ha": 12.0, "where": "W"}
+        {"kind": "less_green", "area_ha": 12.0, "where": "W", "lot": "Oeste"}
     ]
-    assert len(answers["Oeste"]["patches"]) == 1
+    assert answers["Oeste"]["patches"][0]["lot"] is None
     assert (answers["Este"]["patches"], answers["Este"]["data_quality"]) == ([], "GOOD")
 
-    features = client.get(f"/territories/{west['id']}/anomalies").json()["features"]
-    assert features[0]["properties"]["kind"] == "less_green"
-    assert client.get(f"/territories/{east['id']}/anomalies").json()["features"] == []
+    features = client.get(f"/territories/{field['id']}/anomalies").json()["features"]
+    assert [f["properties"]["unit"] for f in features] == ["Oeste"]
+    assert client.get(f"/territories/{lots['Este']['id']}/anomalies").json()["features"] == []
 
-    session.add(User(email="default", locale="es", summary_sent_at=datetime.now(UTC)))
+    session.add(User(email="default", locale="es", summary_sent_at=now))
     session.commit()
     user = session.scalar(select(User).where(User.email == "default"))
-    send_summary(session, outbox.append, Settings(), thresholds, user, datetime.now(UTC))
-    assert "Algo raro: menos verde en 12,0 ha al O" in outbox[-1].get_content()
+    send_summary(session, outbox.append, Settings(), thresholds, user, now)
+    body = outbox[-1].get_content()
+    # Once, on the field, naming the lot; the lots then read the same as their field.
+    assert body.count("Algo raro") == 1
+    assert "Algo raro: menos verde en 12,0 ha al O de Oeste" in body
+    assert "Lotes igual que el campo: Este, Oeste." in body
 
 
 def rect(w, s, e, n):
