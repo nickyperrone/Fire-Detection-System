@@ -3,6 +3,19 @@
     "schemas": {
       "AnomalyAnswerOut": {
         "properties": {
+          "checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None until the field is first looked at",
+            "title": "Checked At"
+          },
           "data_quality": {
             "$ref": "#/components/schemas/DataQuality"
           },
@@ -29,7 +42,8 @@
         "required": [
           "data_quality",
           "observed_on",
-          "patches"
+          "patches",
+          "checked_at"
         ],
         "title": "AnomalyAnswerOut",
         "type": "object"

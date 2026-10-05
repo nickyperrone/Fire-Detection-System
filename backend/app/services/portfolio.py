@@ -115,6 +115,8 @@ class AnomalyAnswer:
     data_quality: DataQuality = DataQuality.NO_DATA
     observed_on: date | None = None
     patches: list[AnomalyPatch] = field(default_factory=list)
+    # None until the field is first looked at: a new field waits for the next 6-hourly check.
+    checked_at: datetime | None = None
 
 
 @dataclass
@@ -176,7 +178,7 @@ def build_portfolio(
 # A territory answers through what was analyzed for it: itself, or its lots when it has them.
 ANOMALIES_SQL = text("""
     SELECT t.id AS territory_id, u.id AS unit_id, u.name AS unit,
-           c.data_quality, c.last_clear, a.kind, a.where, a.area_ha
+           c.data_quality, c.last_clear, c.checked_at, a.kind, a.where, a.area_ha
     FROM territory t
     JOIN territory u ON u.id = t.id OR u.parent_id = t.id
     JOIN field_anomaly_check c ON c.territory_id = u.id
@@ -203,6 +205,8 @@ def _anomalies(session: Session, ids: list[int]) -> dict[int, AnomalyAnswer]:
             answer.data_quality = quality
         if row.last_clear and (answer.observed_on is None or row.last_clear > answer.observed_on):
             answer.observed_on = row.last_clear
+        if answer.checked_at is None or row.checked_at > answer.checked_at:
+            answer.checked_at = row.checked_at
         if row.kind is not None:
             lot = row.unit if row.unit_id != row.territory_id else None
             answer.patches.append(AnomalyPatch(row.kind, row.area_ha, row.where, lot))

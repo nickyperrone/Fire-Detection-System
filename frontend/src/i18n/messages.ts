@@ -193,6 +193,8 @@ const en = {
       `Clouds over the field since ${date}; nothing unusual then.`,
     partial: "Not enough clear images yet to compare the field with itself.",
     noData: "No clear satellite image of this field in 90 days.",
+    notYet:
+      "Not looked at yet: fields are checked against new satellite images every 6 hours.",
     note: "Seen from orbit (Sentinel-2, 10 m), not a diagnosis: worth a look on the ground.",
     chip: (n: number) => (n === 1 ? "Unusual patch" : `${n} unusual patches`),
   },
@@ -561,6 +563,8 @@ const es: Messages = {
     partial:
       "Todavía no hay suficientes imágenes despejadas para comparar el campo consigo mismo.",
     noData: "Sin imágenes satelitales despejadas de este campo en 90 días.",
+    notYet:
+      "Todavía no se revisó: los campos se comparan con las imágenes satelitales nuevas cada 6 horas.",
     note: "Visto desde el satélite (Sentinel-2, 10 m), no es un diagnóstico: conviene ir a mirar.",
     chip: (n) => (n === 1 ? "Algo raro" : `${n} cosas raras`),
   },

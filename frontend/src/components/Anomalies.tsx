@@ -36,7 +36,9 @@ export function AnomalySection({ anomaly }: { anomaly: Anomaly }) {
     </ul>
   );
   let body: React.ReactNode;
-  if (anomaly.data_quality === "GOOD") {
+  if (anomaly.checked_at === null) {
+    body = <p className="text-sm text-slate-400">{t.anomaly.notYet}</p>;
+  } else if (anomaly.data_quality === "GOOD") {
     body = anomaly.patches.length ? (
       <>
         <p className="text-sm text-slate-300">{t.anomaly.seenOn(seen)}</p>

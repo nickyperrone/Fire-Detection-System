@@ -210,6 +210,7 @@ class AnomalyAnswerOut(BaseModel):
     data_quality: DataQuality
     observed_on: date | None
     patches: list[AnomalyPatchOut]
+    checked_at: datetime | None = Field(description="None until the field is first looked at")
 
 
 class PortfolioEntryOut(BaseModel):

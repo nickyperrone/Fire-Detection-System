@@ -178,6 +178,7 @@ def test_lots_are_checked_apart_and_their_field_gathers_them(client, session, th
 
     answers = {e["name"]: e["anomaly"] for e in client.get("/portfolio").json()}
     assert answers["La Esperanza"]["data_quality"] == "GOOD"
+    assert answers["La Esperanza"]["checked_at"] is not None
     assert answers["La Esperanza"]["patches"] == [
         {"kind": "less_green", "area_ha": 12.0, "where": "W", "lot": "Oeste"}
     ]

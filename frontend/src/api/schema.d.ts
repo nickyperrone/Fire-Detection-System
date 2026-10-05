@@ -462,6 +462,11 @@ export interface components {
     schemas: {
         /** AnomalyAnswerOut */
         AnomalyAnswerOut: {
+            /**
+             * Checked At
+             * @description None until the field is first looked at
+             */
+            checked_at: string | null;
             data_quality: components["schemas"]["DataQuality"];
             /** Observed On */
             observed_on: string | null;
