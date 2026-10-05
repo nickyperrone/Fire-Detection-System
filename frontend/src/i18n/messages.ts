@@ -246,12 +246,16 @@ const en = {
     photoOf: (date: string) => `Photo of ${date}`,
   },
   portfolio: {
-    allQuiet: (fields: number) => `No fires near your ${fields} fields`,
+    allQuiet: (fields: number) =>
+      fields === 1
+        ? "No fires near your field"
+        : `No fires near your ${fields} fields`,
     withFire: (n: number) =>
       n === 1 ? "1 field has a fire nearby" : `${n} fields have a fire nearby`,
     sprayNow: (good: number, total: number) =>
       `Good to spray now: ${good} of ${total}`,
-    counts: (fields: number, lots: number) => `${fields} fields · ${lots} lots`,
+    counts: (fields: number, lots: number) =>
+      `${fields} ${fields === 1 ? "field" : "fields"} · ${lots} ${lots === 1 ? "lot" : "lots"}`,
     select: (name: string) => `Select ${name}`,
     selected: (n: number) => `${n} selected`,
     showingSelected: (n: number) => `Showing ${n} selected`,
@@ -664,11 +668,15 @@ const es: Messages = {
     photoOf: (date) => `Foto del ${date}`,
   },
   portfolio: {
-    allQuiet: (fields) => `Sin fuegos cerca de tus ${fields} campos`,
+    allQuiet: (fields) =>
+      fields === 1
+        ? "Sin fuegos cerca de tu campo"
+        : `Sin fuegos cerca de tus ${fields} campos`,
     withFire: (n) =>
       n === 1 ? "1 campo tiene fuego cerca" : `${n} campos tienen fuego cerca`,
     sprayNow: (good, total) => `Para pulverizar ahora: ${good} de ${total}`,
-    counts: (fields, lots) => `${fields} campos · ${lots} lotes`,
+    counts: (fields, lots) =>
+      `${fields} ${fields === 1 ? "campo" : "campos"} · ${lots} ${lots === 1 ? "lote" : "lotes"}`,
     select: (name) => `Seleccionar ${name}`,
     selected: (n) => (n === 1 ? "1 seleccionado" : `${n} seleccionados`),
     showingSelected: (n) =>
