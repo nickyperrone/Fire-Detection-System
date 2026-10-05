@@ -42,10 +42,33 @@ export function styleFor(basemap: Basemap): string | StyleSpecification {
 }
 
 export const TERRITORY_LAYERS = ["section-fill", "field-fill"] as const;
+
+function byBand(
+  value: (band: (typeof RISK_BANDS)[number]) => string | number,
+  otherwise: string | number,
+): ExpressionSpecification {
+  // Built from the list above; MapLibre's types only accept match arms written out by hand.
+  return [
+    "match",
+    ["get", "band"],
+    ...RISK_BANDS.flatMap((b) => [b.band, value(b)]),
+    otherwise,
+  ] as unknown as ExpressionSpecification;
+}
 export const FIRE_LAYER = "fire-core";
 export const FIRE_HALO_LAYER = "fire-halo";
 export const LIGHTNING_LAYER = "lightning-ring";
 export const RISK_LAYER = "risk-fill";
+
+/** How each next-day risk band is shaded (docs/05-fire-forecast.md#on-the-map): low is a faint
+ * green so turning the layer on always shows something; from moderate up, stronger reds. The
+ * map legend draws the same swatches. */
+export const RISK_BANDS = [
+  { band: "LOW", color: TONE_HEX.good, opacity: 0.12 },
+  { band: "MODERATE", color: TONE_HEX.bad, opacity: 0.22 },
+  { band: "HIGH", color: TONE_HEX.bad, opacity: 0.36 },
+  { band: "VERY_HIGH", color: TONE_HEX.bad, opacity: 0.52 },
+] as const;
 export const PARCELS_LAYER = "parcel-line";
 export const SELECTED_GLOW_LAYER = "field-glow";
 
@@ -160,19 +183,8 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     "source-layer": "risk",
     layout: { visibility: showRisk ? "visible" : "none" },
     paint: {
-      "fill-color": TONE_HEX.bad,
-      // Transparent at low risk, stronger red as the next-day probability grows.
-      "fill-opacity": [
-        "interpolate",
-        ["linear"],
-        ["get", "probability"],
-        0.02,
-        0,
-        0.05,
-        0.12,
-        0.35,
-        0.5,
-      ],
+      "fill-color": byBand((b) => b.color, TONE_HEX.unknown),
+      "fill-opacity": byBand((b) => b.opacity, 0),
       "fill-antialias": false,
     },
   });

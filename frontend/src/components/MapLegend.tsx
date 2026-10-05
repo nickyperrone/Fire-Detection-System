@@ -6,9 +6,15 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { type Tone, TONE_HEX } from "@/lib/status";
 import type { ColorBy } from "@/lib/useUrlState";
 
+import { RISK_BANDS } from "./map/overlay";
+
 import { ChevronIcon, PlusIcon } from "./Icons";
 
 type Props = {
+  /** The user has fields: the state and tag legend applies. */
+  showFields: boolean;
+  /** The fire risk layer is on: its scale is shown too. */
+  showRisk: boolean;
   colorBy: ColorBy;
   onColorBy: (colorBy: ColorBy) => void;
   /** Tags in use, in the order that decides a field's color, with their colors. */
@@ -29,6 +35,8 @@ const SHOWN_TAGS = 5;
 /** What the field colors mean, and the switch between coloring by state and by tag
  * (docs/01-product.md#field-states). */
 export function MapLegend({
+  showFields,
+  showRisk,
   colorBy,
   onColorBy,
   tags,
@@ -36,13 +44,59 @@ export function MapLegend({
   onAddTag,
 }: Props) {
   const { t } = useLocale();
-  const [explained, setExplained] = useState(false);
 
   return (
     <section
       aria-label={t.legend.label}
       className="liquid w-fit max-w-full rounded-2xl p-1.5 text-xs"
     >
+      {showFields && (
+        <FieldColors
+          colorBy={colorBy}
+          onColorBy={onColorBy}
+          tags={tags}
+          canTag={canTag}
+          onAddTag={onAddTag}
+        />
+      )}
+      {showRisk && (
+        <div
+          className={`px-2 pb-1 pt-1.5 ${showFields ? "mt-1 border-t border-white/10" : ""}`}
+        >
+          <p className="text-[11px] text-muted">{t.legend.riskTomorrow}</p>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-slate-200">
+            {RISK_BANDS.map(({ band, color, opacity }) => (
+              <span key={band} className="flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="block size-2.5 rounded-sm ring-1 ring-white/20"
+                  // Twice the map's opacity: a small swatch needs more color to read.
+                  style={{
+                    background: color,
+                    opacity: Math.min(1, opacity * 2),
+                  }}
+                />
+                {t.forecast.band[band]}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FieldColors({
+  colorBy,
+  onColorBy,
+  tags,
+  canTag,
+  onAddTag,
+}: Omit<Props, "showFields" | "showRisk">) {
+  const { t } = useLocale();
+  const [explained, setExplained] = useState(false);
+  return (
+    <>
       <div
         role="radiogroup"
         aria-label={t.colorBy.label}
@@ -131,7 +185,7 @@ export function MapLegend({
           )}
         </div>
       )}
-    </section>
+    </>
   );
 }
 

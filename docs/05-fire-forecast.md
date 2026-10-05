@@ -64,6 +64,10 @@ Delta burns every year and shares weather with it.
   the main factors ("dry for 18 days", "FWI 32", "fires around in the last week").
 - The factors are the features with the most weight in the model whose value today is far from
   usual for the cell. It is a plain explanation, not SHAP.
+- **On the map** ("Riesgo de fuego" in the layers menu), each forecast cell is shaded by its
+  band for tomorrow: a faint green for `LOW`, so turning the layer on always shows the area it
+  covers, and stronger reds from `MODERATE` up. The band comes in each tile from the same
+  thresholds as the field card, and the map legend shows the scale while the layer is on.
 - Stored in a `fire_forecast` table with territory, horizon, issued_at, probability, band, factors,
   model version and processing version. Serving starts only after the report shows the model
   beats the baselines.

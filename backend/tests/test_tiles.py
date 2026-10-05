@@ -1,5 +1,6 @@
 import json
 import math
+from datetime import UTC, date, datetime
 
 import mapbox_vector_tile
 import pytest
@@ -7,9 +8,10 @@ from fastapi.testclient import TestClient
 
 from app.db import get_session
 from app.main import app
-from app.models import User
+from app.models import CellForecast, User
 from app.routers.dependencies import current_user
 from app.services.territories import DEFAULT_OWNER, load_feature_collection
+from app.services.tiles import Layer, build_tile
 from tests.conftest import ARGENTINA
 from tests.test_territories import SAMPLE
 
@@ -79,3 +81,40 @@ def test_empty_tile_is_204(client):
 def test_tile_outside_zoom_level_is_404(client):
     assert client.get("/tiles/territories/2/4/0.pbf").status_code == 404
     assert client.get("/tiles/rivers/2/1/1.pbf").status_code == 422
+
+
+def test_risk_cells_carry_their_band_from_config(session, thresholds):
+    west, south = thresholds["region"]["bbox"][:2]
+    cell = thresholds["forecast"]["cell_degrees"]
+    # Three cells side by side near Larroque: low, moderate and very high.
+    for col, probability in [(10, 0.01), (11, 0.08), (12, 0.5)]:
+        session.add(
+            CellForecast(
+                row=10,
+                col=col,
+                horizon_days=1,
+                valid_from=date(2026, 10, 6),
+                probability=probability,
+                factors=[],
+                issued_at=datetime(2026, 10, 5, tzinfo=UTC),
+                model_version="test",
+            )
+        )
+    session.commit()
+    x, y = tile_xy(west + 11.5 * cell, south + 10.5 * cell, 6)
+    tile = build_tile(
+        session,
+        Layer.RISK,
+        6,
+        x,
+        y,
+        None,
+        datetime.now(UTC),
+        forecast_grid=(west, south, cell),
+        forecast_bands=thresholds["forecast"]["bands"],
+    )
+    bands = {
+        f["properties"]["probability"]: f["properties"]["band"]
+        for f in mapbox_vector_tile.decode(tile)["risk"]["features"]
+    }
+    assert bands == {0.01: "LOW", 0.08: "MODERATE", 0.5: "VERY_HIGH"}

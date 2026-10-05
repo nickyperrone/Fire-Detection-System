@@ -348,10 +348,12 @@ export function FieldWatchApp() {
                 onPick={(t) => open(t.id)}
               />
             </div>
-            {signedIn && hasFields && (
+            {((signedIn && hasFields) || url.showRisk) && (
               // On a phone it stops short of the map buttons on the right.
               <div className="pointer-events-auto mr-[60px] mt-2 md:mr-0">
                 <MapLegend
+                  showFields={signedIn && hasFields}
+                  showRisk={url.showRisk}
                   colorBy={url.colorBy}
                   onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
                   tags={allTags.map((label) => ({

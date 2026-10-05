@@ -297,6 +297,7 @@ const en = {
     addTag: "Tag",
     openToTag: "Open a field to tag it",
     more: "What the colors mean",
+    riskTomorrow: "Fire risk tomorrow",
   },
   signIn: {
     button: "Sign in",
@@ -739,6 +740,7 @@ const es: Messages = {
     addTag: "Etiqueta",
     openToTag: "Abrí un campo para etiquetarlo",
     more: "Qué significa cada color",
+    riskTomorrow: "Riesgo de fuego mañana",
   },
   signIn: {
     button: "Entrar",

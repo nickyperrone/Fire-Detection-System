@@ -122,11 +122,16 @@ LIGHTNING_SQL = text("""
 """)
 
 
-# Next-day probability per forecast cell, drawn as the cell's square.
+# Next-day probability per forecast cell, drawn as the cell's square, with its band (the
+# thresholds come from config, so the map and the field card always agree).
 RISK_SQL = text("""
     WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
     SELECT ST_AsMVT(mvt, 'risk', :extent, 'geom') FROM (
         SELECT round(f.probability::numeric, 3)::float AS probability,
+               CASE WHEN f.probability >= :very_high THEN 'VERY_HIGH'
+                    WHEN f.probability >= :high THEN 'HIGH'
+                    WHEN f.probability >= :moderate THEN 'MODERATE'
+                    ELSE 'LOW' END AS band,
                ST_AsMVTGeom(
                    ST_Transform(ST_MakeEnvelope(
                        :west + f.col * :cell, :south + f.row * :cell,
@@ -165,6 +170,7 @@ def build_tile(
     now: datetime,
     lightning_window_minutes: int = 60,
     forecast_grid: tuple[float, float, float] | None = None,
+    forecast_bands: list[dict] | None = None,
 ) -> bytes:
     params = {"z": z, "x": x, "y": y, "extent": EXTENT, "buffer": BUFFER}
     if layer == Layer.TERRITORIES:
@@ -180,9 +186,10 @@ def build_tile(
         params["cell_m"] = tile_width_m(z) / CLUSTER_CELLS_PER_TILE
     elif layer == Layer.FIRE_EVENTS:
         statement = FIRE_EVENTS_SQL
-    elif layer == Layer.RISK and forecast_grid:
+    elif layer == Layer.RISK and forecast_grid and forecast_bands:
         statement = RISK_SQL
         params |= dict(zip(("west", "south", "cell"), forecast_grid, strict=True))
+        params |= {b["band"].lower(): b["from"] for b in forecast_bands or []}
     elif layer == Layer.PARCELS:
         if z < PARCELS_FROM_ZOOM:
             return b""

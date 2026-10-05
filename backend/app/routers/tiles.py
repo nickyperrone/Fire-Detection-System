@@ -55,6 +55,7 @@ def tile(
         datetime.now(UTC),
         thresholds["lightning"]["window_minutes"],
         (west, south, thresholds["forecast"]["cell_degrees"]),
+        thresholds["forecast"]["bands"],
     )
     headers = {"Cache-Control": CACHE_CONTROL[layer]}
     if not content:
