@@ -18,6 +18,7 @@ import {
 } from "@/i18n/text";
 import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
+import { AnomalySection } from "./Anomalies";
 import { FieldSettings } from "./FieldSettings";
 import { FieldChips, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
@@ -229,7 +230,7 @@ export function FieldDetail({
 
       <section>
         <SectionTitle>{t.sections.unusual}</SectionTitle>
-        <p className="text-sm text-slate-400">{t.sections.unusualSoon}</p>
+        <AnomalySection anomaly={entry.anomaly} />
       </section>
 
       <button

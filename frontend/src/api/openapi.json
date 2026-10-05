@@ -5,12 +5,70 @@
         "properties": {
           "data_quality": {
             "$ref": "#/components/schemas/DataQuality"
+          },
+          "observed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed On"
+          },
+          "patches": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalyPatchOut"
+            },
+            "title": "Patches",
+            "type": "array"
           }
         },
         "required": [
-          "data_quality"
+          "data_quality",
+          "observed_on",
+          "patches"
         ],
         "title": "AnomalyAnswerOut",
+        "type": "object"
+      },
+      "AnomalyPatchOut": {
+        "properties": {
+          "area_ha": {
+            "title": "Area Ha",
+            "type": "number"
+          },
+          "kind": {
+            "description": "less_green, water or burnt",
+            "title": "Kind",
+            "type": "string"
+          },
+          "lot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lot it is in, for a field split into lots",
+            "title": "Lot"
+          },
+          "where": {
+            "description": "Compass point from the field's center, or center",
+            "title": "Where",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "area_ha",
+          "where"
+        ],
+        "title": "AnomalyPatchOut",
         "type": "object"
       },
       "DataQuality": {
@@ -2672,6 +2730,67 @@
           }
         },
         "summary": "Get",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/anomalies": {
+      "get": {
+        "description": "The field's unusual patches as GeoJSON, to draw on the map (docs/11).",
+        "operationId": "anomalies_territories__territory_id__anomalies_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Anomalies Territories  Territory Id  Anomalies Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Anomalies",
         "tags": [
           "territories"
         ]

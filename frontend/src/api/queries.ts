@@ -89,6 +89,15 @@ export function useSprayConditions(id: number | null) {
   });
 }
 
+/** The selected field's unusual patches, drawn on the map while its card is open. */
+export function useAnomalyPatches(id: number | null) {
+  return useQuery({
+    queryKey: ["anomalies", id],
+    queryFn: () => api.anomalies(id!),
+    enabled: id !== null,
+  });
+}
+
 export function useFireHistory(id: number) {
   // The archive changes once a year; no refetching while the app is open.
   return useQuery({

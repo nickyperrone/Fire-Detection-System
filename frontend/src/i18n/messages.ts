@@ -172,8 +172,29 @@ const en = {
     lightning: "Lightning",
     spray: "Spraying, next 48 h",
     unusual: "Something unusual",
-    unusualSoon:
-      "Vegetation, water and burn scar changes from Sentinel-2 images are not available yet.",
+  },
+  anomaly: {
+    kinds: {
+      less_green: "Less green",
+      water: "Water",
+      burnt: "Burnt",
+    } as Record<string, string>,
+    line: (what: string, ha: string, where: string) =>
+      `${what} in ${ha} ha ${where}`,
+    center: "in the center",
+    toward: (side: string) => `to the ${side}`,
+    ofLot: (lot: string) => ` of ${lot}`,
+    nothing: (date: string) => `Nothing unusual on ${date}.`,
+    seenOn: (date: string) =>
+      `On ${date}, compared with the rest of the field:`,
+    cloudy: (date: string) =>
+      `Clouds over the field since ${date}. The last clear image showed:`,
+    cloudyNothing: (date: string) =>
+      `Clouds over the field since ${date}; nothing unusual then.`,
+    partial: "Not enough clear images yet to compare the field with itself.",
+    noData: "No clear satellite image of this field in 90 days.",
+    note: "Seen from orbit (Sentinel-2, 10 m), not a diagnosis: worth a look on the ground.",
+    chip: (n: number) => (n === 1 ? "Unusual patch" : `${n} unusual patches`),
   },
   detail: {
     field: "Field",
@@ -524,8 +545,24 @@ const es: Messages = {
     lightning: "Rayos",
     spray: "Pulverización, próximas 48 h",
     unusual: "Algo raro en el campo",
-    unusualSoon:
-      "Los cambios de vegetación, agua y áreas quemadas con imágenes Sentinel-2 todavía no están disponibles.",
+  },
+  anomaly: {
+    kinds: { less_green: "Menos verde", water: "Agua", burnt: "Quemado" },
+    line: (what, ha, where) => `${what} en ${ha} ha ${where}`,
+    center: "en el centro",
+    toward: (side) => `al ${side}`,
+    ofLot: (lot) => ` de ${lot}`,
+    nothing: (date) => `Nada raro el ${date}.`,
+    seenOn: (date) => `El ${date}, comparado con el resto del campo:`,
+    cloudy: (date) =>
+      `Las nubes taparon el campo desde el ${date}. La última imagen despejada mostró:`,
+    cloudyNothing: (date) =>
+      `Las nubes taparon el campo desde el ${date}; ese día no había nada raro.`,
+    partial:
+      "Todavía no hay suficientes imágenes despejadas para comparar el campo consigo mismo.",
+    noData: "Sin imágenes satelitales despejadas de este campo en 90 días.",
+    note: "Visto desde el satélite (Sentinel-2, 10 m), no es un diagnóstico: conviene ir a mirar.",
+    chip: (n) => (n === 1 ? "Algo raro" : `${n} cosas raras`),
   },
   detail: {
     field: "Campo",

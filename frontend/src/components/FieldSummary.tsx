@@ -13,7 +13,13 @@ import {
 } from "@/i18n/text";
 import { fireTone, sprayTone } from "@/lib/status";
 
-import { BoltIcon, FlameIcon, ForecastIcon, SprayIcon } from "./Icons";
+import {
+  BoltIcon,
+  FlameIcon,
+  ForecastIcon,
+  PatchIcon,
+  SprayIcon,
+} from "./Icons";
 import { StatusChip } from "./StatusChip";
 
 /** The most useful single sentence about a field: a fire first, then why not to spray. */
@@ -69,6 +75,11 @@ export function FieldChips({ entry }: { entry: PortfolioEntry }) {
       {entry.lightning.flashes > 0 && (
         <StatusChip tone="bad" icon={<BoltIcon className="size-3.5" />}>
           {t.lightning.count(entry.lightning.flashes)}
+        </StatusChip>
+      )}
+      {entry.anomaly.patches.length > 0 && (
+        <StatusChip tone="bad" icon={<PatchIcon className="size-3.5" />}>
+          {t.anomaly.chip(entry.anomaly.patches.length)}
         </StatusChip>
       )}
     </div>

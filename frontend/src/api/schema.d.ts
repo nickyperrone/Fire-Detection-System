@@ -317,6 +317,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/territories/{territory_id}/anomalies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Anomalies
+         * @description The field's unusual patches as GeoJSON, to draw on the map (docs/11).
+         */
+        get: operations["anomalies_territories__territory_id__anomalies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/territories/{territory_id}/fire-history": {
         parameters: {
             query?: never;
@@ -443,6 +463,30 @@ export interface components {
         /** AnomalyAnswerOut */
         AnomalyAnswerOut: {
             data_quality: components["schemas"]["DataQuality"];
+            /** Observed On */
+            observed_on: string | null;
+            /** Patches */
+            patches: components["schemas"]["AnomalyPatchOut"][];
+        };
+        /** AnomalyPatchOut */
+        AnomalyPatchOut: {
+            /** Area Ha */
+            area_ha: number;
+            /**
+             * Kind
+             * @description less_green, water or burnt
+             */
+            kind: string;
+            /**
+             * Lot
+             * @description The lot it is in, for a field split into lots
+             */
+            lot?: string | null;
+            /**
+             * Where
+             * @description Compass point from the field's center, or center
+             */
+            where: string;
         };
         /**
          * DataQuality
@@ -1660,6 +1704,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    anomalies_territories__territory_id__anomalies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
             };
             /** @description Validation Error */
             422: {

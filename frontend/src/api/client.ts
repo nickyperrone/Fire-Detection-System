@@ -130,6 +130,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ geometry }),
     }),
+  anomalies: (id: number) =>
+    request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),
 };

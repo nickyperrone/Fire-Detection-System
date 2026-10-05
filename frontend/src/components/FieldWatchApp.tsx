@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PortfolioEntry, Territory } from "@/api/client";
 import {
   useBoundary,
+  useAnomalyPatches,
   useMe,
   usePortfolio,
   useTags,
@@ -164,6 +165,7 @@ export function FieldWatchApp() {
   ]);
   const selected =
     everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
+  const patches = useAnomalyPatches(selected?.territory_id ?? null);
 
   const frame = useCallback(
     (targets: Territory[], duration = 900) => {
@@ -294,6 +296,7 @@ export function FieldWatchApp() {
         showParcels={url.showParcels || drawingOn}
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
+        patches={selected && !drawingOn ? (patches.data ?? null) : null}
       />
 
       {drawingOn ? (

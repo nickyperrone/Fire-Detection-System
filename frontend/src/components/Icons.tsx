@@ -158,3 +158,10 @@ export const WindIcon = (p: IconProps) => (
     <path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7" />
   </Icon>
 );
+
+export const PatchIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 5h16v14H4z" />
+    <path d="M9 9.5c1.5-1.5 4-1 4.5.8.6 2-1.4 3.7-3.4 3.2-1.6-.4-2.4-2.6-1.1-4Z" />
+  </Icon>
+);

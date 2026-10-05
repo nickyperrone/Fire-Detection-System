@@ -4,6 +4,7 @@ import {
   AttributionControl,
   Map as MapLibreMap,
   Popup,
+  type GeoJSONSource,
   type MapGeoJSONFeature,
   type MapMouseEvent,
   setWorkerUrl,
@@ -14,6 +15,7 @@ import { useEffect, useRef } from "react";
 import { tileUrl } from "@/api/client";
 import type { Messages } from "@/i18n/messages";
 import { formatAge } from "@/i18n/text";
+import { TONE_HEX } from "@/lib/status";
 
 import {
   addOverlay,
@@ -69,6 +71,8 @@ type Props = {
   /** The country's outline; while `grayOutside` is true everything else is grayed out. */
   boundary: CountryOutline | null;
   grayOutside: boolean;
+  /** The selected field's unusual patches, drawn while its card is open. */
+  patches: GeoJSON.FeatureCollection | null;
 };
 
 export function MapView(props: Props) {
@@ -116,6 +120,7 @@ export function MapView(props: Props) {
         latest.current.selectedId,
       );
       hideTerritories(map, [...latest.current.hiddenIds]);
+      showPatches(map, latest.current.patches);
       // A new basemap rebuilds the layers; the selected field keeps its glow.
       if (latest.current.selectedId !== null) fadeInGlow(map);
       showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
@@ -205,6 +210,11 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
+    if (map?.getSource("territories")) showPatches(map, props.patches);
+  }, [props.patches]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map?.getLayer(SELECTED_GLOW_LAYER) || props.selectedId === null)
       return;
     return fadeInGlow(map);
@@ -251,6 +261,44 @@ function outsideOf(country: CountryOutline): GeoJSON.Feature<GeoJSON.Polygon> {
       coordinates: [world, ...parts.map((polygon) => polygon[0])],
     },
   };
+}
+
+const PATCHES_SOURCE = "patches";
+const NO_PATCHES: GeoJSON.FeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+
+/** Red, with a dashed white edge, so a patch reads apart from the field's own outline. */
+function showPatches(
+  map: MapLibreMap,
+  patches: GeoJSON.FeatureCollection | null,
+) {
+  const source = map.getSource(PATCHES_SOURCE) as GeoJSONSource | undefined;
+  if (source) {
+    source.setData(patches ?? NO_PATCHES);
+    return;
+  }
+  map.addSource(PATCHES_SOURCE, {
+    type: "geojson",
+    data: patches ?? NO_PATCHES,
+  });
+  map.addLayer({
+    id: "patch-fill",
+    type: "fill",
+    source: PATCHES_SOURCE,
+    paint: { "fill-color": TONE_HEX.bad, "fill-opacity": 0.35 },
+  });
+  map.addLayer({
+    id: "patch-line",
+    type: "line",
+    source: PATCHES_SOURCE,
+    paint: {
+      "line-color": "#ffffff",
+      "line-width": 1.5,
+      "line-dasharray": [2, 1.5],
+    },
+  });
 }
 
 function showOutsideMask(
