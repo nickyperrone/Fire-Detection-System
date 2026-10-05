@@ -219,3 +219,23 @@ field_detection:
   cache_days: 7
   # Benchmark: a parcel counts as one field when this share of it has the same history.
   benchmark_purity: 0.8
+
+# Unusual patches in a field (docs/11-field-anomalies.md).
+anomalies:
+  lookback_days: 90
+  max_scene_cloud_percent: 60
+  max_field_cloud_share: 0.2
+  # The latest clear date must be this recent for "nothing unusual" to be said.
+  clear_within_days: 10
+  min_baseline_dates: 3
+  # NDVI below the pixel's usual place in the field: this many spreads and at least this much.
+  less_green_sigmas: 2.5
+  less_green_min_drop: 0.12
+  # Spread floor, so a pixel that never varied is not flagged by a tiny wobble.
+  min_spread: 0.03
+  water_ndwi: 0.0
+  dry_ndwi: -0.1
+  burnt_min_drop: 0.25
+  min_patch_pixels: 100
+  simplify_m: 10
+  read_threads: 4
