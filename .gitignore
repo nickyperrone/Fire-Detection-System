@@ -8,6 +8,7 @@ __pycache__/
 data/cache/
 data/models/
 data/snapshots/
+data/weather/
 ml/datasets/
 ml/runs/
 *.pt

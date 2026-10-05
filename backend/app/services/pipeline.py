@@ -25,6 +25,7 @@ from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
 from app.services.summary import send_due_summaries
+from app.services.weather_layer import WEATHER_ROOT, refresh_weather_layer
 from app.versioning import processing_version
 
 # Each field's Sentinel-2 boxes, shared by the unusual-patches check and the photos.
@@ -64,6 +65,11 @@ def run_goes_fire_pipeline(session: Session, client: httpx.Client, thresholds: d
 
 def run_lightning_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
     return {"runs": [_summary(ingest_lightning(session, client, thresholds, datetime.now(UTC)))]}
+
+
+def run_weather_layer_pipeline(_: Session, client: httpx.Client, thresholds: dict) -> dict:
+    """GOES-19's newest clouds and rain over the region, as an image for the map."""
+    return refresh_weather_layer(client, thresholds, WEATHER_ROOT, datetime.now(UTC))
 
 
 # The FIRMS archive top-up only changes once a day.

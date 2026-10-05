@@ -22,12 +22,10 @@ def grid() -> tuple[np.ndarray, np.ndarray]:
     return np.linspace(xs.min(), xs.max(), SIZE), np.linspace(ys.max(), ys.min(), SIZE)
 
 
-def fire_file(
-    mask_pixels: dict[tuple[int, int], int], start: str = "2026-09-30T14:20:20.3Z"
-) -> bytes:
-    """An ABI-L2-FDCF file whose Mask has the given codes at (row, col); everything else is 100."""
+def _abi_dataset(start: str) -> Dataset:
+    """An in-memory ABI file with its scan time, fixed grid and projection over the test area."""
     x, y = grid()
-    ds = Dataset("fdc", "w", memory=1024)
+    ds = Dataset("abi", "w", memory=1024)
     ds.setncattr("time_coverage_start", start)
     ds.createDimension("x", SIZE)
     ds.createDimension("y", SIZE)
@@ -37,6 +35,14 @@ def fire_file(
     for name in ("perspective_point_height", "semi_major_axis", "semi_minor_axis"):
         projection.setncattr(name, getattr(GOES_EAST, name))
     projection.setncattr("longitude_of_projection_origin", GOES_EAST.longitude_of_projection_origin)
+    return ds
+
+
+def fire_file(
+    mask_pixels: dict[tuple[int, int], int], start: str = "2026-09-30T14:20:20.3Z"
+) -> bytes:
+    """An ABI-L2-FDCF file whose Mask has the given codes at (row, col); everything else is 100."""
+    ds = _abi_dataset(start)
     mask = np.full((SIZE, SIZE), 100, dtype="i2")
     for (row, col), code in mask_pixels.items():
         mask[row, col] = code
@@ -68,4 +74,12 @@ def lightning_file(
     }
     for name, (dtype, values) in columns.items():
         ds.createVariable(name, dtype, ("number_of_flashes",))[:] = values
+    return bytes(ds.close())
+
+
+def abi_file(variable: str, values: np.ndarray, start: str = "2026-10-05T16:30:21.1Z") -> bytes:
+    """An ABI product with one variable over the test area; NaN in `values` is a missing pixel."""
+    ds = _abi_dataset(start)
+    data = ds.createVariable(variable, "f4", ("y", "x"), fill_value=-999.0)
+    data[:] = np.ma.masked_invalid(values.astype("f4"))
     return bytes(ds.close())

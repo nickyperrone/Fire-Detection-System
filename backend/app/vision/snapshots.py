@@ -66,10 +66,13 @@ def greenness(bands: dict[str, np.ndarray], config: dict) -> np.ndarray:
 
 
 def png(rgb: np.ndarray) -> bytes:
-    height, width, _ = rgb.shape
+    """An (height, width, 3) RGB or (height, width, 4) RGBA uint8 array as a PNG."""
+    height, width, bands = rgb.shape
     # A plain picture: it has no place on Earth, and that is fine.
     with warnings.catch_warnings(), MemoryFile() as memory:
         warnings.simplefilter("ignore", NotGeoreferencedWarning)
-        with memory.open(driver="PNG", width=width, height=height, count=3, dtype="uint8") as image:
+        with memory.open(
+            driver="PNG", width=width, height=height, count=bands, dtype="uint8"
+        ) as image:
             image.write(np.moveaxis(rgb, -1, 0))
         return memory.read()

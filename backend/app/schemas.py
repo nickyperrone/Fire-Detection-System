@@ -272,6 +272,15 @@ class FireHistoryOut(BaseModel):
     latest: FireDayOut | None
 
 
+class WeatherLayerOut(BaseModel):
+    """The clouds and rain image: its scan times and the box it covers (west, south, east,
+    north)."""
+
+    clouds_at: datetime
+    rain_at: datetime
+    bbox: list[float]
+
+
 class SnapshotOutlineOut(BaseModel):
     territory_id: int
     name: str

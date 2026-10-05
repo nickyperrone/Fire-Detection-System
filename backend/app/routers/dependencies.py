@@ -13,6 +13,7 @@ from app.models import User
 from app.services.auth import user_for_session
 from app.services.mail import SendEmail, smtp_sender
 from app.services.snapshots import PHOTO_ROOT
+from app.services.weather_layer import WEATHER_ROOT
 
 SESSION_COOKIE = "fw_session"
 
@@ -49,8 +50,14 @@ def photo_root() -> Path:
     return PHOTO_ROOT
 
 
+def weather_root() -> Path:
+    """Where the clouds and rain image is kept; tests use a temporary folder."""
+    return WEATHER_ROOT
+
+
 HttpDep = Annotated[httpx.Client, Depends(http_client)]
 UserDep = Annotated[User | None, Depends(current_user)]
 OwnerDep = Annotated[str, Depends(require_owner)]
 MailDep = Annotated[SendEmail, Depends(mail_sender)]
 PhotoRootDep = Annotated[Path, Depends(photo_root)]
+WeatherRootDep = Annotated[Path, Depends(weather_root)]

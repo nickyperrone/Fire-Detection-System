@@ -88,6 +88,23 @@ goes:
     nominal: [12, 14, 32, 34]
     low: [15, 35]
   min_confidence: nominal
+  # Clouds and rain on the map (docs/06-goes.md#clouds-and-rain-on-the-map).
+  weather_layer:
+    cloud_product: ABI-L2-ACHAF
+    rain_product: ABI-L2-RRQPEF
+    # Wider than the fire region, so weather coming from the west or south shows before it
+    # arrives: west, south, east, north.
+    bbox: [-66.0, -39.0, -53.0, -26.0]
+    cell_degrees: 0.02
+    # Cloud tops: faint near the ground, solid at this height and above.
+    cloud_full_height_m: 12000
+    # Cloud edges fade in up to this height, where the interpolation between a cloudy and a
+    # clear pixel is still low.
+    cloud_edge_height_m: 4000
+    # A light softening on top, in grid cells.
+    cloud_blur_cells: 3.0
+    # Rain from this rate up, in mm/h; then the next band from each value.
+    rain_bands_mm_h: [0.5, 2.5, 10.0]
 
 lightning:
   radius_m: 10000
@@ -192,6 +209,7 @@ worker:
   # Sentinel-2 passes every 5 days; checking 4 times a day catches each scene the day it lands.
   anomaly_interval_minutes: 360
   snapshot_interval_minutes: 360
+  weather_layer_interval_minutes: 10
 
 # Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
 auth:

@@ -20,6 +20,7 @@ from app.services.pipeline import (
     run_snapshot_pipeline,
     run_spray_pipeline,
     run_summary_pipeline,
+    run_weather_layer_pipeline,
 )
 
 log = logging.getLogger("worker")
@@ -85,6 +86,11 @@ def main() -> None:
         (
             job("lightning", run_lightning_pipeline, then_alert=True),
             intervals["lightning_interval_minutes"],
+            "default",
+        ),
+        (
+            job("clouds and rain", run_weather_layer_pipeline),
+            intervals["weather_layer_interval_minutes"],
             "default",
         ),
         (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"], "default"),
