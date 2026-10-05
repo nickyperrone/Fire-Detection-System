@@ -67,10 +67,11 @@ more than two taps.
 - **A status dock floats at the bottom**: one small glass bar, centered over the map, that answers
   "am I signed in and is the data fresh" at a glance. From left to right:
   - **Satellite data**: a dot (green when fresh, gray when `STALE`, `NO_DATA` or the API is
-    unreachable) and the age of the newest satellite pass processed ("12 min ago"). Tapping it
-    opens the detail: the pass ("Last pass VIIRS NOAA-21 · 2 h ago") and when we last checked
-    ("checked 3 min ago"). The two times differ because FIRMS publishes passes over Argentina hours
-    later.
+    unreachable) and how long ago a satellite last looked at the region ("12 min ago"), which is
+    GOES-19's newest scan almost always ([06-goes](06-goes.md#how-recent-the-satellite-look-is)).
+    Tapping it opens the detail: GOES-19's scan (every 10 minutes), the newest polar pass with a
+    detection ("VIIRS NOAA-21 · 9 h ago", a few passes a day, published about 3 h later) and when
+    we last checked.
   - **Portfolio**, signed in: how many fields and hectares are monitored ("3 fields · 412 ha").
   - **Language**: ES or EN; tapping switches. Spanish by default for Argentine browsers, the choice
     is kept in the browser. The API returns codes and numbers, never sentences, so every text the

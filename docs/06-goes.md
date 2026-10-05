@@ -14,6 +14,8 @@ Both come from NOAA's public bucket `noaa-goes19` on AWS (no key), under
 |---|---|---|---|---|
 | `ABI-L2-FDCF` | Fire mask, FRP (MW), fire temperature (K) and area per pixel, full disk | 10 min | ~10 min | ~1.8 MB |
 | `GLM-L2-LCFA` | Lightning flashes with position, energy and quality | 20 s | ~40 s | ~0.5 MB |
+| `ABI-L2-ACHAF` | Cloud top height (m), about 10 km per pixel, full disk | 10 min | ~15 min | ~1.6 MB |
+| `ABI-L2-RRQPEF` | Rainfall rate (mm/h), about 2 km per pixel, full disk | 10 min | ~10 min | ~1.6 MB |
 
 Each provider keeps a cursor: the last object key it processed, stored on its `ingestion_run`.
 A run lists the current and previous hour and processes every newer file in order.
@@ -58,6 +60,37 @@ observation: 1,000 m for FIRMS, 3,000 m for GOES. One fire seen by GOES at 14:20
   `lightning.window_minutes` (60), and the nearest one. A flash near a field is a reason to watch
   it for fire in the next hours, not a fire.
 - Map: a lightning layer with flashes from the last hour.
+
+## How recent the satellite look is
+
+Polar satellites (VIIRS, MODIS through FIRMS) see small fires best but pass over Larroque a few
+times a day, and FIRMS publishes each pass about 3 h later: their newest detection is often 6 to
+12 hours old. GOES-19 looks at the whole region every 10 minutes. "When did a satellite last
+look" is therefore GOES-19's newest scan read, from the file name of the last fire product
+processed (`s{year}{day}{hour}{minute}`), not the newest detection: no detection means nothing
+burned, not that nobody looked.
+
+- `GET /health` returns `latest_scan` (GOES-19's newest fire scan) beside `latest_pass` (the
+  newest polar pass with a detection).
+- The status dock shows the newer of the two ("GOES-19 · 12 min ago"); its detail lists both,
+  each with how often it looks.
+
+## Clouds and rain on the map
+
+"Nubes y lluvia" in the layers menu draws GOES-19's latest scan over the region, so the
+contractor sees where it is cloudy and where it is raining right now:
+
+- **Clouds** from `ABI-L2-ACHAF`: every pixel with a cloud top is white, more opaque the higher
+  the top (low haze faint, storm towers solid).
+- **Rain** from `ABI-L2-RRQPEF`, on top: light blue from 0.5 mm/h, darker blue from 2.5 mm/h and
+  violet from 10 mm/h. Less than 0.5 mm/h is not drawn.
+- The worker reads both every 10 minutes (only the region's window of each file), reprojects
+  them to a 0.02° grid over the region and writes one PNG with transparency
+  (`data/weather/latest.png`) and its scan times. `GET /weather-layer` gives the times and the
+  box; `GET /weather-layer.png` the image. The map places it as an image over the box and
+  reloads it when a new scan arrives.
+- The legend names the layer, its scale and the scan's age. It is GOES's estimate from space:
+  rain rate comes from cloud temperatures, not from a rain gauge or a radar.
 
 ## Colors
 
