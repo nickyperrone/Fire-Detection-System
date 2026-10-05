@@ -20,14 +20,17 @@ import {
   PatchIcon,
   SprayIcon,
 } from "./Icons";
+import { patchLine } from "./Anomalies";
 import { StatusChip } from "./StatusChip";
 
-/** The most useful single sentence about a field: a fire first, then why not to spray. */
+/** The most useful single sentence about a field, in the order of attention: a fire, lightning,
+ * the largest unusual patch, then why not to spray. */
 export function headline(t: Messages, entry: PortfolioEntry): string {
-  const { fire, spray, lightning } = entry;
+  const { fire, spray, lightning, anomaly } = entry;
   if (fire.severity || fire.data_quality === "NO_DATA")
     return fireSentence(t, fire);
   if (lightning.flashes > 0) return lightningSentence(t, entry);
+  if (anomaly.patches.length > 0) return patchLine(t, anomaly.patches[0]);
   if (!spray.status) return t.sprayText.noForecast;
   if (spray.status === "FAVORABLE") return t.sprayText.allPass;
   const window = spray.next_favorable;
@@ -50,23 +53,30 @@ export function lightningSentence(t: Messages, entry: PortfolioEntry): string {
   );
 }
 
-/** Fire and spraying chips, plus a lightning chip only when there is lightning nearby. */
-export function FieldChips({ entry }: { entry: PortfolioEntry }) {
+/** Fire and spraying chips, plus a lightning chip only when there is lightning nearby.
+ * `onlyProblems` leaves the green ones out, for lists where "fine" is the quiet default. */
+export function FieldChips({
+  entry,
+  onlyProblems = false,
+}: {
+  entry: PortfolioEntry;
+  onlyProblems?: boolean;
+}) {
   const { t } = useLocale();
+  const fire = fireTone(entry.fire);
+  const spray = sprayTone(entry.spray);
   return (
     <div className="flex flex-wrap gap-1.5">
-      <StatusChip
-        tone={fireTone(entry.fire)}
-        icon={<FlameIcon className="size-3.5" />}
-      >
-        {fireLabel(t, entry.fire)}
-      </StatusChip>
-      <StatusChip
-        tone={sprayTone(entry.spray)}
-        icon={<SprayIcon className="size-3.5" />}
-      >
-        {sprayLabel(t, entry.spray)}
-      </StatusChip>
+      {!(onlyProblems && fire === "good") && (
+        <StatusChip tone={fire} icon={<FlameIcon className="size-3.5" />}>
+          {fireLabel(t, entry.fire)}
+        </StatusChip>
+      )}
+      {!(onlyProblems && spray === "good") && (
+        <StatusChip tone={spray} icon={<SprayIcon className="size-3.5" />}>
+          {sprayLabel(t, entry.spray)}
+        </StatusChip>
+      )}
       {["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "") && (
         <StatusChip tone="bad" icon={<ForecastIcon className="size-3.5" />}>
           {t.forecast.chip(t.forecast.band[entry.forecast.days[0].band])}

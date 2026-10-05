@@ -16,7 +16,14 @@ import {
   localTime,
   ruleSentence,
 } from "@/i18n/text";
-import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
+import {
+  attention,
+  fireTone,
+  lightningTone,
+  sprayTone,
+  type Tone,
+  TONE_HEX,
+} from "@/lib/status";
 
 import type { FieldTab } from "@/lib/useUrlState";
 import { FIELD_TABS } from "@/lib/useUrlState";
@@ -25,7 +32,7 @@ import { AnomalySection } from "./Anomalies";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { FieldPhotos } from "./FieldPhotos";
 import { FieldSettings } from "./FieldSettings";
-import { FieldChips, lightningSentence } from "./FieldSummary";
+import { FieldChips, headline, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
 import { ForecastSection } from "./ForecastSection";
 import {
@@ -78,7 +85,7 @@ export function FieldPage({
 
   return (
     <div>
-      <header className="sticky top-0 z-10 -mx-4 bg-[linear-gradient(rgb(17_21_28)_75%,rgb(17_21_28/0))] px-4 pb-4 pt-1 md:-top-4 md:-mt-4 md:pt-4">
+      <header className="sticky top-0 z-10 -mx-4 border-b border-white/[0.06] bg-[rgb(17_21_28/0.97)] px-4 pb-3 pt-1 backdrop-blur-xl md:-top-4 md:-mt-4 md:pt-4">
         <div className="flex items-center justify-between gap-3">
           <Breadcrumbs
             items={[
@@ -91,13 +98,12 @@ export function FieldPage({
                     },
                   ]
                 : []),
-              { label: entry.name },
             ]}
           />
           <button
             onClick={() => onOpen(null)}
             aria-label={t.detail.close}
-            className="grid size-8 shrink-0 place-items-center rounded-full bg-white/[0.07] text-slate-300 hover:bg-white/15 hover:text-white"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-white/[0.07] text-slate-300 hover:bg-white/15 hover:text-white md:size-8"
           >
             <CloseIcon className="size-4" />
           </button>
@@ -115,8 +121,8 @@ export function FieldPage({
         <Tabs tab={tab} onTab={onTab} />
       </header>
 
-      <div key={tab} className="rise-in space-y-6 pt-1">
-        {tab === "now" && <Now entry={entry} />}
+      <div key={tab} className="rise-in space-y-6 pt-4">
+        {tab === "now" && <Now entry={entry} lots={lots} onOpen={onOpen} />}
         {tab === "photos" && <FieldPhotos territoryId={entry.territory_id} />}
         {tab === "history" && (
           <section>
@@ -166,7 +172,7 @@ function Tabs({
           role="tab"
           aria-selected={tab === option}
           onClick={() => onTab(option)}
-          className={`relative z-10 rounded-full py-1.5 text-[13px] font-medium transition-colors ${
+          className={`relative z-10 rounded-full py-2 text-[13px] font-medium transition-colors ${
             tab === option
               ? "text-slate-950"
               : "text-slate-300 hover:text-white"
@@ -180,7 +186,15 @@ function Tabs({
 }
 
 /** Today's answers: fire, spraying, weather, lightning, unusual patches and the fire forecast. */
-function Now({ entry }: { entry: PortfolioEntry }) {
+function Now({
+  entry,
+  lots,
+  onOpen,
+}: {
+  entry: PortfolioEntry;
+  lots: PortfolioEntry[];
+  onOpen: (id: number | null) => void;
+}) {
   const { t } = useLocale();
   const risks = useRiskEvents(entry.territory_id);
   const hours = useSprayConditions(entry.territory_id);
@@ -188,6 +202,13 @@ function Now({ entry }: { entry: PortfolioEntry }) {
 
   return (
     <>
+      {lots.length > 0 && (
+        <section>
+          <SectionTitle>{t.page.lots}</SectionTitle>
+          <LotList lots={lots} onOpen={onOpen} />
+        </section>
+      )}
+
       <section>
         <SectionTitle icon={<FlameIcon className="size-4" />}>
           {t.sections.fire}
@@ -330,10 +351,7 @@ function Settings({
 
   return (
     <>
-      <section>
-        <SectionTitle>{t.settings.title}</SectionTitle>
-        <FieldSettings entry={entry} />
-      </section>
+      <FieldSettings entry={entry} />
 
       <section>
         <SectionTitle>{t.tags.title}</SectionTitle>
@@ -346,24 +364,7 @@ function Settings({
           {lots.length === 0 ? (
             <p className="text-sm text-slate-300">{t.page.noLots}</p>
           ) : (
-            <ul className="divide-y divide-white/10 overflow-hidden rounded-2xl bg-white/[0.04]">
-              {lots.map((lot) => (
-                <li key={lot.territory_id}>
-                  <button
-                    onClick={() => onOpen(lot.territory_id)}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {lot.name}
-                    </span>
-                    <span className="text-xs text-muted tabular-nums">
-                      {formatHectares(t, lot.hectares)}
-                    </span>
-                    <ChevronIcon className="size-4 text-muted" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <LotList lots={lots} onOpen={onOpen} />
           )}
         </section>
       )}
@@ -395,6 +396,49 @@ function Settings({
         </button>
       </section>
     </>
+  );
+}
+
+/** A field's lots, each opening its own page, with a dot that says whether it needs a look. */
+function LotList({
+  lots,
+  onOpen,
+}: {
+  lots: PortfolioEntry[];
+  onOpen: (id: number | null) => void;
+}) {
+  const { t } = useLocale();
+  return (
+    <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl bg-white/[0.04]">
+      {lots.map((lot) => (
+        <li key={lot.territory_id}>
+          <button
+            onClick={() => onOpen(lot.territory_id)}
+            className="flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5"
+          >
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{
+                background: TONE_HEX[attention(lot) < 4 ? "bad" : "good"],
+              }}
+            />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+              {lot.name}
+            </span>
+            {attention(lot) < 4 && (
+              <span className="truncate text-xs text-bad">
+                {headline(t, lot)}
+              </span>
+            )}
+            <span className="shrink-0 text-xs text-muted tabular-nums">
+              {formatHectares(t, lot.hectares)}
+            </span>
+            <ChevronIcon className="size-4 shrink-0 text-muted" />
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

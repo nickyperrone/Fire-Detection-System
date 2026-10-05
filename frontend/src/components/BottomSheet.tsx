@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
 
 export type Snap = "peek" | "half" | "full";
+const SNAPS: Snap[] = ["peek", "half", "full"];
 
 export const PEEK_PX = 168;
 const FRACTION: Record<Exclude<Snap, "peek">, number> = {
@@ -17,8 +18,7 @@ function heightFor(snap: Snap, viewport: number): number {
 }
 
 function nearestSnap(height: number, viewport: number): Snap {
-  const snaps: Snap[] = ["peek", "half", "full"];
-  return snaps.reduce((best, snap) =>
+  return SNAPS.reduce((best, snap) =>
     Math.abs(heightFor(snap, viewport) - height) <
     Math.abs(heightFor(best, viewport) - height)
       ? snap
@@ -31,6 +31,8 @@ type Props = {
   onSnapChange: (snap: Snap) => void;
   /** Changing it scrolls the content back to the top, e.g. when another field opens. */
   contentKey: string;
+  /** Changing it scrolls back to the top without replaying the entrance, e.g. another tab. */
+  scrollKey?: string;
   children: React.ReactNode;
 };
 
@@ -39,6 +41,7 @@ export function BottomSheet({
   snap,
   onSnapChange,
   contentKey,
+  scrollKey,
   children,
 }: Props) {
   const { t } = useLocale();
@@ -49,7 +52,7 @@ export function BottomSheet({
 
   useEffect(() => {
     content.current?.scrollTo({ top: 0 });
-  }, [contentKey]);
+  }, [contentKey, scrollKey]);
 
   useEffect(() => {
     const measure = () => setViewport(window.innerHeight);
@@ -59,6 +62,22 @@ export function BottomSheet({
   }, []);
 
   const height = dragHeight ?? heightFor(snap, viewport);
+
+  // Enter or Space cycles like a tap; the arrows step up and down.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const at = SNAPS.indexOf(snap);
+    const next =
+      e.key === "Enter" || e.key === " "
+        ? (at + 1) % SNAPS.length
+        : e.key === "ArrowUp"
+          ? Math.min(at + 1, SNAPS.length - 1)
+          : e.key === "ArrowDown"
+            ? Math.max(at - 1, 0)
+            : null;
+    if (next === null) return;
+    e.preventDefault();
+    onSnapChange(SNAPS[next]);
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -96,6 +115,7 @@ export function BottomSheet({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onKeyDown={onKeyDown}
         className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center md:hidden"
       >
         <span className="h-1.5 w-10 rounded-full bg-white/25" />

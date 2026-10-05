@@ -25,8 +25,10 @@ function longDate(t: Messages, day: string): string {
 /** Fire days near the field per year and per month (docs/07-fire-history.md). */
 export function FireHistory({ territoryId }: { territoryId: number }) {
   const { t } = useLocale();
-  const { data: history } = useFireHistory(territoryId);
-  if (!history) return null;
+  const { data: history, isError } = useFireHistory(territoryId);
+  if (isError) return <p className="text-sm text-bad">{t.app.apiDown}</p>;
+  if (!history)
+    return <div className="h-40 animate-pulse rounded-2xl bg-white/5" />;
   if (history.years_loaded.length === 0)
     return <p className="text-sm text-slate-400">{t.history.noData}</p>;
 

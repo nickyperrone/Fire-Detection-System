@@ -2,6 +2,7 @@ import type {
   DataQuality,
   FireAnswer,
   LightningAnswer,
+  PortfolioEntry,
   SprayAnswer,
   SprayStatus,
 } from "../api/client";
@@ -58,4 +59,26 @@ export function hazardTone(fire: FireAnswer, lightning: LightningAnswer): Tone {
   const tones = [fireTone(fire), lightningTone(lightning)];
   if (tones.includes("bad")) return "bad";
   return tones.includes("unknown") ? "unknown" : "good";
+}
+
+/**
+ * How soon a field needs a look, most urgent first (docs/12-field-page.md#the-list): a fire, then
+ * lightning, then an unusual patch, then no spraying now, then nothing to see.
+ */
+export function attention(entry: PortfolioEntry): number {
+  if (fireTone(entry.fire) === "bad") return 0;
+  if (lightningTone(entry.lightning) === "bad") return 1;
+  if (entry.anomaly.patches.length > 0) return 2;
+  if (sprayTone(entry.spray) === "bad") return 3;
+  return 4;
+}
+
+/** Nothing to report: no chip needs to be shown. */
+export function allFine(entry: PortfolioEntry): boolean {
+  return (
+    attention(entry) === 4 &&
+    fireTone(entry.fire) === "good" &&
+    sprayTone(entry.spray) === "good" &&
+    !["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "")
+  );
 }

@@ -4,6 +4,7 @@
  * from the server without the session cookie. They are small PNGs already. */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   snapshotUrl,
@@ -75,7 +76,7 @@ export function FieldPhotos({ territoryId }: { territoryId: number }) {
             role="radio"
             aria-checked={view === option}
             onClick={() => setView(option)}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
+            className={`rounded-full px-3 py-1.5 text-xs font-medium ${
               view === option ? "bg-white text-slate-950" : "text-slate-300"
             }`}
           >
@@ -87,7 +88,7 @@ export function FieldPhotos({ territoryId }: { territoryId: number }) {
         aria-pressed={before !== null}
         disabled={snapshots.length < 2}
         onClick={toggleCompare}
-        className="ml-auto flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40 aria-pressed:bg-white aria-pressed:text-slate-950"
+        className="ml-auto flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-slate-300 hover:bg-white/10 disabled:opacity-40 aria-pressed:bg-white aria-pressed:text-slate-950"
       >
         <CompareIcon className="size-3.5" />
         {t.photos.compare}
@@ -119,7 +120,7 @@ export function FieldPhotos({ territoryId }: { territoryId: number }) {
         <button
           aria-label={t.photos.fullscreen}
           onClick={() => setLarge(true)}
-          className="liquid absolute right-2 top-2 grid size-8 place-items-center rounded-full text-white"
+          className="liquid absolute right-2 top-2 grid size-9 place-items-center rounded-full text-white"
         >
           <ExpandIcon className="size-4" />
         </button>
@@ -329,7 +330,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`liquid absolute top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-white disabled:opacity-0 ${
+      className={`liquid absolute top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full text-white disabled:opacity-0 ${
         side === "left" ? "left-2" : "right-2"
       }`}
     >
@@ -443,7 +444,7 @@ function GreennessChart({
               aria-label={`${t.photos.photoOf(localDate(t, s.date))} · ${t.photos.meanNdvi(formatNumber(t, s.ndvi_mean!, 2))}`}
               aria-current={index === current}
               onClick={() => onPick(index)}
-              className="group absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center"
+              className="group absolute grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center"
               style={{ left: `${x(s)}%`, top: y(s.ndvi_mean!) }}
             >
               <span
@@ -559,15 +560,22 @@ function FullScreen({
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        // Closes the photos only, not the field page behind them.
+        e.preventDefault();
+        onClose();
+      }
       if (e.key === "ArrowLeft") onStep(-1);
       if (e.key === "ArrowRight") onStep(1);
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    // Captured on the window, so it runs before the page's own Escape (one step up).
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", onKey, { capture: true });
   }, [onClose, onStep]);
 
-  return (
+  // On the body: inside the panel, its blur and motion would pin "fixed" to the panel.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -582,6 +590,7 @@ function FullScreen({
         <CloseIcon className="size-5" />
       </button>
       <div className="mx-auto max-w-5xl pt-10">{children}</div>
-    </div>
+    </div>,
+    document.body,
   );
 }

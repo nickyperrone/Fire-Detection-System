@@ -3,7 +3,7 @@
 import type { SprayHour, Weather } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatAge, formatNumber, localTime } from "@/i18n/text";
-import { details, hasWeather, weatherLine } from "@/lib/weather";
+import { details, hasWeather } from "@/lib/weather";
 
 const BLIND = ["NO_DATA", "STALE"];
 // The 48 h strip shows one column every this many hours.
@@ -12,22 +12,6 @@ const STEP_HOURS = 3;
 function value(hour: SprayHour, name: string): number | null {
   const v = hour.weather[name];
   return typeof v === "number" ? v : null;
-}
-
-/** One line per field in the list; gray with its age when it is not current. */
-export function WeatherLine({ weather }: { weather: Weather }) {
-  const { t } = useLocale();
-  const line = weatherLine(t, weather);
-  if (!line) return null;
-  const old = BLIND.includes(weather.data_quality);
-  return (
-    <p
-      className={`mt-1 truncate text-xs ${old ? "text-muted" : "text-slate-300"}`}
-    >
-      {line}
-      {old && weather.valid_at && ` · ${formatAge(t, weather.valid_at)}`}
-    </p>
-  );
 }
 
 /** The field card's weather: now, then the next 48 h every 3 hours. */

@@ -6,12 +6,14 @@ that close look, and the place to manage a field.
 
 ## Navigation
 
-- **Breadcrumbs** at the top of the panel say where you are and take you back:
-  `Mis campos › La Esperanza › Lote 3`. Each step is a link; the last one is the page you are on.
-  On a phone they shorten from the left (`… › La Esperanza › Lote 3`).
+- **Breadcrumbs** at the top of the panel are the way back, one step per level:
+  `Mis campos › La Esperanza` above the title "Lote 3". The page's own name is the title, so it is
+  not repeated in them, and "Mis campos" is always there, on a phone too.
 - The open field and tab are in the link (`?f=12&tab=photos`), so the browser's back button, a
   reload and a shared link all land on the same page.
-- **Escape** goes one step back up the breadcrumbs.
+- **Escape** goes one step back up the breadcrumbs; with the photos full screen, it only closes
+  them.
+- The page's name, chips and tabs stay at the top while it scrolls; another tab starts at its top.
 
 ## Tabs
 
@@ -19,13 +21,29 @@ A segmented control under the field's name, with four tabs:
 
 | Tab | What it holds |
 |---|---|
-| **Ahora** | The answers for today: fire, lightning, unusual patches, weather, spraying (with the 48 h timeline) and the fire forecast. |
+| **Ahora** | A field's lots first, each with a dot that says whether it needs a look; then the answers for today: fire, spraying (with the 48 h timeline), weather, lightning, unusual patches and the fire forecast. |
 | **Fotos** | The satellite photos of the field, one per clear pass, and how green it was over time. |
 | **Historial** | Fires near the field in past years, by month. |
 | **Ajustes** | Alerts, priority and visibility, tags, the lots of the field, editing the outline and deleting. |
 
-A field with lots lists its lots in Ajustes, each opening its own page. A lot's page shows its
-field in the breadcrumbs.
+Each lot opens its own page, from Ahora or Ajustes. A lot's page shows its field in the
+breadcrumbs.
+
+## The list
+
+"Mis campos" is for watching many fields at once, so what needs a look comes first:
+
+1. A fire near the field or one of its lots.
+2. Lightning nearby.
+3. Something unusual in it.
+4. Not good to spray now.
+5. Nothing to see.
+
+A field ranks by its worst lot; fields marked high priority go first within a rank. A field with
+nothing to report is one quiet line ("Todo en orden" and the weather) with a green dot; chips
+appear only for what is wrong. Lots fold under their field ("15 lotes · 2 para mirar") and open as
+thin rows. The summary above the list counts fires, fields good to spray and fields with
+something unusual.
 
 ## Satellite photos
 

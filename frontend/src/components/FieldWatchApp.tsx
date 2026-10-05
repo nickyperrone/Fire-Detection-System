@@ -176,7 +176,7 @@ export function FieldWatchApp() {
       map?.fitBounds(bounds, {
         padding: mobile
           ? { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
-          : { top: 60, bottom: 60, left: 440, right: 60 },
+          : { top: 60, bottom: 60, left: 440, right: 80 },
         maxZoom: 15,
         duration,
       });
@@ -192,7 +192,11 @@ export function FieldWatchApp() {
     if (flewIn.current || url.linkHasCamera || !map || !territories.data)
       return;
     flewIn.current = true;
-    const fields = territories.data.filter((t) => t.kind === "FIELD");
+    // A link to a field lands on that field; otherwise on all of them.
+    const open = territories.data.find((t) => t.id === url.selectedId);
+    const fields = open
+      ? [open]
+      : territories.data.filter((t) => t.kind === "FIELD");
     const flyIn = () => {
       if (fields.length) frame(fields, OPENING_FLIGHT_MS);
       else
@@ -202,7 +206,7 @@ export function FieldWatchApp() {
     // arrive, and a missed event would leave the map over Argentina.
     if (map.loaded()) window.setTimeout(flyIn, OPENING_PAUSE_MS);
     else map.once("load", () => window.setTimeout(flyIn, OPENING_PAUSE_MS));
-  }, [map, territories.data, url.linkHasCamera, frame]);
+  }, [map, territories.data, url.linkHasCamera, url.selectedId, frame]);
 
   // A step the back button undoes; another field opens on its first tab.
   const open = useCallback(
@@ -247,7 +251,8 @@ export function FieldWatchApp() {
   // Escape goes one step up the breadcrumbs: from a lot to its field, from a field to the list.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || !selected || drawingOn) return;
+      if (e.key !== "Escape" || e.defaultPrevented || !selected || drawingOn)
+        return;
       const typing = (e.target as HTMLElement).closest(
         "input, textarea, select",
       );
@@ -333,7 +338,7 @@ export function FieldWatchApp() {
         />
       ) : (
         <>
-          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-auto md:w-[380px]">
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-[72px] md:max-w-[380px]">
             <div className="pointer-events-auto">
               <SearchBar
                 territories={territories.data ?? []}
@@ -368,6 +373,7 @@ export function FieldWatchApp() {
             snap={snap}
             onSnapChange={setSnap}
             contentKey={String(url.selectedId ?? "portfolio")}
+            scrollKey={url.tab}
           >
             {me.isSuccess && !signedIn ? (
               <div className="space-y-3">
