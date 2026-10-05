@@ -9,6 +9,7 @@ import {
   type MapMouseEvent,
   setWorkerUrl,
   type VectorTileSource,
+  type ImageSource,
 } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 
@@ -73,6 +74,8 @@ type Props = {
   grayOutside: boolean;
   /** The selected field's unusual patches, drawn while its card is open. */
   patches: GeoJSON.FeatureCollection | null;
+  /** GOES-19's clouds and rain image and the box it covers (west, south, east, north). */
+  weather: { url: string; bbox: number[] } | null;
 };
 
 export function MapView(props: Props) {
@@ -121,6 +124,7 @@ export function MapView(props: Props) {
       );
       hideTerritories(map, [...latest.current.hiddenIds]);
       showPatches(map, latest.current.patches);
+      showWeather(map, latest.current.weather);
       // A new basemap rebuilds the layers; the selected field keeps its glow.
       if (latest.current.selectedId !== null) fadeInGlow(map);
       showOutsideMask(map, latest.current.boundary, latest.current.grayOutside);
@@ -213,6 +217,12 @@ export function MapView(props: Props) {
     if (map?.getSource("territories")) showPatches(map, props.patches);
   }, [props.patches]);
 
+  const weatherUrl = props.weather?.url ?? null;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map?.getSource("territories")) showWeather(map, latest.current.weather);
+  }, [weatherUrl]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.getLayer(SELECTED_GLOW_LAYER) || props.selectedId === null)
@@ -261,6 +271,49 @@ function outsideOf(country: CountryOutline): GeoJSON.Feature<GeoJSON.Polygon> {
       coordinates: [world, ...parts.map((polygon) => polygon[0])],
     },
   };
+}
+
+const WEATHER_SOURCE = "weather";
+
+/** Clouds and rain as one image stretched over its box, under the fields so they stay readable
+ * (docs/06-goes.md#clouds-and-rain-on-the-map). */
+function showWeather(map: MapLibreMap, weather: Props["weather"]) {
+  if (!weather) {
+    if (map.getLayer(WEATHER_SOURCE)) map.removeLayer(WEATHER_SOURCE);
+    if (map.getSource(WEATHER_SOURCE)) map.removeSource(WEATHER_SOURCE);
+    return;
+  }
+  const [west, south, east, north] = weather.bbox;
+  const coordinates: [
+    [number, number],
+    [number, number],
+    [number, number],
+    [number, number],
+  ] = [
+    [west, north],
+    [east, north],
+    [east, south],
+    [west, south],
+  ];
+  const source = map.getSource(WEATHER_SOURCE) as ImageSource | undefined;
+  if (source) {
+    source.updateImage({ url: weather.url, coordinates });
+    return;
+  }
+  map.addSource(WEATHER_SOURCE, {
+    type: "image",
+    url: weather.url,
+    coordinates,
+  });
+  map.addLayer(
+    {
+      id: WEATHER_SOURCE,
+      type: "raster",
+      source: WEATHER_SOURCE,
+      paint: { "raster-opacity": 0.9, "raster-fade-duration": 400 },
+    },
+    "field-fill",
+  );
 }
 
 const PATCHES_SOURCE = "patches";

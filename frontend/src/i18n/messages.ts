@@ -166,6 +166,14 @@ const en = {
   parcels: {
     layer: "Property lines",
   },
+  weatherLayer: {
+    layer: "Clouds and rain",
+    title: (age: string) => `Clouds and rain · GOES-19 ${age}`,
+    clouds: "Clouds",
+    light: "Light rain",
+    moderate: "Rain",
+    heavy: "Heavy rain",
+  },
   sections: {
     fire: "Fire",
     history: "Fire history",
@@ -618,6 +626,14 @@ const es: Messages = {
   },
   parcels: {
     layer: "Líneas de propiedad",
+  },
+  weatherLayer: {
+    layer: "Nubes y lluvia",
+    title: (age) => `Nubes y lluvia · GOES-19 ${age}`,
+    clouds: "Nubes",
+    light: "Lluvia débil",
+    moderate: "Lluvia",
+    heavy: "Lluvia fuerte",
   },
   sections: {
     fire: "Fuego",

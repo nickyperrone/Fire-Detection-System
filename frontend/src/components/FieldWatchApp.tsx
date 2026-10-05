@@ -3,7 +3,11 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { PortfolioEntry, Territory } from "@/api/client";
+import {
+  type PortfolioEntry,
+  type Territory,
+  weatherLayerUrl,
+} from "@/api/client";
 import {
   useBoundary,
   useAnomalyPatches,
@@ -11,6 +15,7 @@ import {
   usePortfolio,
   useTags,
   useTerritories,
+  useWeatherLayer,
 } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { hazardTone, TONE_HEX } from "@/lib/status";
@@ -84,6 +89,7 @@ export function FieldWatchApp() {
   const territories = useTerritories(signedIn);
   const tags = useTags(signedIn);
   const boundary = useBoundary();
+  const weatherLayer = useWeatherLayer(url.showWeather);
 
   const territoryById = useMemo(
     () => new Map((territories.data ?? []).map((t) => [t.id, t])),
@@ -327,6 +333,14 @@ export function FieldWatchApp() {
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
+        weather={
+          url.showWeather && weatherLayer.data
+            ? {
+                url: weatherLayerUrl(weatherLayer.data),
+                bbox: weatherLayer.data.bbox,
+              }
+            : null
+        }
       />
 
       {drawingOn ? (
@@ -348,12 +362,17 @@ export function FieldWatchApp() {
                 onPick={(t) => open(t.id)}
               />
             </div>
-            {((signedIn && hasFields) || url.showRisk) && (
+            {((signedIn && hasFields) || url.showRisk || url.showWeather) && (
               // On a phone it stops short of the map buttons on the right.
               <div className="pointer-events-auto mr-[60px] mt-2 md:mr-0">
                 <MapLegend
                   showFields={signedIn && hasFields}
                   showRisk={url.showRisk}
+                  weatherScannedAt={
+                    url.showWeather
+                      ? (weatherLayer.data?.clouds_at ?? null)
+                      : undefined
+                  }
                   colorBy={url.colorBy}
                   onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}
                   tags={allTags.map((label) => ({
@@ -377,6 +396,10 @@ export function FieldWatchApp() {
               onBasemap={(b) => url.update({ b })}
               showRisk={url.showRisk}
               onToggleRisk={() => url.update({ r: url.showRisk ? null : "1" })}
+              showWeather={url.showWeather}
+              onToggleWeather={() =>
+                url.update({ w: url.showWeather ? null : "1" })
+              }
               showParcels={url.showParcels}
               onToggleParcels={() =>
                 url.update({ p: url.showParcels ? "0" : null })

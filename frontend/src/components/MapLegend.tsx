@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useLocale } from "@/i18n/LocaleProvider";
+import { formatAge } from "@/i18n/text";
 import { type Tone, TONE_HEX } from "@/lib/status";
 import type { ColorBy } from "@/lib/useUrlState";
 
@@ -15,6 +16,8 @@ type Props = {
   showFields: boolean;
   /** The fire risk layer is on: its scale is shown too. */
   showRisk: boolean;
+  /** The clouds and rain layer is on, with the time of its scan once it has loaded. */
+  weatherScannedAt: string | null | undefined;
   colorBy: ColorBy;
   onColorBy: (colorBy: ColorBy) => void;
   /** Tags in use, in the order that decides a field's color, with their colors. */
@@ -29,6 +32,13 @@ const STATES: { tone: Tone; name: "danger" | "clear" | "unknown" }[] = [
   { tone: "good", name: "clear" },
   { tone: "unknown", name: "unknown" },
 ];
+// The colors the worker paints (backend/app/vision/weather_layer.py), lightest rain first.
+const WEATHER_SWATCHES = [
+  { name: "clouds", color: "rgb(236 240 245)" },
+  { name: "light", color: "rgb(125 185 255)" },
+  { name: "moderate", color: "rgb(37 99 235)" },
+  { name: "heavy", color: "rgb(147 51 234)" },
+] as const;
 // Past this many tags the legend says "+N" instead of growing over the map.
 const SHOWN_TAGS = 5;
 
@@ -37,6 +47,7 @@ const SHOWN_TAGS = 5;
 export function MapLegend({
   showFields,
   showRisk,
+  weatherScannedAt,
   colorBy,
   onColorBy,
   tags,
@@ -82,6 +93,27 @@ export function MapLegend({
           </div>
         </div>
       )}
+      {weatherScannedAt !== undefined && (
+        <div
+          className={`px-2 pb-1 pt-1.5 ${showFields || showRisk ? "mt-1 border-t border-white/10" : ""}`}
+        >
+          <p className="text-[11px] text-muted">
+            {t.weatherLayer.title(formatAge(t, weatherScannedAt))}
+          </p>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-slate-200">
+            {WEATHER_SWATCHES.map(({ name, color }) => (
+              <span key={name} className="flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="block size-2.5 rounded-sm ring-1 ring-white/20"
+                  style={{ background: color }}
+                />
+                {t.weatherLayer[name]}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -92,7 +124,7 @@ function FieldColors({
   tags,
   canTag,
   onAddTag,
-}: Omit<Props, "showFields" | "showRisk">) {
+}: Omit<Props, "showFields" | "showRisk" | "weatherScannedAt">) {
   const { t } = useLocale();
   const [explained, setExplained] = useState(false);
   return (

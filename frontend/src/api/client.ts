@@ -27,6 +27,12 @@ export type Detected = Schemas["DetectOut"];
 export type Snapshots = Schemas["SnapshotsOut"];
 export type Snapshot = Schemas["SnapshotOut"];
 export type SnapshotView = "true_color" | "greenness";
+export type WeatherLayer = Schemas["WeatherLayerOut"];
+
+/** GOES-19's clouds and rain image; the scan time makes each new scan a new address. */
+export function weatherLayerUrl(layer: WeatherLayer): string {
+  return `/api/weather-layer.png?at=${encodeURIComponent(layer.clouds_at)}`;
+}
 
 /** One satellite photo of a field (docs/12-field-page.md). */
 export function snapshotUrl(
@@ -144,6 +150,7 @@ export const api = {
     }),
   anomalies: (id: number) =>
     request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
+  weatherLayer: () => request<WeatherLayer>("/weather-layer"),
   snapshots: (id: number) => request<Snapshots>(`/territories/${id}/snapshots`),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),

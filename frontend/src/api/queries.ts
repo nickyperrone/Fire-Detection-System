@@ -124,6 +124,16 @@ export function useBoundary() {
   });
 }
 
+/** The clouds and rain layer's scan, checked every few minutes while it is on. */
+export function useWeatherLayer(enabled: boolean) {
+  return useQuery({
+    queryKey: ["weather-layer"],
+    queryFn: api.weatherLayer,
+    enabled,
+    refetchInterval: 5 * 60 * 1000,
+  });
+}
+
 export function useHealth() {
   return useQuery({
     queryKey: ["health"],

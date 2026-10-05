@@ -17,6 +17,7 @@ type Changes = Partial<{
   s: string[];
   only: string | null;
   r: string | null;
+  w: string | null;
   p: string | null;
   c: string | null;
   signin: string | null;
@@ -44,7 +45,7 @@ export type ColorBy = "status" | "tags";
 /**
  * App state that belongs in a shareable link: the open field (f) and its tab (tab), tag filters
  * (tag), the fields picked to compare (s) and whether only those are shown (only), basemap (b),
- * field colors (c) and camera (v).
+ * field colors (c), the fire risk (r) and clouds and rain (w) layers, and camera (v).
  */
 export function useUrlState() {
   const params = useSearchParams();
@@ -65,6 +66,7 @@ export function useUrlState() {
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
   const showRisk = params.get("r") === "1";
+  const showWeather = params.get("w") === "1";
   // Set by the API when an email link was used or expired (docs/09-accounts-and-alerts.md).
   const signinExpired = params.get("signin") === "expired";
   const colorBy: ColorBy = params.get("c") === "tags" ? "tags" : "status";
@@ -97,6 +99,7 @@ export function useUrlState() {
     picked,
     onlyPicked,
     showRisk,
+    showWeather,
     showParcels,
     colorBy,
     signinExpired,

@@ -493,6 +493,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/weather-layer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Weather Layer
+         * @description When the clouds and rain image was scanned and the box it covers (docs/06-goes.md).
+         */
+        get: operations["weather_layer_weather_layer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/weather-layer.png": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Weather Layer Image */
+        get: operations["weather_layer_image_weather_layer_png_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1152,6 +1189,25 @@ export interface components {
             wind_gusts_kmh: number | null;
             /** Wind Speed Kmh */
             wind_speed_kmh: number | null;
+        };
+        /**
+         * WeatherLayerOut
+         * @description The clouds and rain image: its scan times and the box it covers (west, south, east,
+         *     north).
+         */
+        WeatherLayerOut: {
+            /** Bbox */
+            bbox: number[];
+            /**
+             * Clouds At
+             * Format: date-time
+             */
+            clouds_at: string;
+            /**
+             * Rain At
+             * Format: date-time
+             */
+            rain_at: string;
         };
     };
     responses: never;
@@ -2142,6 +2198,44 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    weather_layer_weather_layer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherLayerOut"];
+                };
+            };
+        };
+    };
+    weather_layer_image_weather_layer_png_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
