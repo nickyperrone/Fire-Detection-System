@@ -208,3 +208,35 @@ def check_fields(
         checked += 1
         patches += len(finding.patches)
     return {"fields_checked": checked, "fields_failed": failed, "patches": patches}
+
+
+# A lot shows the patches of its field that reach into it, clipped to the lot.
+ANOMALY_FEATURES_SQL = text("""
+    SELECT a.kind, a.area_ha, a.where, a.observed_on,
+           ST_AsGeoJSON(CASE WHEN t.parent_id IS NULL THEN a.geom
+                             ELSE ST_Intersection(a.geom, t.geom) END, 7) AS geometry
+    FROM territory t
+    JOIN field_anomaly a ON a.territory_id = coalesce(t.parent_id, t.id)
+    WHERE t.id = :id AND (t.parent_id IS NULL OR ST_Intersects(a.geom, t.geom))
+    ORDER BY a.area_ha DESC
+""")
+
+
+def field_anomaly_features(session: Session, territory_id: int) -> dict:
+    rows = session.execute(ANOMALY_FEATURES_SQL, {"id": territory_id}).all()
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": json.loads(r.geometry),
+                "properties": {
+                    "kind": r.kind,
+                    "area_ha": r.area_ha,
+                    "where": r.where,
+                    "observed_on": r.observed_on.isoformat(),
+                },
+            }
+            for r in rows
+        ],
+    }

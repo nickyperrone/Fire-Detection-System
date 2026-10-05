@@ -17,6 +17,10 @@ WEEKDAYS = {
     "es": ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"],
     "en": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
 }
+ANOMALY_KINDS = {
+    "es": {"less_green": "menos verde", "water": "agua", "burnt": "quemado"},
+    "en": {"less_green": "less green", "water": "water", "burnt": "burnt"},
+}
 BANDS = {
     "es": {"HIGH": "alto", "VERY_HIGH": "muy alto"},
     "en": {"HIGH": "high", "VERY_HIGH": "very high"},
@@ -174,6 +178,25 @@ def _field_lines(item: "FieldSummary", locale: str) -> list[str]:
             "Pulverizar: sin ventanas buenas en las próximas 48 h."
             if es
             else "Spraying: no good window in the next 48 h."
+        )
+    for patch in item.entry.anomaly.patches:
+        what = ANOMALY_KINDS[locale][patch.kind]
+        where = "" if patch.where == "center" else DIRECTIONS[locale].get(patch.where, "")
+        place = (
+            ("en el centro" if es else "in the center")
+            if patch.where == "center"
+            else (f"al {where}" if es else f"to the {where}")
+        )
+        area = f"{patch.area_ha:.1f}".replace(".", ",") if es else f"{patch.area_ha:.1f}"
+        seen = _when(
+            datetime.combine(item.entry.anomaly.observed_on, datetime.min.time(), LOCAL),
+            locale,
+            hour=False,
+        )
+        lines.append(
+            f"Algo raro: {what} en {area} ha {place} ({seen})."
+            if es
+            else f"Something unusual: {what} in {area} ha {place} ({seen})."
         )
     risky = [d for d in item.entry.forecast.days if d.band in BANDS[locale]]
     if risky:

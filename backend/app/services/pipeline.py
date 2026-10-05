@@ -15,6 +15,7 @@ from app.forecast.recent_fires import top_up
 from app.forecast.serve import cells_of, forecast_grid, forecast_territories, issue_forecast
 from app.models import IngestionRun, RunStatus
 from app.services.alerts import send_alerts
+from app.services.anomalies import check_fields
 from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
@@ -148,4 +149,16 @@ def run_summary_pipeline(
     """Daily and weekly summaries of the accounts that are due (docs/09)."""
     return send_due_summaries(
         session, smtp_sender(settings), settings, thresholds, datetime.now(UTC)
+    )
+
+
+def run_anomaly_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
+    """Every field against its latest Sentinel-2 scenes (docs/11-field-anomalies.md)."""
+    return check_fields(
+        session,
+        client,
+        thresholds["anomalies"],
+        processing_version(thresholds),
+        datetime.now(UTC),
+        REPO_ROOT / "data" / "cache" / "sentinel2" / "fields",
     )

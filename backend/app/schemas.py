@@ -199,8 +199,16 @@ class ForecastAnswerOut(BaseModel):
     days: list[ForecastDayOut]
 
 
+class AnomalyPatchOut(BaseModel):
+    kind: str = Field(description="less_green, water or burnt")
+    area_ha: float
+    where: str = Field(description="Compass point from the field's center, or center")
+
+
 class AnomalyAnswerOut(BaseModel):
     data_quality: DataQuality
+    observed_on: date | None
+    patches: list[AnomalyPatchOut]
 
 
 class PortfolioEntryOut(BaseModel):

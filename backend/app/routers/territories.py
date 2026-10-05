@@ -18,6 +18,7 @@ from app.schemas import (
     TerritoryIn,
     TerritoryOut,
 )
+from app.services.anomalies import field_anomaly_features
 from app.services.field_risk import assess_active_fire_events, compass, reassess_territory
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
@@ -198,6 +199,13 @@ def risk_events(
         )
         for r in list_risk_events(session, owner, territory_id)
     ]
+
+
+@router.get("/{territory_id}/anomalies")
+def anomalies(session: SessionDep, owner: OwnerDep, territory_id: int) -> dict:
+    """The field's unusual patches as GeoJSON, to draw on the map (docs/11)."""
+    owned(session, owner, territory_id)
+    return field_anomaly_features(session, territory_id)
 
 
 @router.get("/{territory_id}/fire-history", response_model=FireHistoryOut)

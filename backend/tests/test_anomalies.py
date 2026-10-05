@@ -6,10 +6,12 @@ import yaml
 from affine import Affine
 from geoalchemy2 import WKTElement
 from rasterio.crs import CRS
+from sqlalchemy import select
 
-from app.config import REPO_ROOT
-from app.models import Confidence, DataQuality, Observation
-from app.services.anomalies import confirm_burns
+from app.config import REPO_ROOT, Settings
+from app.models import Confidence, DataQuality, Observation, User
+from app.services.anomalies import confirm_burns, store_finding
+from app.services.summary import send_summary
 from app.vision.anomalies import FieldDate, Finding, Patch, field_date, find_patches
 
 CONFIG = yaml.safe_load((REPO_ROOT / "config" / "thresholds.yaml").read_text())["anomalies"]
@@ -146,3 +148,54 @@ def test_a_burn_needs_a_fire_detection_between_the_two_dates(session):
     assert [p.kind for p in confirm_burns(session, finding(burnt, less_green), 1000).patches] == [
         "burnt"
     ]
+
+
+def test_a_stored_patch_reaches_the_field_its_lots_the_map_and_the_summary(
+    client, session, thresholds, outbox
+):
+    field = client.post(
+        "/territories",
+        json={"name": "La Esperanza", "geometry": rect(-59.10, -33.00, -59.09, -32.99)},
+    ).json()
+    west = client.post(
+        "/territories",
+        json={
+            "name": "Oeste",
+            "geometry": rect(-59.10, -33.00, -59.095, -32.99),
+            "parent_id": field["id"],
+        },
+    ).json()
+    east = client.post(
+        "/territories",
+        json={
+            "name": "Este",
+            "geometry": rect(-59.095, -33.00, -59.09, -32.99),
+            "parent_id": field["id"],
+        },
+    ).json()
+    # A dry patch in the west half only.
+    dry = Patch("less_green", 12.0, 3.1, "W", rect(-59.099, -32.998, -59.096, -32.994))
+    store_finding(
+        session, field["id"], Finding(DataQuality.GOOD, TODAY, [dry]), datetime.now(UTC), "test"
+    )
+
+    answers = {e["name"]: e["anomaly"] for e in client.get("/portfolio").json()}
+    assert answers["La Esperanza"]["patches"] == [
+        {"kind": "less_green", "area_ha": 12.0, "where": "W"}
+    ]
+    assert len(answers["Oeste"]["patches"]) == 1
+    assert (answers["Este"]["patches"], answers["Este"]["data_quality"]) == ([], "GOOD")
+
+    features = client.get(f"/territories/{west['id']}/anomalies").json()["features"]
+    assert features[0]["properties"]["kind"] == "less_green"
+    assert client.get(f"/territories/{east['id']}/anomalies").json()["features"] == []
+
+    session.add(User(email="default", locale="es", summary_sent_at=datetime.now(UTC)))
+    session.commit()
+    user = session.scalar(select(User).where(User.email == "default"))
+    send_summary(session, outbox.append, Settings(), thresholds, user, datetime.now(UTC))
+    assert "Algo raro: menos verde en 12,0 ha al O" in outbox[-1].get_content()
+
+
+def rect(w, s, e, n):
+    return {"type": "Polygon", "coordinates": [[[w, s], [e, s], [e, n], [w, n], [w, s]]]}

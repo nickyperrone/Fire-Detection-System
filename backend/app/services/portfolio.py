@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -100,9 +100,19 @@ class WeatherAnswer:
 
 
 @dataclass
+class AnomalyPatch:
+    kind: str
+    area_ha: float
+    where: str
+
+
+@dataclass
 class AnomalyAnswer:
+    """Unusual patches on the field's latest clear date (docs/11-field-anomalies.md)."""
+
     data_quality: DataQuality = DataQuality.NO_DATA
-    message: str = "vegetation and water change detection is not available yet"
+    observed_on: date | None = None
+    patches: list[AnomalyPatch] = field(default_factory=list)
 
 
 @dataclass
@@ -143,6 +153,7 @@ def build_portfolio(
     risks = _open_risks(session, ids)
     received = _received_at(session, {r.fire_event_id for rs in risks.values() for r in rs})
     assessments = _assessments(session, ids, profile, now)
+    anomalies = _anomalies(session, ids)
     entries = [
         PortfolioEntry(
             territory=t,
@@ -153,11 +164,37 @@ def build_portfolio(
                 lightning.get(t.id), lightning_dq, thresholds["lightning"]["window_minutes"]
             ),
             forecast=forecasts.get(t.id, ForecastAnswer(data_quality=DataQuality.NO_DATA)),
-            anomaly=AnomalyAnswer(),
+            anomaly=anomalies.get(t.id, AnomalyAnswer()),
         )
         for t in territories
     ]
     return _worst_first(entries)
+
+
+# A lot takes its field's check, and the patches of its field that reach into it.
+ANOMALIES_SQL = text("""
+    SELECT t.id AS territory_id, c.data_quality, c.last_clear,
+           a.kind, a.where, a.area_ha
+    FROM territory t
+    JOIN field_anomaly_check c ON c.territory_id = coalesce(t.parent_id, t.id)
+    LEFT JOIN field_anomaly a
+      ON a.territory_id = c.territory_id
+     AND (t.parent_id IS NULL OR ST_Intersects(a.geom, t.geom))
+    WHERE t.id = ANY(:ids)
+    ORDER BY t.id, a.area_ha DESC
+""")
+
+
+def _anomalies(session: Session, ids: list[int]) -> dict[int, AnomalyAnswer]:
+    answers: dict[int, AnomalyAnswer] = {}
+    for row in session.execute(ANOMALIES_SQL, {"ids": ids}):
+        answer = answers.setdefault(
+            row.territory_id,
+            AnomalyAnswer(data_quality=DataQuality(row.data_quality), observed_on=row.last_clear),
+        )
+        if row.kind is not None:
+            answer.patches.append(AnomalyPatch(row.kind, row.area_ha, row.where))
+    return answers
 
 
 def _forecasts(session: Session, ids: list[int]) -> dict[int, ForecastAnswer]:

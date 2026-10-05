@@ -21,7 +21,13 @@ from app.services.pipeline import (
     run_lightning_pipeline,
     run_spray_pipeline,
 )
-from app.services.portfolio import FireAnswer, PortfolioEntry, SprayAnswer, build_portfolio
+from app.services.portfolio import (
+    AnomalyAnswer,
+    FireAnswer,
+    PortfolioEntry,
+    SprayAnswer,
+    build_portfolio,
+)
 from app.services.territories import DEFAULT_OWNER, claim_fields, load_feature_collection
 
 LOCAL_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -85,6 +91,15 @@ def spray_line(spray: SprayAnswer) -> str:
     return f"{spray.status.value:<12}" + " · ".join(parts)
 
 
+def anomaly_line(anomaly: AnomalyAnswer) -> str:
+    if not anomaly.patches:
+        seen = f" on {anomaly.observed_on}" if anomaly.observed_on else ""
+        verdict = "nothing unusual" if anomaly.data_quality == DataQuality.GOOD else "not seen"
+        return f"{anomaly.data_quality.value:<12}{verdict}{seen}"
+    patches = ", ".join(f"{p.kind} {p.area_ha:g} ha {p.where}" for p in anomaly.patches)
+    return f"{anomaly.data_quality.value:<12}{patches} on {anomaly.observed_on}"
+
+
 def print_entry(entry: PortfolioEntry, listed_ids: set[int], now: datetime) -> None:
     t = entry.territory
     under_parent = t.parent_id in listed_ids
@@ -94,7 +109,7 @@ def print_entry(entry: PortfolioEntry, listed_ids: set[int], now: datetime) -> N
     print(f"{indent}{name} ({t.hectares:,.0f} ha)    {tags}")
     print(f"{indent}  Fire   {fire_line(entry.fire, now)}")
     print(f"{indent}  Spray  {spray_line(entry.spray)}")
-    print(f"{indent}  Weird  {entry.anomaly.data_quality.value:<12}{entry.anomaly.message}")
+    print(f"{indent}  Weird  {anomaly_line(entry.anomaly)}")
 
 
 def main() -> None:

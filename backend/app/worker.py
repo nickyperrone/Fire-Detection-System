@@ -11,6 +11,7 @@ from app.db import session_factory
 from app.logging_setup import configure_logging
 from app.services.pipeline import (
     run_alert_pipeline,
+    run_anomaly_pipeline,
     run_fire_pipeline,
     run_forecast_pipeline,
     run_goes_fire_pipeline,
@@ -73,6 +74,10 @@ def main() -> None:
         (
             job("forecast", run_forecast_pipeline, with_settings=True),
             intervals["forecast_interval_minutes"],
+        ),
+        (
+            job("anomalies", run_anomaly_pipeline),
+            intervals["anomaly_interval_minutes"],
         ),
         (
             job("summaries", run_summary_pipeline, with_settings=True),

@@ -189,6 +189,8 @@ worker:
   weather_interval_minutes: 60
   # Checks which accounts are due a daily or weekly summary (docs/09).
   summary_interval_minutes: 15
+  # Sentinel-2 passes every 5 days; checking 4 times a day catches each scene the day it lands.
+  anomaly_interval_minutes: 360
 
 # Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
 auth:
