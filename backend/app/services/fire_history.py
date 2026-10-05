@@ -22,13 +22,19 @@ PROVIDER = "firms_archive"
 BATCH_ROWS = 5_000
 
 # Days in Argentina time: a fire at 01:00 UTC belongs to the evening before for the user.
+# A degree of longitude in metres at Argentina's southern tip (55° S), the shortest it gets in the
+# country: a box this many degrees wide always holds the whole radius.
+METERS_PER_DEGREE_SOUTHERNMOST = 63_800
+
 FIRE_DAYS_SQL = text("""
     WITH t AS (SELECT geom FROM territory WHERE id = :territory_id)
     SELECT (h.acquired_at AT TIME ZONE 'America/Argentina/Buenos_Aires')::date AS day,
            min(ST_Distance(t.geom::geography, h.geom::geography)) AS nearest_m,
            bool_or(ST_Intersects(t.geom, h.geom)) AS inside
     FROM historical_detection h, t
-    WHERE ST_DWithin(t.geom::geography, h.geom::geography, :radius_m)
+    -- The box first, so the spatial index answers; then the exact distance.
+    WHERE h.geom && ST_Expand(t.geom, :radius_deg)
+      AND ST_DWithin(t.geom::geography, h.geom::geography, :radius_m)
       AND h.acquired_at >= :since AND h.acquired_at < :until
     GROUP BY day
     ORDER BY day
@@ -155,6 +161,7 @@ def field_history(session: Session, territory_id: int, config: dict) -> FireHist
         {
             "territory_id": territory_id,
             "radius_m": config["radius_m"],
+            "radius_deg": config["radius_m"] / METERS_PER_DEGREE_SOUTHERNMOST,
             "since": datetime(first, 1, 1, tzinfo=UTC),
             "until": datetime(last + 1, 1, 1, tzinfo=UTC),
         },
