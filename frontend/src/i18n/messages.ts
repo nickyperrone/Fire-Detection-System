@@ -360,6 +360,9 @@ const en = {
     checked: (age: string) => `checked ${age}`,
     stale: (age: string) => `Satellite data old · checked ${age}`,
     partial: "some sensors failed",
+    scan: (satellite: string, age: string) =>
+      `${satellite} looked at the region ${age} · every 10 min`,
+    polar: "a few passes a day, published about 3 h later",
   },
   dock: {
     label: "Status",
@@ -800,6 +803,9 @@ const es: Messages = {
     checked: (age) => `revisado ${age}`,
     stale: (age) => `Datos satelitales viejos · revisado ${age}`,
     partial: "fallaron algunos sensores",
+    scan: (satellite, age) =>
+      `${satellite} miró la región ${age} · cada 10 min`,
+    polar: "pocas pasadas por día, llegan unas 3 h después",
   },
   dock: {
     label: "Estado",

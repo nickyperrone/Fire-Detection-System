@@ -1,4 +1,8 @@
+from datetime import UTC, datetime
+
 import pytest
+
+from app.models import IngestionRun, RunStatus
 
 
 def rect(w, s, e, n):
@@ -57,3 +61,22 @@ def test_health_reports_every_source(client):
     body = client.get("/health").json()
     assert body["fire_data_quality"] == "NO_DATA"
     assert {s["product"] for s in body["sources"]} >= {"MODIS_NRT", "forecast"}
+    assert body["latest_scan"] is None
+
+
+def test_health_says_when_goes_last_looked_even_without_fires(client, session):
+    # A GOES run that read a scan and found no fire: the region was still looked at.
+    now = datetime(2026, 10, 5, 16, 40, tzinfo=UTC)
+    session.add(
+        IngestionRun(
+            provider="goes",
+            product="ABI-L2-FDCF",
+            started_at=now,
+            finished_at=now,
+            status=RunStatus.SUCCESS,
+            cursor="ABI-L2-FDCF/2026/278/16/OR_ABI-L2-FDCF-M6_G19_s20262781630211_e1_c1.nc",
+        )
+    )
+    session.commit()
+    scan = client.get("/health").json()["latest_scan"]
+    assert (scan["satellite"], scan["acquired_at"]) == ("GOES-19", "2026-10-05T16:30:21Z")

@@ -1,11 +1,25 @@
 """Listing and downloading GOES files from NOAA's public S3 bucket (no credentials)."""
 
+import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
 S3_NAMESPACE = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
+# OR_ABI-L2-FDCF-M6_G19_s20262781620211_e…: satellite, then the scan start as year, day of the
+# year, hour, minute, second and tenth of a second.
+KEY_PATTERN = re.compile(r"_G(\d+)_s(\d{4})(\d{3})(\d{2})(\d{2})(\d{2})\d")
+
+
+def scan_of_key(key: str) -> tuple[str, datetime]:
+    """The satellite ("GOES-19") and scan start of an ABI or GLM file, from its name."""
+    match = KEY_PATTERN.search(key)
+    if match is None:
+        raise ValueError(f"not a GOES file name: {key}")
+    number, year, day, hour, minute, second = (int(g) for g in match.groups())
+    start = datetime(year, 1, 1, hour, minute, second, tzinfo=UTC) + timedelta(days=day - 1)
+    return f"GOES-{number}", start
 
 
 def bucket_url(bucket: str) -> str:

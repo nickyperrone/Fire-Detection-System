@@ -7,7 +7,7 @@ from app.models import Confidence
 from app.providers.geostationary import latlon_to_scan, scan_to_latlon
 from app.providers.goes_fire import parse_fire_file
 from app.providers.goes_lightning import parse_lightning_file
-from app.providers.goes_s3 import hour_prefixes
+from app.providers.goes_s3 import hour_prefixes, scan_of_key
 from tests.goes_files import GOES_EAST, fire_file, grid, lightning_file
 
 BBOX = [-59.5, -33.5, -58.5, -32.5]
@@ -65,3 +65,10 @@ def test_hour_prefixes_cross_midnight_and_year_days():
         "GLM-L2-LCFA/2025/365/23/",
         "GLM-L2-LCFA/2026/001/00/",
     ]
+
+
+def test_the_scan_time_is_read_from_the_file_name():
+    key = "ABI-L2-FDCF/2026/278/16/OR_ABI-L2-FDCF-M6_G19_s20262781620211_e2026278162951_c1.nc"
+    assert scan_of_key(key) == ("GOES-19", datetime(2026, 10, 5, 16, 20, 21, tzinfo=UTC))
+    with pytest.raises(ValueError):
+        scan_of_key("not-a-goes-file.nc")

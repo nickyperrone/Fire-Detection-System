@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import DataQuality, IngestionRun, Observation, RunStatus, SprayAssessment
+from app.providers.goes_s3 import scan_of_key
 
 
 @dataclass(frozen=True)
@@ -94,3 +95,23 @@ def latest_pass(session: Session, source: str | None = None) -> LatestPass | Non
     if newest is None:
         return None
     return LatestPass(newest.sensor, newest.satellite, newest.acquired_at, newest.ingested_at)
+
+
+def latest_scan(session: Session, product: str) -> LatestPass | None:
+    """GOES's newest scan read, whether or not it saw a fire: when a satellite last looked at the
+    region (docs/06-goes.md#how-recent-the-satellite-look-is)."""
+    run = session.scalar(
+        select(IngestionRun)
+        .where(
+            IngestionRun.provider == "goes",
+            IngestionRun.product == product,
+            IngestionRun.status == RunStatus.SUCCESS,
+            IngestionRun.cursor.is_not(None),
+        )
+        .order_by(IngestionRun.finished_at.desc())
+        .limit(1)
+    )
+    if run is None:
+        return None
+    satellite, scanned_at = scan_of_key(run.cursor)
+    return LatestPass("ABI", satellite, scanned_at, run.finished_at)

@@ -700,6 +700,7 @@ export interface components {
             database: boolean;
             fire_data_quality: components["schemas"]["DataQuality"];
             latest_pass: components["schemas"]["LatestPassOut"] | null;
+            latest_scan: components["schemas"]["LatestPassOut"] | null;
             /** Processing Version */
             processing_version: string;
             /** Sources */

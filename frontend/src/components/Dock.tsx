@@ -35,26 +35,40 @@ function useFreshness(t: Messages): Freshness | null {
     };
   if (!health) return null;
   const checks = health.sources
-    .filter((s) => s.provider === "firms" && s.last_run_at)
+    .filter((s) => s.last_run_at && ["firms", "goes"].includes(s.provider))
     .map((s) => s.last_run_at!)
     .sort();
   const checked = t.freshness.checked(formatAge(t, checks.at(-1)));
-  const pass = health.latest_pass;
-  if (health.fire_data_quality === "NO_DATA" || !pass)
+  const { latest_scan: scan, latest_pass: pass } = health;
+  if (health.fire_data_quality === "NO_DATA" || (!scan && !pass))
     return { fresh: false, short: t.dock.noData, detail: [t.freshness.noData] };
-  const age = formatAge(t, pass.acquired_at);
+  // When a satellite last looked: GOES-19 every 10 minutes, a polar pass a few times a day
+  // (docs/06-goes.md#how-recent-the-satellite-look-is).
+  const newest = [scan, pass]
+    .filter((p) => p !== null)
+    .sort((a, b) => b.acquired_at.localeCompare(a.acquired_at))[0];
+  const detail = [
+    ...(scan
+      ? [t.freshness.scan(scan.satellite, formatAge(t, scan.acquired_at))]
+      : []),
+    ...(pass
+      ? [
+          `${t.freshness.lastPass(`${pass.sensor} ${pass.satellite}`, formatAge(t, pass.acquired_at))} · ${t.freshness.polar}`,
+        ]
+      : []),
+    checked,
+  ];
   if (health.fire_data_quality === "STALE")
     return {
       fresh: false,
-      short: age,
-      detail: [t.freshness.stale(formatAge(t, checks.at(-1)))],
+      short: formatAge(t, newest.acquired_at),
+      detail: [t.freshness.stale(formatAge(t, checks.at(-1))), ...detail],
     };
   return {
     fresh: true,
-    short: age,
+    short: formatAge(t, newest.acquired_at),
     detail: [
-      t.freshness.lastPass(`${pass.sensor} ${pass.satellite}`, age),
-      checked,
+      ...detail,
       ...(health.fire_data_quality === "PARTIAL" ? [t.freshness.partial] : []),
     ],
   };
@@ -121,7 +135,7 @@ export function Dock({ me, entries, covered, onSignIn }: Props) {
       {content && (
         <div
           key={panel}
-          className="liquid pop-up absolute bottom-full left-1/2 mb-2 w-max max-w-[calc(100vw-24px)] -translate-x-1/2 rounded-2xl p-3"
+          className="liquid pop-up absolute bottom-full left-1/2 mb-2 w-max max-w-[min(20rem,calc(100vw-24px))] -translate-x-1/2 rounded-2xl p-3 md:left-auto md:right-0 md:translate-x-0"
         >
           {content}
         </div>

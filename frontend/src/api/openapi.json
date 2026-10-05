@@ -571,6 +571,16 @@
               }
             ]
           },
+          "latest_scan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatestPassOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "processing_version": {
             "title": "Processing Version",
             "type": "string"
@@ -588,6 +598,7 @@
           "processing_version",
           "fire_data_quality",
           "latest_pass",
+          "latest_scan",
           "sources"
         ],
         "title": "HealthOut",

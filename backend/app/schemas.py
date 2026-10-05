@@ -317,7 +317,9 @@ class HealthOut(BaseModel):
     database: bool
     processing_version: str
     fire_data_quality: DataQuality
+    # The newest polar pass with a detection, and GOES's newest scan, detection or not.
     latest_pass: LatestPassOut | None
+    latest_scan: LatestPassOut | None
     sources: list[SourceStatusOut]
 
 
