@@ -70,24 +70,43 @@ on a given week. Each field and each lot has three settings, changed from its ca
 - `PATCH /territories/{id}/settings` changes any of the three; the portfolio and the territory list
   return them.
 
+### Field states
+
+Every field and lot is in one of three states. The state is the field's color on the map in
+**Estado** mode and the dot beside its name in the list, so a color means the same everywhere:
+
+| State | Color | When |
+|---|---|---|
+| **Peligro** | red | A satellite fire within 10 km in the last 24 h, or lightning within 10 km in the last hour |
+| **Sin peligro** | green | The fire and lightning sources were read and nothing is near |
+| **Sin datos** | gray | A source could not be read or is late (`NO_DATA`, `STALE`): "nothing seen" is not said |
+
+Spraying conditions and unusual patches are not states: spraying is often "caution" for hours, and
+if it colored the map a real fire would no longer stand out. They show as red chips on the field
+and move it up the list ([12-field-page](12-field-page.md#the-list)).
+
 ### Tags and colors
 
 Tags group fields the way the contractor talks about them: "casa", "cliente 1", "cliente 2",
 `crop:soy`. Each tag has a color.
 
-- A tag gets a color from a fixed palette when it is first seen, and the user can change it from any
-  field card (tap the tag's dot). The color belongs to the tag, so every field with it changes.
+- A tag gets a color from a fixed palette when it is first seen, and the user can change it (tap
+  the tag's dot). The color belongs to the tag, so every field with it changes.
 - The palette has no red and no green: those mean danger and all clear everywhere in the app, and
   a "cliente 1" field must never look like a fire.
-- **Color fields by** in the layers menu switches the map between **Status** (red and green, the
-  default) and **Tags**. With tags, a field takes the color of its first tag (plain labels such as
-  "casa" before `key:value` tags, then alphabetical). A lot takes its field's color, so a client's
-  field reads as one piece; only a lot of an untagged field uses its own tags. Untagged fields are
-  gray. Fires and lightning keep their colors in both modes.
-- The tag chips above the list carry their color dot and work as the legend.
-- A field's tags are edited on its card: remove one with its ×, add one by typing (existing tags are
-  suggested). `GET /tags` lists the tags with their colors, `PATCH /tags/{id}` changes a color, and
-  `PUT /territories/{id}/tags` replaces a field's tags.
+- **Adding a tag** is right under the field's name on its page: its tags as chips, then
+  **+ Etiqueta**. Tapping it opens a box with the tags already used as one-tap suggestions; typing
+  a new name and Enter adds it. Each chip's × removes it.
+- **The legend on the map** (under the search bar) is also the switch between **Estado** (the
+  default) and **Etiquetas**. In Estado it names the three states and what each means; in
+  Etiquetas it lists the tags in use with their colors, gray for untagged fields, and
+  **+ Etiqueta** for the open field (or how to tag one when none is open).
+- With tags, a field takes the color of its first tag (plain labels such as "casa" before
+  `key:value` tags, then alphabetical). A lot takes its field's color, so a client's field reads as
+  one piece; only a lot of an untagged field uses its own tags. Fires and lightning keep their
+  colors in both modes.
+- The tag chips above the list filter it. `GET /tags` lists the tags with their colors,
+  `PATCH /tags/{id}` changes a color, and `PUT /territories/{id}/tags` replaces a field's tags.
 
 ## Scope: Argentina
 
