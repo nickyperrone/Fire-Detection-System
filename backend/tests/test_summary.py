@@ -80,11 +80,21 @@ def account(session):
         summary_sent_at=MONDAY_8 - timedelta(days=7, hours=1),
     )
     session.add(user)
-    create_territory(
+    field = create_territory(
         session,
         owner=EMAIL,
         name="La Esperanza",
         geometry=rect(-59.10, -33.00, -59.09, -32.99),
+        section_tolerance_m=5,
+        allowed_area=ARGENTINA,
+    )
+    create_territory(
+        session,
+        owner=EMAIL,
+        name="Lote 1",
+        # The east half: the same fires at the same distances as the whole field.
+        geometry=rect(-59.095, -33.00, -59.09, -32.99),
+        parent_id=field.id,
         section_tolerance_m=5,
         allowed_area=ARGENTINA,
     )
@@ -144,6 +154,8 @@ def test_a_weekly_summary_lists_the_week_per_field_once(session, thresholds, out
     assert "Rayos: 1 rayo a menos de 10 km." in body
     assert "Lluvia en la zona: 15,5 mm." in body
     assert "menú de tu cuenta" in body
+    # Its lot says the same, so it is named once instead of repeated.
+    assert "Lotes igual que el campo: Lote 1." in body
 
     assert (
         send_due_summaries(session, outbox.append, Settings(), thresholds, MONDAY_8)[

@@ -191,7 +191,7 @@ def _field_lines(item: "FieldSummary", locale: str) -> list[str]:
 def summary_email(
     locale: str, frequency: SummaryFrequency, items: list["FieldSummary"], app_url: str
 ) -> tuple[str, str]:
-    """Every field and lot, in the list's order; lots indented under their field."""
+    """Every field in the list's order; its lots listed in full only where they differ."""
     es = locale == "es"
     fields = [i for i in items if i.entry.territory.parent_id is None]
     with_fire = sum(1 for i in fields if i.fire_days)
@@ -212,13 +212,31 @@ def summary_email(
             if es
             else f"no fires near your {len(fields)} fields"
         )
+    lines = {item.entry.territory.id: _field_lines(item, locale) for item in items}
     blocks = []
     for item in items:
         t = item.entry.territory
-        indent = "    " if t.parent_id else ""
-        title = f"{indent}{t.name} ({t.hectares:.0f} ha)"
-        details = [f"{indent}  {line}" for line in _field_lines(item, locale)]
-        blocks.append("\n".join([title, *details, f"{indent}  {app_url}/?f={t.id}"]))
+        if t.parent_id is not None:
+            continue
+        block = [f"{t.name} ({t.hectares:.0f} ha)", *(f"  {line}" for line in lines[t.id])]
+        block.append(f"  {app_url}/?f={t.id}")
+        # A lot that says the same as its field is named, not repeated.
+        lots = [i.entry.territory for i in items if i.entry.territory.parent_id == t.id]
+        same = [lot.name for lot in lots if lines[lot.id] == lines[t.id]]
+        if same:
+            block.append(
+                ("  Lotes igual que el campo: " if es else "  Lots as the field: ")
+                + ", ".join(same)
+                + "."
+            )
+        for lot in lots:
+            if lines[lot.id] != lines[t.id]:
+                block += [
+                    f"    {lot.name} ({lot.hectares:.0f} ha)",
+                    *(f"      {line}" for line in lines[lot.id]),
+                ]
+                block.append(f"      {app_url}/?f={lot.id}")
+        blocks.append("\n".join(block))
     footer = (
         "Cambiá la frecuencia de este resumen (diario, semanal o ninguno) desde el menú de tu "
         f"cuenta: {app_url}"
