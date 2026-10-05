@@ -52,17 +52,28 @@ def snapshot_field(
         # The outline was edited: the old photos show another box.
         session.execute(delete(FieldSnapshot).where(FieldSnapshot.territory_id == field.id))
         shutil.rmtree(photo_root / str(field.id), ignore_errors=True)
-    kept = set(
-        session.scalars(
-            select(FieldSnapshot.acquired_on).where(FieldSnapshot.territory_id == field.id)
+    kept = {
+        row.acquired_on: row
+        for row in session.scalars(
+            select(FieldSnapshot).where(FieldSnapshot.territory_id == field.id)
         )
-    )
+    }
+    units = [field, *field.sections]
     added = 0
     for day, box in field_boxes(client, field, config, today, cache_root):
-        if day in kept:
+        row = kept.get(day)
+        if row and all(str(unit.id) in row.ndvi_means for unit in units):
             continue
-        stats = pass_stats(box.bands, field_mask(field, box))
-        if stats.cloud_share > config["max_field_cloud_share"]:
+        if row is None:
+            cloud_share = pass_stats(box.bands, field_mask(field, box)).cloud_share
+            if cloud_share > config["max_field_cloud_share"]:
+                continue
+        means = {
+            str(unit.id): pass_stats(box.bands, field_mask(unit, box)).ndvi_mean for unit in units
+        }
+        if row:
+            # A lot drawn after this pass: its greenness is read from the same image.
+            row.ndvi_means = means
             continue
         for view, render in RENDER.items():
             path = photo_path(photo_root, field.id, day, view)
@@ -77,8 +88,8 @@ def snapshot_field(
                 width=width,
                 height=height,
                 grid={"crs": box.crs.to_wkt(), "transform": list(box.transform)[:6]},
-                cloud_share=stats.cloud_share,
-                ndvi_mean=stats.ndvi_mean,
+                cloud_share=cloud_share,
+                ndvi_means=means,
                 processing_version=version,
             )
         )
@@ -160,7 +171,12 @@ def field_snapshots(session: Session, territory: Territory) -> dict:
         "height": latest.height,
         "outlines": outlines,
         "snapshots": [
-            {"date": r.acquired_on, "cloud_share": r.cloud_share, "ndvi_mean": r.ndvi_mean}
+            {
+                "date": r.acquired_on,
+                "cloud_share": r.cloud_share,
+                # The greenness of the page's own field or lot.
+                "ndvi_mean": r.ndvi_means.get(str(territory.id)),
+            }
             for r in rows
         ],
     }

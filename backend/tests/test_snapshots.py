@@ -119,6 +119,22 @@ def test_clear_passes_are_kept_once_and_cloudy_ones_skipped(
     # Already kept: nothing new on the next run.
     assert take(session, field, config, tmp_path, monkeypatch, passes) == 0
 
+    # A lot drawn later gets its greenness from the photos already kept.
+    lot = create_territory(
+        session,
+        owner=DEFAULT_OWNER,
+        name="Lote 3",
+        geometry=rect(-59.10, -33.00, -59.095, -32.995),
+        parent_id=field.id,
+        section_tolerance_m=5,
+        allowed_area=ARGENTINA,
+    )
+    session.commit()
+    # The worker loads fields afresh on every run; here the field still lists its old lots.
+    session.expire(field)
+    assert take(session, field, config, tmp_path, monkeypatch, passes) == 0
+    assert all(str(lot.id) in r.ndvi_means for r in rows)
+
     # An edited outline is another box: the old photos go.
     edit_outline(
         session,

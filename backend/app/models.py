@@ -537,5 +537,7 @@ class FieldSnapshot(Base):
     # The image grid: {"crs": WKT, "transform": [a, b, c, d, e, f]}, to place outlines on it.
     grid: Mapped[dict] = mapped_column(JSONB)
     cloud_share: Mapped[float] = mapped_column(Float)
-    ndvi_mean: Mapped[float | None] = mapped_column(Float)
+    # Mean NDVI of the clear part of the field and of each of its lots, by territory id (as text);
+    # None where clouds hid all of it.
+    ndvi_means: Mapped[dict[str, float | None]] = mapped_column(JSONB)
     processing_version: Mapped[str] = mapped_column(String(40))
