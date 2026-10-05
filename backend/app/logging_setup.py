@@ -7,3 +7,5 @@ def configure_logging() -> None:
     )
     # httpx logs every request URL at INFO, and the FIRMS URL contains the map key.
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    # rasterio says at INFO, on every Sentinel-2 read, that it reads the public bucket unsigned.
+    logging.getLogger("rasterio.session").setLevel(logging.WARNING)
