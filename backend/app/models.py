@@ -518,3 +518,24 @@ class FieldAnomaly(Base):
     where: Mapped[str] = mapped_column(String(10))
     geom = mapped_column(Geometry("GEOMETRY", srid=4326, spatial_index=False), nullable=False)
     processing_version: Mapped[str] = mapped_column(String(40))
+
+
+class FieldSnapshot(Base):
+    """One clear Sentinel-2 pass over a field, kept as a photo (docs/12-field-page.md). The images
+    are files under data/snapshots/; the row keeps what is needed to list them and draw outlines."""
+
+    __tablename__ = "field_snapshot"
+
+    territory_id: Mapped[int] = mapped_column(
+        ForeignKey("territory.id", ondelete="CASCADE"), primary_key=True
+    )
+    acquired_on: Mapped[date] = mapped_column(Date, primary_key=True)
+    # The box the photo covers; an edited outline makes a new one and drops the old photos.
+    box_key: Mapped[str] = mapped_column(String(10))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    # The image grid: {"crs": WKT, "transform": [a, b, c, d, e, f]}, to place outlines on it.
+    grid: Mapped[dict] = mapped_column(JSONB)
+    cloud_share: Mapped[float] = mapped_column(Float)
+    ndvi_mean: Mapped[float | None] = mapped_column(Float)
+    processing_version: Mapped[str] = mapped_column(String(40))

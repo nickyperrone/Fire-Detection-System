@@ -23,8 +23,9 @@ from app.models import DataQuality
 from app.providers.sentinel2 import CLOUDY_CLASSES
 from app.services.field_risk import compass
 
-# Bands read for each date: NDVI (red, nir), NDWI (green, nir), NBR (nir, swir22), clouds (scl).
-BANDS = ["red", "green", "nir", "swir22", "scl"]
+# Bands read for each date: NDVI (red, nir), NDWI (green, nir), NBR (nir, swir22), clouds (scl),
+# and blue for the field's true-color photo (docs/12-field-page.md).
+BANDS = ["red", "green", "blue", "nir", "swir22", "scl"]
 PIXEL_HA = 0.01  # 10 m pixels
 COORDINATE_PRECISION = 1e-7
 

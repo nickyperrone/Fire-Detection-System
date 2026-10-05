@@ -34,10 +34,15 @@ MARGIN_DEG = 0.002
 RESOLUTION_M = 10
 
 
-def _cache_dir(root: Path, territory: Territory, bounds: tuple[float, ...]) -> Path:
-    """One folder per field and outline: an edited outline reads its box again."""
-    outline = hashlib.sha1(repr(bounds).encode()).hexdigest()[:10]
-    return root / f"{territory.id}-{outline}"
+def box_key(bounds: tuple[float, ...]) -> str:
+    """Names a field's box and the bands read over it: an edited outline, or a new band, reads
+    the box again."""
+    return hashlib.sha1(repr((bounds, BANDS)).encode()).hexdigest()[:10]
+
+
+def field_bounds(territory: Territory) -> tuple[float, float, float, float]:
+    west, south, east, north = to_shape(territory.geom).bounds
+    return (west - MARGIN_DEG, south - MARGIN_DEG, east + MARGIN_DEG, north + MARGIN_DEG)
 
 
 def _load(path: Path) -> Box:
@@ -65,9 +70,8 @@ def field_boxes(
 ) -> list[tuple[date, Box]]:
     """Every scene of the lookback over the field's box, reading only dates not cached."""
     outline = to_shape(territory.geom)
-    west, south, east, north = outline.bounds
-    bounds = (west - MARGIN_DEG, south - MARGIN_DEG, east + MARGIN_DEG, north + MARGIN_DEG)
-    folder = _cache_dir(cache_root, territory, bounds)
+    bounds = field_bounds(territory)
+    folder = cache_root / f"{territory.id}-{box_key(bounds)}"
     scenes = clearest_per_day(
         search(
             client,
@@ -96,6 +100,13 @@ def field_boxes(
         return [found for found in pool.map(box_for, scenes) if found is not None]
 
 
+def field_mask(territory: Territory, box: Box) -> np.ndarray:
+    """The field's pixels on the box's grid."""
+    outline = transform_geom("EPSG:4326", box.crs, mapping(to_shape(territory.geom)))
+    shape_ = next(iter(box.bands.values())).shape
+    return rasterize([outline], out_shape=shape_, transform=box.transform).astype(bool)
+
+
 def analyze_field(
     client: httpx.Client, territory: Territory, config: dict, today: date, cache_root: Path
 ) -> Finding:
@@ -103,9 +114,8 @@ def analyze_field(
     if not boxes:
         return Finding(DataQuality.NO_DATA, None, [])
     first = boxes[-1][1]
-    shape_ = next(iter(first.bands.values())).shape
-    outline = transform_geom("EPSG:4326", first.crs, mapping(to_shape(territory.geom)))
-    field = rasterize([outline], out_shape=shape_, transform=first.transform).astype(bool)
+    field = field_mask(territory, first)
+    shape_ = field.shape
     dates = [
         found
         for day, box in boxes

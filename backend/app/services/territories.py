@@ -203,11 +203,11 @@ def list_territories(session: Session, owner: str, tags: Sequence[str] = ()) -> 
     territories = session.scalars(query).all()
     return sorted(
         territories,
-        key=lambda t: (t.parent_id or t.id, t.parent_id is not None, _natural(t.name)),
+        key=lambda t: (t.parent_id or t.id, t.parent_id is not None, natural_key(t.name)),
     )
 
 
-def _natural(name: str) -> list[int | str]:
+def natural_key(name: str) -> list[int | str]:
     """ "Lote 2" before "Lote 10", as people number lots."""
     return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", name)]
 

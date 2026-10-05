@@ -1,18 +1,20 @@
 from dataclasses import asdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.boundaries import allowed_area
 from app.config import get_thresholds
 from app.models import Territory
-from app.routers.dependencies import HttpDep, OwnerDep, SessionDep, TagsQuery
+from app.routers.dependencies import HttpDep, OwnerDep, PhotoRootDep, SessionDep, TagsQuery
 from app.schemas import (
     FireHistoryOut,
     OutlineIn,
     RiskEventOut,
     SettingsIn,
+    SnapshotsOut,
     SprayHourOut,
     TagsIn,
     TerritoryIn,
@@ -23,6 +25,7 @@ from app.services.field_risk import assess_active_fire_events, compass, reassess
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
 from app.services.pipeline import answer_territories
+from app.services.snapshots import View, field_snapshots, photo_path
 from app.services.spray_conditions import list_spray_hours
 from app.services.territories import (
     create_territory,
@@ -206,6 +209,29 @@ def anomalies(session: SessionDep, owner: OwnerDep, territory_id: int) -> dict:
     """The field's unusual patches as GeoJSON, to draw on the map (docs/11)."""
     owned(session, owner, territory_id)
     return field_anomaly_features(session, territory_id)
+
+
+@router.get("/{territory_id}/snapshots", response_model=SnapshotsOut)
+def snapshots(session: SessionDep, owner: OwnerDep, territory_id: int):
+    """The field's satellite photos, or a lot's field's (docs/12-field-page.md)."""
+    return field_snapshots(session, owned(session, owner, territory_id))
+
+
+@router.get("/{territory_id}/snapshots/{day}/{view}.png", response_class=FileResponse)
+def snapshot_image(
+    session: SessionDep,
+    owner: OwnerDep,
+    root: PhotoRootDep,
+    territory_id: int,
+    day: date,
+    view: View,
+):
+    owned(session, owner, territory_id)
+    path = photo_path(root, territory_id, day, view)
+    if not path.exists():
+        raise HTTPException(404, "no photo of that field on that date")
+    # A pass never changes once kept: the browser can keep it.
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
 @router.get("/{territory_id}/fire-history", response_model=FireHistoryOut)

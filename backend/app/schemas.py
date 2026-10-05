@@ -272,6 +272,31 @@ class FireHistoryOut(BaseModel):
     latest: FireDayOut | None
 
 
+class SnapshotOutlineOut(BaseModel):
+    territory_id: int
+    name: str
+    kind: TerritoryKind
+    # SVG path in the image's pixels.
+    path: str
+
+
+class SnapshotOut(BaseModel):
+    date: date
+    cloud_share: float
+    ndvi_mean: float | None
+
+
+class SnapshotsOut(BaseModel):
+    """A field's satellite photos, oldest first (docs/12-field-page.md). A lot answers with its
+    field's photos; `field_id` is the field whose images to load."""
+
+    field_id: int
+    width: int
+    height: int
+    outlines: list[SnapshotOutlineOut]
+    snapshots: list[SnapshotOut]
+
+
 class SourceStatusOut(BaseModel):
     provider: str
     product: str

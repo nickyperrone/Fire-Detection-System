@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated
 
 import httpx
@@ -11,6 +12,7 @@ from app.db import get_session
 from app.models import User
 from app.services.auth import user_for_session
 from app.services.mail import SendEmail, smtp_sender
+from app.services.snapshots import PHOTO_ROOT
 
 SESSION_COOKIE = "fw_session"
 
@@ -42,7 +44,13 @@ def http_client() -> Iterator[httpx.Client]:
         yield client
 
 
+def photo_root() -> Path:
+    """Where field photos are kept (docs/12-field-page.md); tests use a temporary folder."""
+    return PHOTO_ROOT
+
+
 HttpDep = Annotated[httpx.Client, Depends(http_client)]
 UserDep = Annotated[User | None, Depends(current_user)]
 OwnerDep = Annotated[str, Depends(require_owner)]
 MailDep = Annotated[SendEmail, Depends(mail_sender)]
+PhotoRootDep = Annotated[Path, Depends(photo_root)]

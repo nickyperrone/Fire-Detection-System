@@ -17,6 +17,7 @@ from app.services.pipeline import (
     run_forecast_pipeline,
     run_goes_fire_pipeline,
     run_lightning_pipeline,
+    run_snapshot_pipeline,
     run_spray_pipeline,
     run_summary_pipeline,
 )
@@ -49,8 +50,8 @@ def main() -> None:
     # One job at a time, on the main thread: FIRMS and GOES both correlate fire events and must not
     # interleave, and netCDF only silences HDF5's error printing on the main thread (in another
     # thread every GOES file logs a page of harmless diagnostics).
-    # Reading Sentinel-2 for every lot can take many minutes, so it runs in its own thread:
-    # a fire must never wait for an image. It shares nothing with the fire jobs.
+    # Reading Sentinel-2 for every lot and field can take many minutes, so it runs in its own
+    # thread: a fire must never wait for an image. It shares nothing with the fire jobs.
     # coalesce: a job that fell behind runs once, not once per missed interval.
     # misfire_grace_time=None: a job due while another runs starts late instead of being skipped;
     # with the default of 1 s, the one-minute lightning job starved every other job.
@@ -64,6 +65,11 @@ def main() -> None:
         (
             job("anomalies", run_anomaly_pipeline),
             intervals["anomaly_interval_minutes"],
+            "images",
+        ),
+        (
+            job("photos", run_snapshot_pipeline),
+            intervals["snapshot_interval_minutes"],
             "images",
         ),
         (

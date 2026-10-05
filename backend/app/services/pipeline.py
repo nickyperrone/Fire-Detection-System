@@ -21,10 +21,14 @@ from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
 from app.services.mail import smtp_sender
+from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
 from app.services.summary import send_due_summaries
 from app.versioning import processing_version
+
+# Each field's Sentinel-2 boxes, shared by the unusual-patches check and the photos.
+SENTINEL2_FIELDS = REPO_ROOT / "data" / "cache" / "sentinel2" / "fields"
 
 
 def _summary(run: IngestionRun) -> tuple:
@@ -160,5 +164,18 @@ def run_anomaly_pipeline(session: Session, client: httpx.Client, thresholds: dic
         thresholds["anomalies"],
         processing_version(thresholds),
         datetime.now(UTC),
-        REPO_ROOT / "data" / "cache" / "sentinel2" / "fields",
+        SENTINEL2_FIELDS,
+    )
+
+
+def run_snapshot_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
+    """A photo of every clear pass over each field (docs/12-field-page.md)."""
+    return take_snapshots(
+        session,
+        client,
+        thresholds["snapshots"],
+        processing_version(thresholds),
+        datetime.now(UTC),
+        SENTINEL2_FIELDS,
+        PHOTO_ROOT,
     )

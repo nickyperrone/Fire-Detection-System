@@ -191,6 +191,7 @@ worker:
   summary_interval_minutes: 15
   # Sentinel-2 passes every 5 days; checking 4 times a day catches each scene the day it lands.
   anomaly_interval_minutes: 360
+  snapshot_interval_minutes: 360
 
 # Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
 auth:
@@ -242,4 +243,18 @@ anomalies:
   burn_fire_radius_m: 1000
   min_patch_pixels: 100
   simplify_m: 10
+  read_threads: 4
+
+# Satellite photos of each field (docs/12-field-page.md).
+snapshots:
+  lookback_days: 180
+  max_scene_cloud_percent: 60
+  # A pass is kept while clouds and their shadows cover at most this share of the field.
+  max_field_cloud_share: 0.5
+  # One brightness for every date, never stretched per photo: reflectance x gain, then gamma.
+  true_color_gain: 3.2
+  true_color_gamma: 1.2
+  # NDVI painted from bare soil to dense crop.
+  greenness_min: -0.1
+  greenness_max: 0.85
   read_threads: 4
