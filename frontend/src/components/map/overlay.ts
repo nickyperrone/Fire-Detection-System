@@ -25,7 +25,9 @@ const SATELLITE_STYLE: StyleSpecification = {
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
-      maxzoom: 19,
+      // Over the fields around Larroque Esri has photos up to 18; at 19 it answers "Map data not
+      // yet available". Closer than 18, the map enlarges the zoom 18 photo instead.
+      maxzoom: 18,
       attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
     },
   },
