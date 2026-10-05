@@ -7,6 +7,7 @@ __pycache__/
 .DS_Store
 data/cache/
 data/models/
+data/snapshots/
 ml/datasets/
 ml/runs/
 *.pt
