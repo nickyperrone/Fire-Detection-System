@@ -53,6 +53,8 @@ class Finding:
     data_quality: DataQuality
     last_clear: date | None
     patches: list[Patch]
+    # The clear date before the last one: the change happened between the two.
+    previous_clear: date | None = None
 
 
 def _ratio(a: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -184,4 +186,4 @@ def find_patches(
         burnt = burn >= config["burnt_min_drop"]
     patches += _patches(burnt, burn, "burnt", field, transform, crs, config)
 
-    return Finding(DataQuality.GOOD, latest.day, patches)
+    return Finding(DataQuality.GOOD, latest.day, patches, earlier[-1].day)

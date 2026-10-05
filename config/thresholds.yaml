@@ -236,6 +236,8 @@ anomalies:
   water_ndwi: 0.0
   dry_ndwi: -0.1
   burnt_min_drop: 0.25
+  # A burnt-looking patch needs a satellite fire detection this close between the two dates.
+  burn_fire_radius_m: 1000
   min_patch_pixels: 100
   simplify_m: 10
   read_threads: 4

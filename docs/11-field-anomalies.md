@@ -28,7 +28,11 @@ For each field, from Sentinel-2 L2A at 10 m (Earth Search STAC, the same free Co
    - **Less green:** NDVI difference at least 2.5 standard deviations and 0.12 below the
      baseline.
    - **Water:** NDWI above 0 (open water) where the baseline was dry.
-   - **Burnt:** NBR difference at least 0.25 below the baseline.
+   - **Burnt:** NBR difference at least 0.25 below the baseline, **and** a satellite fire
+     detection within 1 km of the patch between the two clear dates. Freshly tilled or
+     sprayed-off ground darkens NBR the same way, so without a detected fire the patch is reported
+     as less green, never as burnt. A confirmed burn replaces the less-green patch over the same
+     ground.
 5. **Patches.** Pixels flagged for the same reason are joined into connected patches; patches
    under 1 ha (100 pixels) are dropped, so single noisy pixels and field edges never count.
 6. **Answer.** Each patch has its kind, area, where it lies in the field (N, SE, center…), the

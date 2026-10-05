@@ -1,14 +1,16 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import numpy as np
 import pytest
 import yaml
 from affine import Affine
+from geoalchemy2 import WKTElement
 from rasterio.crs import CRS
 
 from app.config import REPO_ROOT
-from app.models import DataQuality
-from app.vision.anomalies import FieldDate, field_date, find_patches
+from app.models import Confidence, DataQuality, Observation
+from app.services.anomalies import confirm_burns
+from app.vision.anomalies import FieldDate, Finding, Patch, field_date, find_patches
 
 CONFIG = yaml.safe_load((REPO_ROOT / "config" / "thresholds.yaml").read_text())["anomalies"]
 TODAY = date(2026, 10, 4)
@@ -95,3 +97,52 @@ def test_a_date_with_clouds_over_the_field_is_skipped():
     assert field_date(TODAY, bands, field_mask(), CONFIG) is not None
     bands["scl"][10:40, 10:70] = 9.0  # high cloud over half the field
     assert field_date(TODAY, bands, field_mask(), CONFIG) is None
+
+
+def patch(kind: str, west: float) -> Patch:
+    ring = [
+        [west, -33.0],
+        [west + 0.004, -33.0],
+        [west + 0.004, -32.996],
+        [west, -32.996],
+        [west, -33.0],
+    ]
+    return Patch(kind, 15.0, 0.4, "S", {"type": "Polygon", "coordinates": [ring]})
+
+
+def finding(*patches: Patch) -> Finding:
+    return Finding(DataQuality.GOOD, TODAY, list(patches), TODAY - timedelta(days=8))
+
+
+def detection(session, lon: float, when: datetime) -> None:
+    session.add(
+        Observation(
+            source="firms",
+            product="VIIRS_NOAA21_NRT",
+            satellite="NOAA-21",
+            sensor="VIIRS",
+            dedup_key=f"{lon}{when}",
+            acquired_at=when,
+            ingested_at=when,
+            geom=WKTElement(f"POINT({lon} -32.998)", srid=4326),
+            confidence_raw="h",
+            confidence=Confidence.HIGH,
+            raw_payload={},
+        )
+    )
+    session.commit()
+
+
+def test_a_burn_needs_a_fire_detection_between_the_two_dates(session):
+    burnt, less_green = patch("burnt", -59.10), patch("less_green", -59.10)
+    # No fire seen: the less-green patch over the same ground is the only report.
+    assert [p.kind for p in confirm_burns(session, finding(burnt, less_green), 1000).patches] == [
+        "less_green"
+    ]
+    # Alone, an unconfirmed burn is still reported, as less green.
+    assert [p.kind for p in confirm_burns(session, finding(burnt), 1000).patches] == ["less_green"]
+    # A fire detected next to it between the two dates confirms it, and it replaces the other.
+    detection(session, -59.098, datetime(2026, 9, 30, 15, tzinfo=UTC))
+    assert [p.kind for p in confirm_burns(session, finding(burnt, less_green), 1000).patches] == [
+        "burnt"
+    ]

@@ -485,3 +485,36 @@ class AlertEmail(Base):
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     dangers: Mapped[list] = mapped_column(JSONB)
     processing_version: Mapped[str] = mapped_column(String(40))
+
+
+class FieldAnomalyCheck(Base):
+    """The latest look at a field for unusual patches (docs/11-field-anomalies.md)."""
+
+    __tablename__ = "field_anomaly_check"
+
+    territory_id: Mapped[int] = mapped_column(
+        ForeignKey("territory.id", ondelete="CASCADE"), primary_key=True
+    )
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_clear: Mapped[date | None] = mapped_column(Date)
+    data_quality: Mapped[DataQuality] = mapped_column(_enum(DataQuality))
+    processing_version: Mapped[str] = mapped_column(String(40))
+
+
+class FieldAnomaly(Base):
+    """A patch of a field that changed unlike the rest of it on the latest clear date."""
+
+    __tablename__ = "field_anomaly"
+    __table_args__ = (Index("ix_field_anomaly_geom", "geom", postgresql_using="gist"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    territory_id: Mapped[int] = mapped_column(
+        ForeignKey("territory.id", ondelete="CASCADE"), index=True
+    )
+    observed_on: Mapped[date] = mapped_column(Date)
+    kind: Mapped[str] = mapped_column(String(20))
+    area_ha: Mapped[float] = mapped_column(Float)
+    score: Mapped[float] = mapped_column(Float)
+    where: Mapped[str] = mapped_column(String(10))
+    geom = mapped_column(Geometry("GEOMETRY", srid=4326, spatial_index=False), nullable=False)
+    processing_version: Mapped[str] = mapped_column(String(40))
