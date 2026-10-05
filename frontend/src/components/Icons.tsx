@@ -165,3 +165,30 @@ export const PatchIcon = (p: IconProps) => (
     <path d="M9 9.5c1.5-1.5 4-1 4.5.8.6 2-1.4 3.7-3.4 3.2-1.6-.4-2.4-2.6-1.1-4Z" />
   </Icon>
 );
+
+/** Points right; rotate it for the other directions. */
+export const ChevronIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m9 5 7 7-7 7" />
+  </Icon>
+);
+
+export const CompareIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3v18M8 8l-4 4 4 4M16 8l4 4-4 4" />
+  </Icon>
+);
+
+export const ExpandIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+  </Icon>
+);
+
+export const PhotoIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <path d="m3 16 5-5 4 4 3-3 6 6" />
+    <circle cx="16" cy="9" r="1.5" />
+  </Icon>
+);

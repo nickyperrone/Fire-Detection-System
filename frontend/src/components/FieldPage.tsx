@@ -18,17 +18,24 @@ import {
 } from "@/i18n/text";
 import { fireTone, lightningTone, sprayTone, type Tone } from "@/lib/status";
 
+import type { FieldTab } from "@/lib/useUrlState";
+import { FIELD_TABS } from "@/lib/useUrlState";
+
 import { AnomalySection } from "./Anomalies";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { FieldPhotos } from "./FieldPhotos";
 import { FieldSettings } from "./FieldSettings";
 import { FieldChips, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
 import { ForecastSection } from "./ForecastSection";
 import {
   BoltIcon,
+  ChevronIcon,
   CloseIcon,
   FlameIcon,
   ForecastIcon,
   HistoryIcon,
+  PatchIcon,
   PencilPlusIcon,
   SprayIcon,
   WindIcon,
@@ -45,66 +52,142 @@ const TONE_TEXT: Record<Tone, string> = {
 
 type Props = {
   entry: PortfolioEntry;
-  parentName: string | null;
-  onClose: () => void;
+  /** The lot's field; null on a field's own page. */
+  parent: PortfolioEntry | null;
+  /** A field's lots, in the order the list shows them. */
+  lots: PortfolioEntry[];
+  tab: FieldTab;
+  onTab: (tab: FieldTab) => void;
+  /** Opens another field or lot, or the list with null. */
+  onOpen: (id: number | null) => void;
   onEditOutline: () => void;
 };
 
-export function FieldDetail({
+/** A field's or lot's own page (docs/12-field-page.md): where it sits, its answers, its photos,
+ * its history and its settings. */
+export function FieldPage({
   entry,
-  parentName,
-  onClose,
+  parent,
+  lots,
+  tab,
+  onTab,
+  onOpen,
   onEditOutline,
 }: Props) {
   const { t } = useLocale();
-  const risks = useRiskEvents(entry.territory_id);
-  const hours = useSprayConditions(entry.territory_id);
-  const remove = useDeleteTerritory();
-  const { fire, spray } = entry;
-  const isField = entry.kind === "FIELD";
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs text-muted">
-            {parentName ? t.detail.lotOf(parentName) : t.detail.field}
-          </p>
-          <h2 className="truncate text-xl font-semibold">{entry.name}</h2>
-          <p className="text-sm text-muted">
-            {formatHectares(t, entry.hectares)}
-            {entry.tags.length > 0 && ` · ${entry.tags.join(" · ")}`}
-          </p>
-          <div className="mt-2">
-            <FieldChips entry={entry} />
-          </div>
+    <div>
+      <header className="sticky top-0 z-10 -mx-4 bg-[linear-gradient(rgb(17_21_28)_75%,rgb(17_21_28/0))] px-4 pb-4 pt-1 md:-top-4 md:-mt-4 md:pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <Breadcrumbs
+            items={[
+              { label: t.page.root, onClick: () => onOpen(null) },
+              ...(parent
+                ? [
+                    {
+                      label: parent.name,
+                      onClick: () => onOpen(parent.territory_id),
+                    },
+                  ]
+                : []),
+              { label: entry.name },
+            ]}
+          />
           <button
-            onClick={onEditOutline}
-            className="mt-2 flex items-center gap-1.5 text-sm font-medium text-accent"
+            onClick={() => onOpen(null)}
+            aria-label={t.detail.close}
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-white/[0.07] text-slate-300 hover:bg-white/15 hover:text-white"
           >
-            <PencilPlusIcon className="size-4" />
-            {t.detail.editOutline}
+            <CloseIcon className="size-4" />
           </button>
         </div>
-        <button
-          onClick={onClose}
-          aria-label={t.detail.close}
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10"
-        >
-          <CloseIcon className="size-4" />
-        </button>
+        <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight">
+          {entry.name}
+        </h2>
+        <p className="mt-0.5 text-sm text-muted tabular-nums">
+          {formatHectares(t, entry.hectares)}
+          {entry.tags.length > 0 && ` · ${entry.tags.join(" · ")}`}
+        </p>
+        <div className="mt-3">
+          <FieldChips entry={entry} />
+        </div>
+        <Tabs tab={tab} onTab={onTab} />
       </header>
 
-      <section>
-        <SectionTitle>{t.settings.title}</SectionTitle>
-        <FieldSettings entry={entry} />
-      </section>
+      <div key={tab} className="rise-in space-y-6 pt-1">
+        {tab === "now" && <Now entry={entry} />}
+        {tab === "photos" && <FieldPhotos territoryId={entry.territory_id} />}
+        {tab === "history" && (
+          <section>
+            <SectionTitle icon={<HistoryIcon className="size-4" />}>
+              {t.sections.history}
+            </SectionTitle>
+            <FireHistory territoryId={entry.territory_id} />
+          </section>
+        )}
+        {tab === "settings" && (
+          <Settings
+            entry={entry}
+            lots={lots}
+            onOpen={onOpen}
+            onEditOutline={onEditOutline}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
 
-      <section>
-        <SectionTitle>{t.tags.title}</SectionTitle>
-        <TagEditor entry={entry} />
-      </section>
+/** A segmented control whose white pill slides to the open tab. */
+function Tabs({
+  tab,
+  onTab,
+}: {
+  tab: FieldTab;
+  onTab: (tab: FieldTab) => void;
+}) {
+  const { t } = useLocale();
+  const index = FIELD_TABS.indexOf(tab);
+  return (
+    <div
+      role="tablist"
+      aria-label={t.page.tabsLabel}
+      className="relative mt-4 grid grid-cols-4 rounded-full bg-white/[0.07] p-1"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] rounded-full bg-white shadow-[0_2px_8px_rgb(0_0_0/0.3)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)]"
+        style={{ transform: `translateX(${index * 100}%)` }}
+      />
+      {FIELD_TABS.map((option) => (
+        <button
+          key={option}
+          role="tab"
+          aria-selected={tab === option}
+          onClick={() => onTab(option)}
+          className={`relative z-10 rounded-full py-1.5 text-[13px] font-medium transition-colors ${
+            tab === option
+              ? "text-slate-950"
+              : "text-slate-300 hover:text-white"
+          }`}
+        >
+          {t.page.tabs[option]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
+/** Today's answers: fire, spraying, weather, lightning, unusual patches and the fire forecast. */
+function Now({ entry }: { entry: PortfolioEntry }) {
+  const { t } = useLocale();
+  const risks = useRiskEvents(entry.territory_id);
+  const hours = useSprayConditions(entry.territory_id);
+  const { fire, spray } = entry;
+
+  return (
+    <>
       <section>
         <SectionTitle icon={<FlameIcon className="size-4" />}>
           {t.sections.fire}
@@ -136,11 +219,9 @@ export function FieldDetail({
         {(risks.data?.length ?? 0) > 1 && (
           <ul className="mt-2 space-y-1 text-sm text-slate-300">
             {risks.data!.map((r) => (
-              <li key={r.id} className="flex justify-between">
-                <span>
-                  {t.severity[r.severity]} · {formatDistance(t, r.distance_m)}{" "}
-                  {direction(t, r.direction)}
-                </span>
+              <li key={r.id}>
+                {t.severity[r.severity]} · {formatDistance(t, r.distance_m)}{" "}
+                {direction(t, r.direction)}
               </li>
             ))}
           </ul>
@@ -150,46 +231,6 @@ export function FieldDetail({
             {t.fire.rulesVersion(risks.data[0].processing_version)}
           </p>
         )}
-      </section>
-
-      <section>
-        <SectionTitle icon={<ForecastIcon className="size-4" />}>
-          {t.forecast.title}
-        </SectionTitle>
-        <ForecastSection forecast={entry.forecast} />
-      </section>
-
-      <section>
-        <SectionTitle icon={<HistoryIcon className="size-4" />}>
-          {t.sections.history}
-        </SectionTitle>
-        <FireHistory territoryId={entry.territory_id} />
-      </section>
-
-      <section>
-        <SectionTitle icon={<BoltIcon className="size-4" />}>
-          {t.sections.lightning}
-        </SectionTitle>
-        <p
-          className={`font-medium ${TONE_TEXT[lightningTone(entry.lightning)]}`}
-        >
-          {lightningTone(entry.lightning) === "unknown"
-            ? t.lightning.noData
-            : lightningSentence(t, entry)}
-        </p>
-        {entry.lightning.flashes > 0 && (
-          <div className="mt-1 space-y-0.5 text-sm text-slate-300">
-            <p>{t.lightning.last(formatAge(t, entry.lightning.last_at))}</p>
-            <p className="text-slate-400">{t.lightning.why}</p>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <SectionTitle icon={<WindIcon className="size-4" />}>
-          {t.weather.title}
-        </SectionTitle>
-        <WeatherSection weather={entry.weather} hours={hours.data ?? []} />
       </section>
 
       <section>
@@ -229,21 +270,131 @@ export function FieldDetail({
       </section>
 
       <section>
-        <SectionTitle>{t.sections.unusual}</SectionTitle>
+        <SectionTitle icon={<WindIcon className="size-4" />}>
+          {t.weather.title}
+        </SectionTitle>
+        <WeatherSection weather={entry.weather} hours={hours.data ?? []} />
+      </section>
+
+      <section>
+        <SectionTitle icon={<BoltIcon className="size-4" />}>
+          {t.sections.lightning}
+        </SectionTitle>
+        <p
+          className={`font-medium ${TONE_TEXT[lightningTone(entry.lightning)]}`}
+        >
+          {lightningTone(entry.lightning) === "unknown"
+            ? t.lightning.noData
+            : lightningSentence(t, entry)}
+        </p>
+        {entry.lightning.flashes > 0 && (
+          <div className="mt-1 space-y-0.5 text-sm text-slate-300">
+            <p>{t.lightning.last(formatAge(t, entry.lightning.last_at))}</p>
+            <p className="text-slate-400">{t.lightning.why}</p>
+          </div>
+        )}
+      </section>
+
+      <section>
+        <SectionTitle icon={<PatchIcon className="size-4" />}>
+          {t.sections.unusual}
+        </SectionTitle>
         <AnomalySection anomaly={entry.anomaly} />
       </section>
 
-      <button
-        onClick={() => {
-          if (window.confirm(t.detail.confirmDelete(entry.name, isField))) {
-            remove.mutate(entry.territory_id, { onSuccess: onClose });
-          }
-        }}
-        className="text-sm text-bad/80 hover:text-bad"
-      >
-        {isField ? t.detail.deleteField : t.detail.deleteLot}
-      </button>
-    </div>
+      <section>
+        <SectionTitle icon={<ForecastIcon className="size-4" />}>
+          {t.forecast.title}
+        </SectionTitle>
+        <ForecastSection forecast={entry.forecast} />
+      </section>
+    </>
+  );
+}
+
+/** Alerts and priority, tags, lots, the outline and deleting. */
+function Settings({
+  entry,
+  lots,
+  onOpen,
+  onEditOutline,
+}: {
+  entry: PortfolioEntry;
+  lots: PortfolioEntry[];
+  onOpen: (id: number | null) => void;
+  onEditOutline: () => void;
+}) {
+  const { t } = useLocale();
+  const remove = useDeleteTerritory();
+  const isField = entry.kind === "FIELD";
+
+  return (
+    <>
+      <section>
+        <SectionTitle>{t.settings.title}</SectionTitle>
+        <FieldSettings entry={entry} />
+      </section>
+
+      <section>
+        <SectionTitle>{t.tags.title}</SectionTitle>
+        <TagEditor entry={entry} />
+      </section>
+
+      {isField && (
+        <section>
+          <SectionTitle>{t.page.lots}</SectionTitle>
+          {lots.length === 0 ? (
+            <p className="text-sm text-slate-300">{t.page.noLots}</p>
+          ) : (
+            <ul className="divide-y divide-white/10 overflow-hidden rounded-2xl bg-white/[0.04]">
+              {lots.map((lot) => (
+                <li key={lot.territory_id}>
+                  <button
+                    onClick={() => onOpen(lot.territory_id)}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {lot.name}
+                    </span>
+                    <span className="text-xs text-muted tabular-nums">
+                      {formatHectares(t, lot.hectares)}
+                    </span>
+                    <ChevronIcon className="size-4 text-muted" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <section>
+        <SectionTitle>{t.page.outline}</SectionTitle>
+        <button
+          onClick={onEditOutline}
+          className="flex items-center gap-1.5 text-sm font-medium text-accent"
+        >
+          <PencilPlusIcon className="size-4" />
+          {t.detail.editOutline}
+        </button>
+      </section>
+
+      <section>
+        <SectionTitle>{t.page.danger}</SectionTitle>
+        <button
+          onClick={() => {
+            if (window.confirm(t.detail.confirmDelete(entry.name, isField))) {
+              remove.mutate(entry.territory_id, {
+                onSuccess: () => onOpen(null),
+              });
+            }
+          }}
+          className="text-sm text-bad/80 hover:text-bad"
+        >
+          {isField ? t.detail.deleteField : t.detail.deleteLot}
+        </button>
+      </section>
+    </>
   );
 }
 

@@ -405,6 +405,43 @@ export interface paths {
         patch: operations["change_settings_territories__territory_id__settings_patch"];
         trace?: never;
     };
+    "/territories/{territory_id}/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Snapshots
+         * @description The field's satellite photos, or a lot's field's (docs/12-field-page.md).
+         */
+        get: operations["snapshots_territories__territory_id__snapshots_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/territories/{territory_id}/snapshots/{day}/{view}.png": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Snapshot Image */
+        get: operations["snapshot_image_territories__territory_id__snapshots__day___view__png_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/territories/{territory_id}/spray-conditions": {
         parameters: {
             query?: never;
@@ -857,6 +894,45 @@ export interface components {
             parcels: {
                 [key: string]: unknown;
             }[];
+        };
+        /** SnapshotOut */
+        SnapshotOut: {
+            /** Cloud Share */
+            cloud_share: number;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Ndvi Mean */
+            ndvi_mean: number | null;
+        };
+        /** SnapshotOutlineOut */
+        SnapshotOutlineOut: {
+            kind: components["schemas"]["TerritoryKind"];
+            /** Name */
+            name: string;
+            /** Path */
+            path: string;
+            /** Territory Id */
+            territory_id: number;
+        };
+        /**
+         * SnapshotsOut
+         * @description A field's satellite photos, oldest first (docs/12-field-page.md). A lot answers with its
+         *     field's photos; `field_id` is the field whose images to load.
+         */
+        SnapshotsOut: {
+            /** Field Id */
+            field_id: number;
+            /** Height */
+            height: number;
+            /** Outlines */
+            outlines: components["schemas"]["SnapshotOutlineOut"][];
+            /** Snapshots */
+            snapshots: components["schemas"]["SnapshotOut"][];
+            /** Width */
+            width: number;
         };
         /** SourceStatusOut */
         SourceStatusOut: {
@@ -1884,6 +1960,72 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TerritoryOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    snapshots_territories__territory_id__snapshots_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    snapshot_image_territories__territory_id__snapshots__day___view__png_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+                day: string;
+                view: "true_color" | "greenness";
+            };
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

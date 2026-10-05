@@ -1053,6 +1053,104 @@
         "title": "SnapOut",
         "type": "object"
       },
+      "SnapshotOut": {
+        "properties": {
+          "cloud_share": {
+            "title": "Cloud Share",
+            "type": "number"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "ndvi_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ndvi Mean"
+          }
+        },
+        "required": [
+          "date",
+          "cloud_share",
+          "ndvi_mean"
+        ],
+        "title": "SnapshotOut",
+        "type": "object"
+      },
+      "SnapshotOutlineOut": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/TerritoryKind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "territory_id": {
+            "title": "Territory Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "territory_id",
+          "name",
+          "kind",
+          "path"
+        ],
+        "title": "SnapshotOutlineOut",
+        "type": "object"
+      },
+      "SnapshotsOut": {
+        "description": "A field's satellite photos, oldest first (docs/12-field-page.md). A lot answers with its\nfield's photos; `field_id` is the field whose images to load.",
+        "properties": {
+          "field_id": {
+            "title": "Field Id",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "outlines": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotOutlineOut"
+            },
+            "title": "Outlines",
+            "type": "array"
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotOut"
+            },
+            "title": "Snapshots",
+            "type": "array"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "field_id",
+          "width",
+          "height",
+          "outlines",
+          "snapshots"
+        ],
+        "title": "SnapshotsOut",
+        "type": "object"
+      },
       "SourceStatusOut": {
         "properties": {
           "last_error": {
@@ -3061,6 +3159,139 @@
           }
         },
         "summary": "Change Settings",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/snapshots": {
+      "get": {
+        "description": "The field's satellite photos, or a lot's field's (docs/12-field-page.md).",
+        "operationId": "snapshots_territories__territory_id__snapshots_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snapshots",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/snapshots/{day}/{view}.png": {
+      "get": {
+        "operationId": "snapshot_image_territories__territory_id__snapshots__day___view__png_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "day",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Day",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "view",
+            "required": true,
+            "schema": {
+              "enum": [
+                "true_color",
+                "greenness"
+              ],
+              "title": "View",
+              "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snapshot Image",
         "tags": [
           "territories"
         ]

@@ -15,12 +15,12 @@ import {
 import { useLocale } from "@/i18n/LocaleProvider";
 import { hazardTone, TONE_HEX } from "@/lib/status";
 import { leadingTag } from "@/lib/tags";
-import { formatCamera, useUrlState } from "@/lib/useUrlState";
+import { type FieldTab, formatCamera, useUrlState } from "@/lib/useUrlState";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
 import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
-import { FieldDetail } from "./FieldDetail";
+import { FieldPage } from "./FieldPage";
 import { MapButtons } from "./MapButtons";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
 import { useFieldDrawing } from "./map/useFieldDrawing";
@@ -62,7 +62,10 @@ export function FieldWatchApp() {
   const { t } = useLocale();
   const url = useUrlState();
   const [map, setMap] = useState<MapLibreMap | null>(null);
-  const [snap, setSnap] = useState<Snap>("peek");
+  // A link to a field opens the sheet on it; to its photos, all the way.
+  const [snap, setSnap] = useState<Snap>(() =>
+    url.selectedId === null ? "peek" : url.tab === "photos" ? "full" : "half",
+  );
   const [drawingActive, setDrawingActive] = useState(false);
   // The field whose outline is being edited; drawing then makes a piece to add or remove.
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -201,9 +204,10 @@ export function FieldWatchApp() {
     else map.once("load", () => window.setTimeout(flyIn, OPENING_PAUSE_MS));
   }, [map, territories.data, url.linkHasCamera, frame]);
 
+  // A step the back button undoes; another field opens on its first tab.
   const open = useCallback(
     (id: number | null) => {
-      url.update({ f: id === null ? null : String(id) });
+      url.update({ f: id === null ? null : String(id), tab: null }, true);
       setSnap(id === null ? "peek" : "half");
       const territory = id === null ? undefined : territoryById.get(id);
       if (territory) frame([territory]);
@@ -233,6 +237,26 @@ export function FieldWatchApp() {
     );
     setSnap("half");
   };
+
+  const openTab = (tab: FieldTab) => {
+    url.update({ tab: tab === "now" ? null : tab }, true);
+    // Photos need room: on a phone the sheet opens all the way.
+    if (tab === "photos") setSnap("full");
+  };
+
+  // Escape goes one step up the breadcrumbs: from a lot to its field, from a field to the list.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !selected || drawingOn) return;
+      const typing = (e.target as HTMLElement).closest(
+        "input, textarea, select",
+      );
+      if (typing || document.querySelector('[aria-modal="true"]')) return;
+      open(selected.parent_id);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [selected, drawingOn, open]);
 
   // Shift or Cmd click on the map adds a field to the selection, as in most map apps.
   const onMapSelect = useCallback(
@@ -361,14 +385,19 @@ export function FieldWatchApp() {
             ) : everything.isError ? (
               <p className="text-sm text-bad">{t.app.apiDown}</p>
             ) : selected ? (
-              <FieldDetail
+              <FieldPage
                 entry={selected}
-                parentName={
-                  selected.parent_id
-                    ? (territoryById.get(selected.parent_id)?.name ?? null)
-                    : null
+                parent={
+                  everything.data?.find(
+                    (e) => e.territory_id === selected.parent_id,
+                  ) ?? null
                 }
-                onClose={() => open(null)}
+                lots={(everything.data ?? []).filter(
+                  (e) => e.parent_id === selected.territory_id,
+                )}
+                tab={url.tab}
+                onTab={openTab}
+                onOpen={open}
                 onEditOutline={() => setEditingId(selected.territory_id)}
               />
             ) : hasFields || url.tags.length ? (

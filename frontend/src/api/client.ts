@@ -24,6 +24,18 @@ export type Tags = Schemas["TagsOut"];
 export type Me = Schemas["MeOut"];
 export type SummaryFrequency = Schemas["SummaryFrequency"];
 export type Detected = Schemas["DetectOut"];
+export type Snapshots = Schemas["SnapshotsOut"];
+export type Snapshot = Schemas["SnapshotOut"];
+export type SnapshotView = "true_color" | "greenness";
+
+/** One satellite photo of a field (docs/12-field-page.md). */
+export function snapshotUrl(
+  fieldId: number,
+  date: string,
+  view: SnapshotView,
+): string {
+  return `/api/territories/${fieldId}/snapshots/${date}/${view}.png`;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -132,6 +144,8 @@ export const api = {
     }),
   anomalies: (id: number) =>
     request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
+  snapshots: (id: number) =>
+    request<Snapshots>(`/territories/${id}/snapshots`),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),
 };

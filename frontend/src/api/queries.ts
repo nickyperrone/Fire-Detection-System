@@ -107,6 +107,14 @@ export function useFireHistory(id: number) {
   });
 }
 
+/** A field's satellite photos; a lot answers with its field's (docs/12-field-page.md). */
+export function useSnapshots(id: number) {
+  return useQuery({
+    queryKey: ["snapshots", id],
+    queryFn: () => api.snapshots(id),
+  });
+}
+
 export function useBoundary() {
   // A country's outline does not change while the app is open.
   return useQuery({

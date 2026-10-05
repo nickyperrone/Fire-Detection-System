@@ -20,6 +20,7 @@ type Changes = Partial<{
   p: string | null;
   c: string | null;
   signin: string | null;
+  tab: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
@@ -33,17 +34,25 @@ export function formatCamera({ lat, lon, zoom }: MapCamera): string {
   return `${lat.toFixed(5)},${lon.toFixed(5)},${zoom.toFixed(2)}`;
 }
 
-/**
- * App state that belongs in a shareable link: the open field (f), tag filters (tag), the fields
- * picked to compare (s) and whether only those are shown (only), basemap (b), field colors (c) and camera (v).
- */
+/** The sections of a field's page (docs/12-field-page.md#tabs). */
+export const FIELD_TABS = ["now", "photos", "history", "settings"] as const;
+export type FieldTab = (typeof FIELD_TABS)[number];
+
 /** What colors the fields on the map (docs/01-product.md#tags-and-colors). */
 export type ColorBy = "status" | "tags";
 
+/**
+ * App state that belongs in a shareable link: the open field (f) and its tab (tab), tag filters
+ * (tag), the fields picked to compare (s) and whether only those are shown (only), basemap (b),
+ * field colors (c) and camera (v).
+ */
 export function useUrlState() {
   const params = useSearchParams();
 
   const selectedId = params.get("f") ? Number(params.get("f")) : null;
+  const tabParam = params.get("tab") as FieldTab | null;
+  const tab: FieldTab =
+    tabParam && FIELD_TABS.includes(tabParam) ? tabParam : "now";
   const tagsKey = params.getAll("tag").join("\n");
   const tags = useMemo(() => (tagsKey ? tagsKey.split("\n") : []), [tagsKey]);
   const pickedKey = params.getAll("s").join(",");
@@ -68,7 +77,8 @@ export function useUrlState() {
   const initialCamera = useMemo(() => parseCamera(params.get("v")), []); // eslint-disable-line react-hooks/exhaustive-deps
   const linkHasCamera = useMemo(() => params.has("v"), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const update = useCallback((changes: Changes) => {
+  // `push`: a step the browser's back button should undo, like opening a field or a tab.
+  const update = useCallback((changes: Changes, push = false) => {
     const next = new URLSearchParams(window.location.search);
     for (const [key, value] of Object.entries(changes)) {
       next.delete(key);
@@ -76,11 +86,13 @@ export function useUrlState() {
       else if (value !== null && value !== undefined) next.set(key, value);
     }
     // Next.js syncs useSearchParams with the native History API, without a navigation.
-    window.history.replaceState(null, "", `?${next}`);
+    if (push) window.history.pushState(null, "", `?${next}`);
+    else window.history.replaceState(null, "", `?${next}`);
   }, []);
 
   return {
     selectedId,
+    tab,
     tags,
     picked,
     onlyPicked,
