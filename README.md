@@ -7,17 +7,19 @@ Satellite monitoring for the fields of a crop-spraying contractor around Larroqu
 spraying conditions favorable, and is something unusual happening in the field. Every answer shows
 its sources, their timestamps and whether the field could actually be observed.
 
-Field outlines can be **detected with computer vision**: tap inside a field and its boundary is
-found by segmenting a year of Sentinel-2 satellite images
-([how and how well](#computer-vision-field-outlines-from-satellite-images)).
+The app uses **computer vision** on Sentinel-2 satellite images twice: to **detect a field's
+outline** from a tap, by segmenting a year of images
+([how and how well](#computer-vision-field-outlines-from-satellite-images)), and to find
+**something unusual in a field**, patches that changed unlike the rest of their lot
+([how](#computer-vision-something-unusual-in-the-field)).
 
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
   fire history per field, fields drawn on the official property lines and edited with two pencils,
   alerts by email and in the browser, accounts opened with a link by email, visibility and
   priority per field, colored tags, field outlines detected by computer vision, the weather now
-  and for 48 hours per field, and daily or weekly summaries by email. Field anomalies from
-  Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
+  and for 48 hours per field, daily or weekly summaries by email, and unusual patches in each
+  field found in Sentinel-2 images. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -440,6 +442,40 @@ xychart-beta
 - Next step, measured with the same benchmark: a segmentation network trained on field
   boundaries.
 
+### Computer vision: something unusual in the field
+
+The third question, answered for every lot every time Sentinel-2 passes (about every five days):
+is part of the field doing something the rest is not? A patch that dried out, standing water after
+rain, a burnt corner ([11-field-anomalies](docs/11-field-anomalies.md)).
+
+A field changes all year on purpose (sown, green, ripe, harvested), so comparing it with itself a
+month ago would call every harvest a disaster. The method compares each 10 m pixel with **the rest
+of its own lot on the same day**, and that difference with the pixel's usual one:
+
+```mermaid
+flowchart LR
+    S["Sentinel-2 scenes<br/>last 90 days,<br/>field's box only"] --> C["Clouds and shadows out<br/>(scene classification)"]
+    C --> I["NDVI, NDWI, NBR<br/>per pixel and date"]
+    I --> R["Minus the lot's median<br/>that day: a harvest of the<br/>whole lot cancels out"]
+    R --> B["Against the pixel's usual<br/>difference (mean, spread)<br/>over earlier dates"]
+    B --> P["Patches of 1 ha or more:<br/>less green, water,<br/>burnt"]
+    P --> F{"Burnt?"}
+    F -- "fire detected<br/>near it" --> K["Burnt"]
+    F -- "no fire seen" --> L["Tilled or sprayed-off ground:<br/>reported only if it<br/>lost green too"]
+```
+
+- **Per lot, not per field.** Lots are sown and harvested apart: in the first version, a 1,225 ha
+  field of 16 lots showed 10 "patches" that were just one lot harvested before the others. Checked
+  lot by lot, the same imagery shows none there.
+- **Burns are confirmed with the fire detections the app already has.** Freshly tilled ground
+  darkens the burn index the same way; seen on La Esperanza between 16 and 24 September, where
+  the soil turned dark brown with no fire anywhere near. Without a satellite fire detection near
+  the patch between the two dates, it is never called burnt.
+- **Clouds are never "all fine".** With no clear pass in 10 days the card says since when the
+  field is under cloud, and shows what the last clear image showed, with its date.
+- Classic computer vision on index time series (no trained model), about 15 s per lot the first
+  time and a single date per new scene afterwards, cached per lot.
+
 ### Map loading by zoom
 
 ```mermaid
@@ -472,6 +508,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
 | [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos, Buenos Aires, Córdoba), loaded on demand; drawings fitted to them |
 | [10-field-detection](docs/10-field-detection.md) | Field outlines by computer vision from a year of Sentinel-2 images, and its benchmark |
+| [11-field-anomalies](docs/11-field-anomalies.md) | Something unusual in a field: patches that change unlike the rest of their lot |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
@@ -491,7 +528,7 @@ the tests against a PostGIS service container, and a Docker image build.
 | Satellite basemap | Esri World Imagery | Needs an ArcGIS license for commercial use | Live |
 | Argentina's boundary | Natural Earth | Public domain | Live |
 | Field outlines by computer vision | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Live |
-| Field anomalies, 10 m | Sentinel-2 L2A | Free (Copernicus) | Next |
+| Unusual patches in a field, 10 m | Sentinel-2 L2A | Free (Copernicus) | Live |
 | Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Free (USGS) | Planned |
 | Radar through clouds, flooding | Sentinel-1 GRD | Free (Copernicus) | Planned |
 
@@ -520,7 +557,7 @@ neither is set up yet.
 | `backend/app/providers/` | FIRMS, GOES, Open-Meteo and cadastre clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray, GOES, lightning, history, cadastre, portfolio |
 | `backend/app/forecast/` | Fire Weather Index, training data, model training and live serving |
-| `backend/app/vision/` | Computer vision: field outlines from Sentinel-2, and their benchmark |
+| `backend/app/vision/` | Computer vision: field outlines and unusual patches from Sentinel-2, and the outline benchmark |
 | `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
