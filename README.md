@@ -18,8 +18,9 @@ outline** from a tap, by segmenting a year of images
   fire history per field, fields drawn on the official property lines and edited with two pencils,
   alerts by email and in the browser, accounts opened with a link by email, visibility and
   priority per field, colored tags, field outlines detected by computer vision, the weather now
-  and for 48 hours per field, daily or weekly summaries by email, and unusual patches in each
-  field found in Sentinel-2 images. See the [roadmap](docs/01-product.md#roadmap).
+  and for 48 hours per field, daily or weekly summaries by email, unusual patches in each
+  field found in Sentinel-2 images, and a page per field with its satellite photos over time. See
+  the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -91,6 +92,7 @@ flowchart LR
         METEO["Open-Meteo<br/>forecast"]
         POWER["NASA POWER<br/>daily reanalysis"]
         ATER["Provincial cadastres<br/>Entre Ríos, Buenos Aires,<br/>Córdoba (WFS)"]
+        S2["Sentinel-2 L2A<br/>Earth Search"]
     end
     subgraph WORKER["Worker: one process, APScheduler"]
         J1["fires · every 5 min"]
@@ -98,6 +100,8 @@ flowchart LR
         J3["lightning · every 1 min"]
         J4["weather + spray · hourly"]
         J5["forecast · hourly"]
+        J6["unusual patches · 6 h"]
+        J7["field photos · 6 h"]
     end
     DB[("PostgreSQL + PostGIS")]
     subgraph READ["Read side"]
@@ -110,7 +114,10 @@ flowchart LR
     GOES --> J2 & J3
     METEO --> J4 & J5
     POWER --> J5
-    J1 & J2 & J3 & J4 & J5 --> DB
+    S2 --> J6 & J7
+    J1 & J2 & J3 & J4 & J5 & J6 & J7 --> DB
+    J7 -- "PNG per pass" --> FILES[("data/snapshots")]
+    FILES --> API
     ATER -- "on demand,<br/>per map tile" --> API
     DB --> API & TILES & CLI
     API & TILES --> WEB
@@ -476,6 +483,44 @@ flowchart LR
 - Classic computer vision on index time series (no trained model), about 15 s per lot the first
   time and a single date per new scene afterwards, cached per lot.
 
+### The field page and its satellite photos
+
+Each field and lot has its own page ([12-field-page](docs/12-field-page.md)). Breadcrumbs say where
+you are and take you back (`Mis campos › Campo Larroque › Lote 1`); the open page and tab live in
+the link, so the browser's back button, a reload or a shared link land on the same place, and
+Escape goes one step up.
+
+```mermaid
+flowchart LR
+    L["Mis campos<br/>every field, worst first"] --> F["Field page"]
+    F --> T1["Ahora<br/>fire, spraying, weather,<br/>lightning, unusual, forecast"]
+    F --> T2["Fotos<br/>a photo per clear pass"]
+    F --> T3["Historial<br/>ten years of fire"]
+    F --> T4["Ajustes<br/>alerts, tags, lots,<br/>outline, delete"]
+    T4 --> LOT["Lot page<br/>same tabs"]
+    LOT -. "breadcrumbs, Escape,<br/>back button" .-> F
+```
+
+The photos are the Sentinel-2 passes the unusual-patches check already reads, kept as images:
+
+```mermaid
+flowchart LR
+    P["Every pass of the last<br/>180 days over the field"] --> C{"Clouds over<br/>the field?"}
+    C -- "over half" --> X["skipped"]
+    C -- "half or less" --> R["Color real: one fixed<br/>brightness for every date"]
+    C -- "half or less" --> G["Verdor: NDVI on one<br/>fixed scale, brown to green"]
+    R & G --> PNG["PNG files,<br/>outline drawn on top"]
+    P --> M["Mean NDVI of the field<br/>and of each lot"]
+    M --> CH["Greenness over time:<br/>sowing, growth, harvest"]
+```
+
+- **Comparable dates.** No photo is stretched on its own, so a field that looks browner really is
+  browner. A before/after slider wipes between any two dates.
+- **Lots on their field's photo.** A lot's page shows its field's photos with the lot highlighted,
+  and the greenness line of the lot itself.
+- **Files, not database rows.** Photos are PNG files; the table keeps the date, the cloud share,
+  the greenness per lot and the image grid used to draw the outlines.
+
 ### Map loading by zoom
 
 ```mermaid
@@ -509,6 +554,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos, Buenos Aires, Córdoba), loaded on demand; drawings fitted to them |
 | [10-field-detection](docs/10-field-detection.md) | Field outlines by computer vision from a year of Sentinel-2 images, and its benchmark |
 | [11-field-anomalies](docs/11-field-anomalies.md) | Something unusual in a field: patches that change unlike the rest of their lot |
+| [12-field-page](docs/12-field-page.md) | A page per field and lot: breadcrumbs, tabs, satellite photos and greenness over time |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
@@ -529,6 +575,8 @@ the tests against a PostGIS service container, and a Docker image build.
 | Argentina's boundary | Natural Earth | Public domain | Live |
 | Field outlines by computer vision | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Live |
 | Unusual patches in a field, 10 m | Sentinel-2 L2A | Free (Copernicus) | Live |
+| Field photos and greenness over time | Sentinel-2 L2A | Free (Copernicus) | Live |
+| Email | [Resend](https://resend.com/) over SMTP, from a verified domain | Free up to 100 emails a day and 3,000 a month | Live |
 | Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Free (USGS) | Planned |
 | Radar through clouds, flooding | Sentinel-1 GRD | Free (Copernicus) | Planned |
 
@@ -543,8 +591,8 @@ repositories. Using it for a business changes two things:
 - **Esri World Imagery:** the satellite basemap needs an ArcGIS license for commercial use; the
   alternative is a satellite layer with an open license.
 
-Running it for others also needs a server (database, API, worker) and an SMTP service for email;
-neither is set up yet.
+Email goes out through Resend's free plan (100 a day, 3,000 a month); more needs a paid plan.
+Running it for others also needs a server (database, API, worker), which is not set up yet.
 
 ## Folders
 
@@ -557,7 +605,7 @@ neither is set up yet.
 | `backend/app/providers/` | FIRMS, GOES, Open-Meteo and cadastre clients that return normalized records |
 | `backend/app/services/` | Ingestion, correlation, field risk, spray, GOES, lightning, history, cadastre, portfolio |
 | `backend/app/forecast/` | Fire Weather Index, training data, model training and live serving |
-| `backend/app/vision/` | Computer vision: field outlines and unusual patches from Sentinel-2, and the outline benchmark |
+| `backend/app/vision/` | Computer vision: field outlines and unusual patches from Sentinel-2, the outline benchmark, and the field photos |
 | `backend/app/routers/` | FastAPI endpoints (HTTP only), including vector tiles |
 | `backend/alembic/` | Database migrations |
 | `backend/tests/` | Unit tests and PostGIS integration tests |
