@@ -634,6 +634,18 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "MeIn": {
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/SummaryFrequency"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "MeIn",
+        "type": "object"
+      },
       "MeOut": {
         "properties": {
           "email": {
@@ -643,11 +655,15 @@
           "locale": {
             "title": "Locale",
             "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SummaryFrequency"
           }
         },
         "required": [
           "email",
-          "locale"
+          "locale",
+          "summary"
         ],
         "title": "MeOut",
         "type": "object"
@@ -1236,6 +1252,15 @@
         "title": "SprayStatus",
         "type": "string"
       },
+      "SummaryFrequency": {
+        "enum": [
+          "WEEKLY",
+          "DAILY",
+          "OFF"
+        ],
+        "title": "SummaryFrequency",
+        "type": "string"
+      },
       "TagColorIn": {
         "properties": {
           "color": {
@@ -1783,6 +1808,111 @@
           }
         },
         "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      },
+      "patch": {
+        "operationId": "change_me_auth_me_patch",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me/summary": {
+      "post": {
+        "description": "Sends the account's summary at once (docs/09-accounts-and-alerts.md#summaries).",
+        "operationId": "summary_now_auth_me_summary_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summary Now",
         "tags": [
           "auth"
         ]

@@ -22,6 +22,7 @@ export type OutlineIn = Schemas["OutlineIn"];
 export type SettingsIn = Schemas["SettingsIn"];
 export type Tags = Schemas["TagsOut"];
 export type Me = Schemas["MeOut"];
+export type SummaryFrequency = Schemas["SummaryFrequency"];
 export type Detected = Schemas["DetectOut"];
 
 export class ApiError extends Error {
@@ -105,6 +106,12 @@ export const api = {
       body: JSON.stringify({ email, locale }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  changeSummary: (summary: SummaryFrequency) =>
+    request<Me>("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify({ summary }),
+    }),
+  summaryNow: () => request<void>("/auth/me/summary", { method: "POST" }),
   detectField: (lat: number, lon: number) =>
     request<Detected>("/fields/detect", {
       method: "POST",

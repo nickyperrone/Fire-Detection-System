@@ -226,6 +226,18 @@ const en = {
     signedOutBody:
       "Sign in with your email to mark your fields, see how far fires are from them and get alerts by email.",
   },
+  summary: {
+    title: "Summary by email",
+    frequency: { WEEKLY: "Weekly", DAILY: "Daily", OFF: "None" } as Record<
+      "WEEKLY" | "DAILY" | "OFF",
+      string
+    >,
+    sendNow: "Send me one now",
+    sending: "Sending…",
+    sent: (email: string) => `Sent to ${email}.`,
+    noFields: "Add a field first.",
+    failed: "It could not be sent. Try again in a minute.",
+  },
   weather: {
     title: "Weather",
     noData: "No weather for this field yet.",
@@ -569,6 +581,15 @@ const es: Messages = {
     signOut: "Salir",
     signedOutBody:
       "Entrá con tu mail para marcar tus campos, ver a qué distancia están los fuegos y recibir avisos por mail.",
+  },
+  summary: {
+    title: "Resumen por mail",
+    frequency: { WEEKLY: "Semanal", DAILY: "Diario", OFF: "No" },
+    sendNow: "Mandame uno ahora",
+    sending: "Mandando…",
+    sent: (email) => `Enviado a ${email}.`,
+    noFields: "Agregá un campo primero.",
+    failed: "No se pudo mandar. Probá de nuevo en un minuto.",
   },
   weather: {
     title: "Clima",

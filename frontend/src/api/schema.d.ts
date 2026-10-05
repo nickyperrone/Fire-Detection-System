@@ -75,6 +75,27 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Change Me */
+        patch: operations["change_me_auth_me_patch"];
+        trace?: never;
+    };
+    "/auth/me/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Summary Now
+         * @description Sends the account's summary at once (docs/09-accounts-and-alerts.md#summaries).
+         */
+        post: operations["summary_now_auth_me_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -643,12 +664,17 @@ export interface components {
              */
             locale: "es" | "en";
         };
+        /** MeIn */
+        MeIn: {
+            summary: components["schemas"]["SummaryFrequency"];
+        };
         /** MeOut */
         MeOut: {
             /** Email */
             email: string;
             /** Locale */
             locale: string;
+            summary: components["schemas"]["SummaryFrequency"];
         };
         /** OutlineIn */
         OutlineIn: {
@@ -866,6 +892,11 @@ export interface components {
          * @enum {string}
          */
         SprayStatus: "FAVORABLE" | "CAUTION" | "UNFAVORABLE";
+        /**
+         * SummaryFrequency
+         * @enum {string}
+         */
+        SummaryFrequency: "WEEKLY" | "DAILY" | "OFF";
         /** TagColorIn */
         TagColorIn: {
             /**
@@ -1116,6 +1147,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_me_auth_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_now_auth_me_summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

@@ -34,6 +34,18 @@ export function useLogin() {
   });
 }
 
+export function useChangeSummary() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.changeSummary,
+    onSuccess: (me) => client.setQueryData(["me"], me),
+  });
+}
+
+export function useSummaryNow() {
+  return useMutation({ mutationFn: api.summaryNow });
+}
+
 export function useLogout() {
   const client = useQueryClient();
   return useMutation({
