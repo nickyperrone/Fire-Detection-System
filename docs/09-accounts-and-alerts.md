@@ -53,6 +53,25 @@ with alerts on, sent when it starts or grows, not while it lasts.
   version). The "already emailed" marks are written only after the email is accepted by the mail
   server, so a failed send is retried on the next run instead of being lost.
 
+## Summaries
+
+Alerts say what just changed; a summary says how the fields are doing, so the contractor can plan
+the week and tell clients about their fields.
+
+- **When:** weekly on Monday at 07:00 Argentina time (the default), daily at 07:00, or never. The
+  choice is in the account menu (`PATCH /auth/me {summary}`), next to **Send me one now**
+  (`POST /auth/me/summary`), which sends the summary at once.
+- **What**, for every field and lot of the account, worst first (the same order as the list):
+  - looking back over the period (a day or a week): fire days within 10 km and the closest one,
+    lightning flashes within 10 km, and rain in the area (the field's 0.5° weather point, so it is
+    the area's rain, not a rain gauge);
+  - looking ahead: the next spraying window in 48 h, and the fire forecast when it is HIGH or
+    VERY_HIGH in the next 3 days.
+- A field with nothing to report says so in one line, so the client's field is never missing.
+- The worker checks every 15 minutes which accounts are due (`app_user.summary_sent_at`), and marks
+  them only after the mail server accepts the email, as with alerts.
+- Same language as the alerts, plain text, with a link to each field and to the summary setting.
+
 ## Sending
 
 Plain SMTP, so the provider can change without code changes. Settings come from the environment:
