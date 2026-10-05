@@ -15,8 +15,9 @@ found by segmenting a year of Sentinel-2 satellite images
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
   fire history per field, fields drawn on the official property lines and edited with two pencils,
   alerts by email and in the browser, accounts opened with a link by email, visibility and
-  priority per field, colored tags, and field outlines detected by computer vision. Field anomalies
-  from Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
+  priority per field, colored tags, field outlines detected by computer vision, the weather now
+  and for 48 hours per field, and daily or weekly summaries by email. Field anomalies from
+  Sentinel-2 are next. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -350,6 +351,28 @@ flowchart LR
 - A fire near a field and its lots is one line, not one per lot; lightning is emailed at most
   once an hour per field.
 - Danger already present is not announced again; only a change is news.
+
+### Weather and summaries
+
+Every field and lot, own or a client's, shows its weather in the list ("22° · wind from S 12 km/h ·
+gusts 23 · 4 mm in 24 h") and, on its card, now plus the next 48 hours every 3 hours. It is the
+same hourly forecast the spraying advice uses, so the two never disagree
+([01-product](docs/01-product.md#weather-per-field)).
+
+Alerts say what just changed; a **summary** says how every field is doing, by email, weekly on
+Monday at 07:00 (the default), daily at 07:00 or never, chosen in the account menu, which can also
+send one at once ([09-accounts-and-alerts](docs/09-accounts-and-alerts.md#summaries)).
+
+```mermaid
+flowchart LR
+    C["Every 15 min:<br/>accounts due?"] --> B["Each field, in the<br/>list's order"]
+    B --> P["Looking back over the day or week:<br/>fire days within 10 km and the closest,<br/>lightning, rain in the area"]
+    B --> F["Looking ahead:<br/>next spraying window in 48 h,<br/>fire risk HIGH or above in 3 days"]
+    P & F --> E["One email;<br/>lots that match their field<br/>are named, not repeated"]
+```
+
+Fire days come from the satellite detections themselves, not from fire events, and detections on
+known industrial heat sources do not count.
 
 ### Colored tags
 
