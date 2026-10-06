@@ -363,7 +363,13 @@ const en = {
     priority: "Priority",
     priorities: { HIGH: "High", NORMAL: "Normal", LOW: "Low" },
   },
-  search: { placeholder: "Search fields, lots or tags", lot: "lot" },
+  search: {
+    placeholder: "Search fields, tags or places",
+    lot: "lot",
+    yours: "Your fields",
+    places: "Places",
+    searching: "Searching places…",
+  },
   freshness: {
     apiDown: "API unreachable",
     noData: "No satellite data yet",
@@ -821,7 +827,13 @@ const es: Messages = {
     priority: "Prioridad",
     priorities: { HIGH: "Alta", NORMAL: "Normal", LOW: "Baja" },
   },
-  search: { placeholder: "Buscar campos, lotes o etiquetas", lot: "lote" },
+  search: {
+    placeholder: "Buscar campos, etiquetas o lugares",
+    lot: "lote",
+    yours: "Tus campos",
+    places: "Lugares",
+    searching: "Buscando lugares…",
+  },
   freshness: {
     apiDown: "Sin conexión con la API",
     noData: "Todavía no hay datos satelitales",

@@ -781,6 +781,67 @@
         "title": "OutlineIn",
         "type": "object"
       },
+      "PlaceOut": {
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "maxItems": 4,
+                "minItems": 4,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "context": {
+            "title": "Context",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "latitude": {
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "title": "Longitude",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "context",
+          "kind",
+          "longitude",
+          "latitude",
+          "bbox"
+        ],
+        "title": "PlaceOut",
+        "type": "object"
+      },
       "PortfolioEntryOut": {
         "properties": {
           "alerts": {
@@ -2399,6 +2460,54 @@
         "summary": "Health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/places": {
+      "get": {
+        "description": "Addresses, streets, towns and areas in Argentina for the search box (docs/04).",
+        "operationId": "places_places_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 120,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceOut"
+                  },
+                  "title": "Response Places Places Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Places",
+        "tags": [
+          "places"
         ]
       }
     },

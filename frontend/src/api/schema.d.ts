@@ -213,6 +213,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Places
+         * @description Addresses, streets, towns and areas in Argentina for the search box (docs/04).
+         */
+        get: operations["places_places_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolio": {
         parameters: {
             query?: never;
@@ -820,6 +840,26 @@ export interface components {
              * @default false
              */
             preview: boolean;
+        };
+        /** PlaceOut */
+        PlaceOut: {
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
+            /** Context */
+            context: string;
+            /** Kind */
+            kind: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Name */
+            name: string;
         };
         /** PortfolioEntryOut */
         PortfolioEntryOut: {
@@ -1581,6 +1621,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    places_places_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

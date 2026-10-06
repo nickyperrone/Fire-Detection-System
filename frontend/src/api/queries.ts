@@ -124,6 +124,20 @@ export function useBoundary() {
   });
 }
 
+// Places are searched from this many letters, as the API does.
+const PLACE_MIN_LETTERS = 3;
+
+/** Addresses, streets and towns in Argentina for the search box (docs/04-frontend.md). */
+export function usePlaces(query: string) {
+  const q = query.trim();
+  return useQuery({
+    queryKey: ["places", q.toLowerCase()],
+    queryFn: () => api.places(q),
+    enabled: q.length >= PLACE_MIN_LETTERS,
+    staleTime: Infinity,
+  });
+}
+
 /** The clouds and rain layer's scan, checked every few minutes while it is on. */
 export function useWeatherLayer(enabled: boolean) {
   return useQuery({

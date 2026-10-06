@@ -605,6 +605,7 @@ the tests against a PostGIS service container, and a Docker image build.
 | Dark and light basemaps | CARTO Dark Matter and Positron | Free up to 1M requests a month for a business | Live |
 | Satellite basemap | Esri World Imagery | Needs an ArcGIS license for commercial use | Live |
 | Argentina's boundary | Natural Earth | Public domain | Live |
+| Places in the search box | [Photon](https://photon.komoot.io/) by komoot, on OpenStreetMap data | Free fair use; OpenStreetMap is ODbL (credited on the map) | Live |
 | Field outlines by computer vision | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Live |
 | Unusual patches in a field, 10 m | Sentinel-2 L2A | Free (Copernicus) | Live |
 | Field photos and greenness over time | Sentinel-2 L2A | Free (Copernicus) | Live |

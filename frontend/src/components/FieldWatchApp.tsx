@@ -4,6 +4,7 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  type Place,
   type PortfolioEntry,
   type Territory,
   weatherFrameUrl,
@@ -41,6 +42,8 @@ type Bounds = [[number, number], [number, number]];
 const LARROQUE: [number, number] = [-59.01, -33.04];
 const OPENING_FLIGHT_MS = 3000;
 const OPENING_PAUSE_MS = 700;
+// The closest the map flies to a field or a place: a whole field still fits.
+const FRAME_MAX_ZOOM = 15;
 
 function boundsOf(territories: Territory[]): Bounds | null {
   const points = territories.flatMap((t) =>
@@ -181,21 +184,28 @@ export function FieldWatchApp() {
     everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
   const patches = useAnomalyPatches(selected?.territory_id ?? null);
 
-  const frame = useCallback(
-    (targets: Territory[], duration = 900) => {
-      const bounds = boundsOf(targets);
-      if (!bounds) return;
+  // Fits a box in the part of the map the panels leave free.
+  const fitBox = useCallback(
+    (bounds: Bounds, duration: number) => {
       const mobile = window.innerWidth < 768;
       map?.fitBounds(bounds, {
         padding: mobile
           ? // Below the search bar and the folded legend, above the sheet.
             { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
           : { top: 60, bottom: 60, left: 440, right: 80 },
-        maxZoom: 15,
+        maxZoom: FRAME_MAX_ZOOM,
         duration,
       });
     },
     [map],
+  );
+
+  const frame = useCallback(
+    (targets: Territory[], duration = 900) => {
+      const bounds = boundsOf(targets);
+      if (bounds) fitBox(bounds, duration);
+    },
+    [fitBox],
   );
 
   // First visit without a camera in the link: start over Argentina and fly to the fields
@@ -255,6 +265,23 @@ export function FieldWatchApp() {
         .filter((t): t is Territory => !!t),
     );
     setSnap("half");
+  };
+
+  // A town is framed whole; a street or an address as close as a field.
+  const flyToPlace = (place: Place) => {
+    const [west, south, east, north] = place.bbox ?? [
+      place.longitude,
+      place.latitude,
+      place.longitude,
+      place.latitude,
+    ];
+    fitBox(
+      [
+        [west, south],
+        [east, north],
+      ],
+      1200,
+    );
   };
 
   const openTab = (tab: FieldTab) => {
@@ -372,6 +399,7 @@ export function FieldWatchApp() {
               <SearchBar
                 territories={territories.data ?? []}
                 onPick={(t) => open(t.id)}
+                onPickPlace={flyToPlace}
               />
             </div>
             {((signedIn && hasFields) || url.showRisk || url.showWeather) && (
