@@ -162,9 +162,31 @@ export function DrawFieldOverlay({
             {t.draw.notices[drawing.notice]}
           </p>
         ) : (
-          <p className="mt-1 text-sm text-slate-300">
-            {hint} {t.draw.zoomHint}
-          </p>
+          <>
+            <p className="mt-1 text-sm text-slate-300">
+              {hint} {t.draw.zoomHint}
+            </p>
+            {drawing.tool === "corners" && drawing.corners > 0 && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="mr-auto text-xs text-muted tabular-nums">
+                  {t.draw.cornersCount(drawing.corners)}
+                </span>
+                <button
+                  onClick={drawing.undoCorner}
+                  className="h-10 rounded-xl px-3 text-sm font-medium text-slate-200 ring-1 ring-white/15 hover:bg-white/10"
+                >
+                  {t.draw.undoCorner}
+                </button>
+                <button
+                  onClick={drawing.closeCorners}
+                  disabled={drawing.corners < 3}
+                  className="h-10 rounded-xl bg-accent px-4 text-sm font-semibold text-slate-950 disabled:opacity-40"
+                >
+                  {t.draw.closeField}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </>

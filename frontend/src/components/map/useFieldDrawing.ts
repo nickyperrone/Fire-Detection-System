@@ -7,7 +7,9 @@ import {
   TerraDraw,
   TerraDrawFreehandMode,
   TerraDrawPolygonMode,
+  TerraDrawModeUndoRedo,
   TerraDrawSelectMode,
+  TerraDrawUndoRedoKeyboardShortcuts,
   ValidateNotSelfIntersecting,
 } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
@@ -78,6 +80,12 @@ export type FieldDrawing = {
   fit: Fit | null;
   /** Switches between the fitted shape and the drawing as it was made. */
   toggleFit: () => void;
+  /** Corners placed so far with the corners tool, before the shape is closed. */
+  corners: number;
+  /** Takes back the last corner placed. */
+  undoCorner: () => void;
+  /** Closes the shape on the corners placed, as tapping the first corner again does. */
+  closeCorners: () => void;
 };
 
 export type ParcelInfo = {
@@ -97,11 +105,25 @@ function metersPerPixel(map: MapLibreMap): number {
   return (40_075_016.686 * Math.cos(latitude)) / (512 * 2 ** map.getZoom());
 }
 
-/** Panning stays on for the parcel tool (it only taps) and is off while tracing or tapping
- * corners, where a press that moves a few pixels would pan instead of drawing. */
+/** Panning is off only while tracing, where every drag draws. Tapping corners leaves it on:
+ * a drag moves the map to reach the next corner, a tap places one. */
 function setPanning(map: MapLibreMap, tool: DrawTool) {
-  if (TAP_TOOLS.includes(tool)) map.dragPan.enable();
-  else map.dragPan.disable();
+  if (tool === "trace") map.dragPan.disable();
+  else map.dragPan.enable();
+}
+
+// Terra Draw closes a polygon being drawn on this key, received by the map's canvas.
+const FINISH_KEY = "Enter";
+
+/** Corners committed so far on a polygon still being drawn. */
+function cornersDrawn(draw: TerraDraw): number {
+  const drawing = draw
+    .getSnapshot()
+    .find(
+      (f) => f.properties.mode === "polygon" && f.properties.currentlyDrawing,
+    );
+  const count = drawing?.properties.committedCoordinateCount;
+  return typeof count === "number" ? count : 0;
 }
 
 /** A field is one polygon: the largest piece of the parcel, without holes. */
@@ -140,6 +162,11 @@ function buildDraw(map: MapLibreMap): TerraDraw {
     },
   });
   return new TerraDraw({
+    // Undo takes back the last corner while drawing (also Cmd or Ctrl+Z).
+    undoRedo: {
+      modeLevel: new TerraDrawModeUndoRedo(),
+      keyboardShortcuts: new TerraDrawUndoRedoKeyboardShortcuts(),
+    },
     adapter: new TerraDrawMapLibreGLAdapter({
       map,
       // Default is 8 px; taps on a phone in a moving truck drift more than that.
@@ -184,6 +211,7 @@ export function useFieldDrawing(
   const [parcel, setParcel] = useState<ParcelInfo | null>(null);
   const [fitting, setFitting] = useState(false);
   const [fit, setFit] = useState<Fit | null>(null);
+  const [corners, setCorners] = useState(0);
   // Both versions of a fitted shape, so either can be put back.
   const shapesRef = useRef<{
     drawn: DrawnPolygon;
@@ -300,6 +328,7 @@ export function useFieldDrawing(
 
       draw.on("change", (ids) => {
         setNotice(null);
+        if (closedIdRef.current === null) setCorners(cornersDrawn(draw));
         const closedId = closedIdRef.current;
         const shape =
           closedId !== null
@@ -327,6 +356,7 @@ export function useFieldDrawing(
           shape = { type: "Polygon", coordinates: [ring] };
           draw.updateFeatureGeometry(id, shape);
         }
+        setCorners(0);
         close(id, shape);
         void fitToPropertyLines(id, shape);
       });
@@ -344,6 +374,7 @@ export function useFieldDrawing(
         setNotice(null);
         setFit(null);
         setFitting(false);
+        setCorners(0);
         shapesRef.current = null;
       };
     };
@@ -386,8 +417,22 @@ export function useFieldDrawing(
     setParcel(null);
     setDetected(null);
     setFit(null);
+    setCorners(0);
     shapesRef.current = null;
   }, []);
+
+  const undoCorner = useCallback(() => {
+    const draw = drawRef.current;
+    if (!draw?.canUndo()) return;
+    draw.undo();
+    setCorners(cornersDrawn(draw));
+  }, []);
+
+  const closeCorners = useCallback(() => {
+    map
+      ?.getCanvas()
+      .dispatchEvent(new KeyboardEvent("keyup", { key: FINISH_KEY }));
+  }, [map]);
 
   const toggleFit = useCallback(() => {
     const draw = drawRef.current;
@@ -416,5 +461,8 @@ export function useFieldDrawing(
     fitting,
     fit,
     toggleFit,
+    corners,
+    undoCorner,
+    closeCorners,
   };
 }

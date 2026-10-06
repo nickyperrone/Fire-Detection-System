@@ -411,8 +411,12 @@ const en = {
         "Tap inside the field: its outline is found in a year of satellite images.",
       trace:
         "Press on the edge of the field and drag your finger all around it. Lift to close.",
-      corners: "Tap each corner. Tap the first corner again to close.",
+      corners:
+        "Tap each corner; drag to move the map. Close with “Close field” or by tapping the first corner.",
     },
+    undoCorner: "Undo corner",
+    closeField: "Close field",
+    cornersCount: (n: number) => `${n} ${n === 1 ? "corner" : "corners"}`,
     zoomHint: "Zoom with two fingers or the wheel.",
     searching: "Looking up the parcel…",
     detecting: "Detecting the field in satellite images…",
@@ -865,8 +869,12 @@ const es: Messages = {
         "Tocá adentro del campo: su borde se encuentra en un año de imágenes satelitales.",
       trace:
         "Apoyá el dedo en el borde del campo y recorrelo entero. Levantá el dedo para cerrar.",
-      corners: "Tocá cada esquina. Tocá la primera otra vez para cerrar.",
+      corners:
+        "Tocá cada esquina; arrastrá para mover el mapa. Cerrá con «Cerrar campo» o tocando la primera esquina.",
     },
+    undoCorner: "Deshacer esquina",
+    closeField: "Cerrar campo",
+    cornersCount: (n) => `${n} ${n === 1 ? "esquina" : "esquinas"}`,
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
     searching: "Buscando la parcela…",
     detecting: "Detectando el campo en imágenes satelitales…",

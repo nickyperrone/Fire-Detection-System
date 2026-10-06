@@ -39,6 +39,9 @@ more than two taps.
   the rule that failed. The next favorable window is labeled on the strip.
 - **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update
   live, then name and tags. A drawn field can be split into sections the same way.
+- **Corners never trap the user**: while placing corners a drag still moves the map (a tap places
+  a corner, a drag pans), the card counts the corners and offers **Undo corner** (also Cmd or
+  Ctrl+Z) and **Close field** from three corners on, besides tapping the first corner again.
 - **Editing a field's outline**: the field card has **Edit outline**, which opens draw mode with two
   pencils, **Add** and **Remove**. With either one the user draws a piece with the usual tools
   (Parcel, Trace, Corners; a hand-drawn piece is fitted to the property lines too) and the card
