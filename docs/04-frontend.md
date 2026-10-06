@@ -59,7 +59,8 @@ more than two taps.
   (`flyTo`) when selecting a field, like a navigation app.
 - **Fields stand out on every basemap**: a dark edge under each outline keeps red, green and tag
   colors readable over crops of any color on the satellite photo; outlines and labels grow with
-  zoom; the selected field glows white.
+  zoom; the selected field or lot glows white, and an open lot's dashed edge turns solid and as
+  thick as a field's, so it stands out from the lots around it.
 - **Motion is short and subtle**: the selected field's glow fades in after the camera arrives,
   content rises in when the sheet changes, list rows appear in a quick cascade, and buttons give a
   small press. Fires breathe like a live location dot. Everything holds still for people who set

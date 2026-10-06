@@ -70,7 +70,8 @@ export const RISK_BANDS = [
   { band: "VERY_HIGH", color: TONE_HEX.bad, opacity: 0.52 },
 ] as const;
 export const PARCELS_LAYER = "parcel-line";
-export const SELECTED_GLOW_LAYER = "field-glow";
+// The selected field or lot glows; MapView fades the glow in.
+export const SELECTED_GLOW_LAYERS = ["field-glow", "section-glow"] as const;
 
 // Set per field by the app: its status tone, or its tag color when coloring by tags.
 const territoryColor: ExpressionSpecification = [
@@ -135,7 +136,9 @@ const TERRITORY_KIND_BY_LAYER = {
   "section-fill": "SECTION",
   "field-line": "FIELD",
   "field-casing": "FIELD",
-  [SELECTED_GLOW_LAYER]: "FIELD",
+  "field-glow": "FIELD",
+  "section-glow": "SECTION",
+  "section-selected": "SECTION",
   "section-line": "SECTION",
   "field-label": "FIELD",
   "section-label": "SECTION",
@@ -264,21 +267,26 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     filter: byKind("SECTION"),
     paint: { "fill-color": territoryColor, "fill-opacity": fillOpacity(0.12) },
   });
-  // The selected field glows; MapView fades it in on selection (selection is feature state,
-  // which does not animate by itself).
-  map.addLayer({
-    id: SELECTED_GLOW_LAYER,
-    type: "line",
-    source: "territories",
-    "source-layer": "territories",
-    filter: byKind("FIELD"),
-    paint: {
-      "line-color": "#ffffff",
-      "line-width": fieldWidth(8),
-      "line-blur": 6,
-      "line-opacity": 0,
-    },
-  });
+  // The selected field or lot glows; MapView fades it in on selection (selection is feature
+  // state, which does not animate by itself).
+  for (const [id, kind] of [
+    ["field-glow", "FIELD"],
+    ["section-glow", "SECTION"],
+  ] as const) {
+    map.addLayer({
+      id,
+      type: "line",
+      source: "territories",
+      "source-layer": "territories",
+      filter: byKind(kind),
+      paint: {
+        "line-color": "#ffffff",
+        "line-width": fieldWidth(8),
+        "line-blur": 6,
+        "line-opacity": 0,
+      },
+    });
+  }
   // A dark edge under each outline keeps red and green readable over fields of any color in the
   // satellite photo, and over the light basemap.
   map.addLayer({
@@ -316,6 +324,25 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
       "line-width": 1.2,
       "line-dasharray": [2, 2],
       "line-opacity": lineOpacity,
+    },
+  });
+  // The open lot's edge is solid and as thick as a field's: a dash pattern cannot follow
+  // feature state, so it is a second layer, shown only for the selected lot.
+  map.addLayer({
+    id: "section-selected",
+    type: "line",
+    source: "territories",
+    "source-layer": "territories",
+    filter: byKind("SECTION"),
+    paint: {
+      "line-color": territoryColor,
+      "line-width": fieldWidth(),
+      "line-opacity": [
+        "case",
+        ["boolean", ["feature-state", "selected"], false],
+        1,
+        0,
+      ],
     },
   });
   const labelPaint = {

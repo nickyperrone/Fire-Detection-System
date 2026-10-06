@@ -26,7 +26,7 @@ import {
   hideTerritories,
   PARCELS_LAYER,
   RISK_LAYER,
-  SELECTED_GLOW_LAYER,
+  SELECTED_GLOW_LAYERS,
   styleFor,
   TERRITORY_LAYERS,
 } from "./overlay";
@@ -225,7 +225,7 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map?.getLayer(SELECTED_GLOW_LAYER) || props.selectedId === null)
+    if (!map?.getLayer(SELECTED_GLOW_LAYERS[0]) || props.selectedId === null)
       return;
     return fadeInGlow(map);
   }, [props.selectedId]);
@@ -446,15 +446,17 @@ function showFire(
 const GLOW_OPACITY = 0.55;
 const GLOW_MS = 450;
 
-/** Fades the selected field's glow in, so the eye finds it after the camera moves. */
+/** Fades the selected field's or lot's glow in, so the eye finds it after the camera moves. */
 function fadeInGlow(map: MapLibreMap): () => void {
-  const set = (opacity: number) =>
-    map.setPaintProperty(SELECTED_GLOW_LAYER, "line-opacity", [
-      "case",
-      ["boolean", ["feature-state", "selected"], false],
-      opacity,
-      0,
-    ]);
+  const set = (opacity: number) => {
+    for (const layer of SELECTED_GLOW_LAYERS)
+      map.setPaintProperty(layer, "line-opacity", [
+        "case",
+        ["boolean", ["feature-state", "selected"], false],
+        opacity,
+        0,
+      ]);
+  };
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     set(GLOW_OPACITY);
     return () => {};
