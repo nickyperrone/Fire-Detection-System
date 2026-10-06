@@ -7,6 +7,7 @@ from app.routers import (
     fields,
     fires,
     health,
+    places,
     portfolio,
     tags,
     territories,
@@ -30,6 +31,7 @@ app.include_router(tags.router)
 app.include_router(auth.router)
 app.include_router(fields.router)
 app.include_router(weather.router)
+app.include_router(places.router)
 
 
 @app.exception_handler(TerritoryError)

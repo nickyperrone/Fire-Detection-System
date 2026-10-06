@@ -272,6 +272,15 @@ class FireHistoryOut(BaseModel):
     latest: FireDayOut | None
 
 
+class PlaceOut(BaseModel):
+    name: str
+    context: str
+    kind: str
+    longitude: float
+    latitude: float
+    bbox: tuple[float, float, float, float] | None
+
+
 class WeatherFrameOut(BaseModel):
     scanned_at: datetime
     # Names the frame's image: /weather-layer/{id}.png.

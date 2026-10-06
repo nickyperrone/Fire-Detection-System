@@ -279,3 +279,12 @@ snapshots:
   greenness_min: -0.1
   greenness_max: 0.85
   read_threads: 4
+
+# Places in the search box (docs/04-frontend.md): OpenStreetMap through Photon.
+places:
+  url: https://photon.komoot.io/api/
+  # Argentina: west, south, east, north.
+  bbox: [-73.6, -55.1, -53.6, -21.8]
+  limit: 5
+  min_letters: 3
+  cache_seconds: 3600
