@@ -5,7 +5,13 @@ import { useState } from "react";
 import type { PortfolioEntry } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatHectares } from "@/i18n/text";
-import { allFine, attention, hazardTone, TONE_HEX } from "@/lib/status";
+import {
+  allFine,
+  attention,
+  hazardTone,
+  lotNeedsALook,
+  TONE_HEX,
+} from "@/lib/status";
 import { weatherLine } from "@/lib/weather";
 
 import { FieldChips, headline } from "./FieldSummary";
@@ -189,7 +195,7 @@ function EntryList(props: Props) {
   return (
     <ul className="mt-3 space-y-2">
       {groups(props.entries).map(({ field, lots }, index) => {
-        const needLook = lots.filter((lot) => attention(lot) < 4).length;
+        const needLook = lots.filter(lotNeedsALook).length;
         const expanded = open.has(field.territory_id);
         return (
           <li

@@ -17,9 +17,9 @@ import {
   ruleSentence,
 } from "@/i18n/text";
 import {
-  attention,
   fireTone,
   hazardTone,
+  lotNeedsALook,
   lightningTone,
   sprayTone,
   type Tone,
@@ -434,7 +434,7 @@ function LotList({
             <span className="min-w-0 flex-1 truncate text-sm font-medium">
               {lot.name}
             </span>
-            {attention(lot) < 4 && (
+            {lotNeedsALook(lot) && (
               <span className="truncate text-xs text-bad">
                 {headline(t, lot)}
               </span>

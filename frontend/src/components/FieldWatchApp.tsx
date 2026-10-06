@@ -183,7 +183,8 @@ export function FieldWatchApp() {
       const mobile = window.innerWidth < 768;
       map?.fitBounds(bounds, {
         padding: mobile
-          ? { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
+          ? // Below the search bar and the folded legend, above the sheet.
+            { top: 140, bottom: window.innerHeight * 0.5, left: 30, right: 70 }
           : { top: 60, bottom: 60, left: 440, right: 80 },
         maxZoom: 15,
         duration,
@@ -355,8 +356,10 @@ export function FieldWatchApp() {
         />
       ) : (
         <>
-          <div className="pointer-events-none absolute inset-x-3 top-3 z-10 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-[72px] md:max-w-[380px]">
-            <div className="pointer-events-auto">
+          {/* No z-index here, so each child stacks on its own: search results over the map
+              buttons, the layers menu over the legend, both over the sheet. */}
+          <div className="pointer-events-none absolute inset-x-3 top-3 pt-[env(safe-area-inset-top)] md:left-[424px] md:right-[72px] md:max-w-[380px]">
+            <div className="pointer-events-auto relative z-[26]">
               <SearchBar
                 territories={territories.data ?? []}
                 onPick={(t) => open(t.id)}
@@ -364,7 +367,7 @@ export function FieldWatchApp() {
             </div>
             {((signedIn && hasFields) || url.showRisk || url.showWeather) && (
               // On a phone it stops short of the map buttons on the right.
-              <div className="pointer-events-auto mr-[60px] mt-2 md:mr-0">
+              <div className="pointer-events-auto relative z-[21] mr-[60px] mt-2 md:mr-0">
                 <MapLegend
                   showFields={signedIn && hasFields}
                   showRisk={url.showRisk}
@@ -390,7 +393,7 @@ export function FieldWatchApp() {
             )}
           </div>
 
-          <div className="absolute right-3 top-[72px] z-10 md:top-3">
+          <div className="absolute right-3 top-[72px] z-[22] md:top-3">
             <MapButtons
               basemap={url.basemap}
               onBasemap={(b) => url.update({ b })}

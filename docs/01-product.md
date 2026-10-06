@@ -100,7 +100,9 @@ Tags group fields the way the contractor talks about them: "casa", "cliente 1", 
 - **The legend on the map** (under the search bar) is also the switch between **Estado** (the
   default) and **Etiquetas**. In Estado it names the three states and what each means; in
   Etiquetas it lists the tags in use with their colors, gray for untagged fields, and
-  **+ Etiqueta** for the open field (or how to tag one when none is open).
+  **+ Etiqueta** for the open field (or how to tag one when none is open). With the fire risk or
+  clouds and rain layers on, their scales are added below. It folds to just its switch with the
+  arrow beside it; on a phone it starts folded, so the map stays in view.
 - With tags, a field takes the color of its first tag (plain labels such as "casa" before
   `key:value` tags, then alphabetical). A lot takes its field's color, so a client's field reads as
   one piece; only a lot of an untagged field uses its own tags. Fires and lightning keep their

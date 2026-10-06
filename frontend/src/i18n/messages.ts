@@ -301,6 +301,7 @@ const en = {
   >,
   legend: {
     label: "Map legend",
+    toggle: "Show or hide the legend",
     untagged: "Untagged",
     addTag: "Tag",
     openToTag: "Open a field to tag it",
@@ -373,7 +374,7 @@ const en = {
     polar: "a few passes a day, published about 3 h later",
   },
   dock: {
-    label: "Status",
+    label: "Status bar",
     data: "Satellite data",
     offline: "Offline",
     noData: "No data",
@@ -755,6 +756,7 @@ const es: Messages = {
   },
   legend: {
     label: "Leyenda del mapa",
+    toggle: "Mostrar u ocultar la leyenda",
     untagged: "Sin etiqueta",
     addTag: "Etiqueta",
     openToTag: "Abrí un campo para etiquetarlo",
@@ -824,7 +826,7 @@ const es: Messages = {
     polar: "pocas pasadas por día, llegan unas 3 h después",
   },
   dock: {
-    label: "Estado",
+    label: "Barra de estado",
     data: "Datos satelitales",
     offline: "Sin conexión",
     noData: "Sin datos",

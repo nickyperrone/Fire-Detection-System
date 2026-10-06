@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatAge } from "@/i18n/text";
@@ -39,6 +39,14 @@ const WEATHER_SWATCHES = [
   { name: "moderate", color: "rgb(37 99 235)" },
   { name: "heavy", color: "rgb(147 51 234)" },
 ] as const;
+const WIDE = "(min-width: 768px)";
+
+function subscribeToWidth(onChange: () => void): () => void {
+  const query = window.matchMedia(WIDE);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
 // Past this many tags the legend says "+N" instead of growing over the map.
 const SHOWN_TAGS = 5;
 
@@ -55,22 +63,69 @@ export function MapLegend({
   onAddTag,
 }: Props) {
   const { t } = useLocale();
+  // Open on a computer; on a phone it starts folded to its switch, so the map stays in view.
+  // Until the user folds or opens it, the screen width decides.
+  const wide = useSyncExternalStore(
+    subscribeToWidth,
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
+  const [choice, setChoice] = useState<boolean | null>(null);
+  const open = choice ?? wide;
 
   return (
     <section
       aria-label={t.legend.label}
       className="liquid w-fit max-w-full rounded-2xl p-1.5 text-xs"
     >
-      {showFields && (
+      <div className="flex items-center gap-1">
+        {showFields ? (
+          <div
+            role="radiogroup"
+            aria-label={t.colorBy.label}
+            className="flex flex-1 rounded-full bg-black/25 p-0.5"
+          >
+            {(["status", "tags"] as const).map((option) => (
+              <button
+                key={option}
+                role="radio"
+                aria-checked={colorBy === option}
+                onClick={() => onColorBy(option)}
+                className={`flex-1 rounded-full px-3 py-1.5 font-medium ${
+                  colorBy === option
+                    ? "bg-white text-slate-950"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                {t.colorBy[option]}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="px-2 font-medium text-slate-200">
+            {t.legend.label}
+          </span>
+        )}
+        <button
+          aria-expanded={open}
+          aria-label={t.legend.toggle}
+          onClick={() => setChoice(!open)}
+          className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-white"
+        >
+          <ChevronIcon
+            className={`size-3.5 transition-transform ${open ? "-rotate-90" : "rotate-90"}`}
+          />
+        </button>
+      </div>
+      {open && showFields && (
         <FieldColors
           colorBy={colorBy}
-          onColorBy={onColorBy}
           tags={tags}
           canTag={canTag}
           onAddTag={onAddTag}
         />
       )}
-      {showRisk && (
+      {open && showRisk && (
         <div
           className={`px-2 pb-1 pt-1.5 ${showFields ? "mt-1 border-t border-white/10" : ""}`}
         >
@@ -93,7 +148,7 @@ export function MapLegend({
           </div>
         </div>
       )}
-      {weatherScannedAt !== undefined && (
+      {open && weatherScannedAt !== undefined && (
         <div
           className={`px-2 pb-1 pt-1.5 ${showFields || showRisk ? "mt-1 border-t border-white/10" : ""}`}
         >
@@ -118,39 +173,17 @@ export function MapLegend({
   );
 }
 
+/** What each field color means: the three states, or the tags in use. */
 function FieldColors({
   colorBy,
-  onColorBy,
   tags,
   canTag,
   onAddTag,
-}: Omit<Props, "showFields" | "showRisk" | "weatherScannedAt">) {
+}: Pick<Props, "colorBy" | "tags" | "canTag" | "onAddTag">) {
   const { t } = useLocale();
   const [explained, setExplained] = useState(false);
   return (
     <>
-      <div
-        role="radiogroup"
-        aria-label={t.colorBy.label}
-        className="flex rounded-full bg-black/25 p-0.5"
-      >
-        {(["status", "tags"] as const).map((option) => (
-          <button
-            key={option}
-            role="radio"
-            aria-checked={colorBy === option}
-            onClick={() => onColorBy(option)}
-            className={`flex-1 rounded-full px-3 py-1.5 font-medium ${
-              colorBy === option
-                ? "bg-white text-slate-950"
-                : "text-slate-300 hover:text-white"
-            }`}
-          >
-            {t.colorBy[option]}
-          </button>
-        ))}
-      </div>
-
       {colorBy === "status" ? (
         <>
           <button

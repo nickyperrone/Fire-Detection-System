@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { PortfolioEntry } from "../api/client";
-import { allFine, attention } from "./status";
+import { allFine, attention, lotNeedsALook } from "./status";
 
 const calm: PortfolioEntry = {
   territory_id: 1,
@@ -94,5 +94,17 @@ describe("attention", () => {
       fire: { ...calm.fire, data_quality: "NO_DATA" },
     };
     expect(allFine(unread)).toBe(false);
+  });
+});
+
+describe("a lot that needs its own look", () => {
+  it("has a fire, lightning or a patch, not just its field's spraying weather", () => {
+    const windy: PortfolioEntry = {
+      ...calm,
+      spray: { ...calm.spray, status: "UNFAVORABLE" },
+    };
+    const unusual = { ...calm, anomaly: { ...calm.anomaly, patches: [patch] } };
+    expect(lotNeedsALook(windy)).toBe(false);
+    expect(lotNeedsALook(unusual)).toBe(true);
   });
 });

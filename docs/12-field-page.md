@@ -42,7 +42,8 @@ breadcrumbs.
 A field ranks by its worst lot; fields marked high priority go first within a rank. A field with
 nothing to report is one quiet line ("Todo en orden" and the weather) with a green dot; chips
 appear only for what is wrong. Lots fold under their field ("15 lotes · 2 para mirar") and open as
-thin rows. The summary above the list counts fires, fields good to spray and fields with
+thin rows. A lot is "para mirar" for what is its own: a fire, lightning or an unusual patch.
+Spraying is not counted for lots: their weather is their field's, and the field already says it. The summary above the list counts fires, fields good to spray and fields with
 something unusual.
 
 ## Satellite photos

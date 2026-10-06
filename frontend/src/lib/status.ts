@@ -82,3 +82,11 @@ export function allFine(entry: PortfolioEntry): boolean {
     !["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "")
   );
 }
+
+/**
+ * A lot needs its own look: a fire, lightning or an unusual patch. Spraying is left out: the
+ * weather of a lot is its field's, and the field already says it.
+ */
+export function lotNeedsALook(lot: PortfolioEntry): boolean {
+  return attention(lot) <= 2;
+}
