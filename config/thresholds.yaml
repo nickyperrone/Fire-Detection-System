@@ -96,13 +96,16 @@ goes:
     # arrives: west, south, east, north.
     bbox: [-66.0, -39.0, -53.0, -26.0]
     cell_degrees: 0.02
-    # Cloud tops: faint near the ground, solid at this height and above.
+    # Clouds are a faint veil, a little stronger the higher their tops, up to this height. Rain
+    # is what stands out: a high top alone is often a thin anvil, not a storm.
     cloud_full_height_m: 12000
     # Cloud edges fade in up to this height, where the interpolation between a cloudy and a
     # clear pixel is still low.
     cloud_edge_height_m: 4000
     # A light softening on top, in grid cells.
     cloud_blur_cells: 3.0
+    # The loop: one frame per scan, this many (two hours at one scan every 10 minutes).
+    frames_kept: 12
     # Rain from this rate up, in mm/h; then the next band from each value.
     rain_bands_mm_h: [0.5, 2.5, 10.0]
 

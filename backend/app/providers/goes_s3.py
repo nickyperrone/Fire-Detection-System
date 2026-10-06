@@ -26,9 +26,10 @@ def bucket_url(bucket: str) -> str:
     return f"https://{bucket}.s3.amazonaws.com"
 
 
-def hour_prefixes(product: str, now: datetime) -> list[str]:
-    """The previous and the current hour: a file can be published after its hour ends."""
-    return [f"{product}/{t:%Y/%j/%H}/" for t in (now - timedelta(hours=1), now)]
+def hour_prefixes(product: str, now: datetime, hours_back: int = 1) -> list[str]:
+    """The current hour and the `hours_back` before it, oldest first: a file can be published
+    after its hour ends."""
+    return [f"{product}/{now - timedelta(hours=h):%Y/%j/%H}/" for h in range(hours_back, -1, -1)]
 
 
 def list_keys(client: httpx.Client, bucket: str, prefix: str) -> list[str]:

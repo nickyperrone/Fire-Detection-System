@@ -77,20 +77,28 @@ burned, not that nobody looked.
 
 ## Clouds and rain on the map
 
-"Nubes y lluvia" in the layers menu draws GOES-19's latest scan over the region, so the
-contractor sees where it is cloudy and where it is raining right now:
+"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over the region, like a
+weather radar loop, so the contractor sees where it is cloudy, where it rains and where it is
+heading:
 
-- **Clouds** from `ABI-L2-ACHAF`: every pixel with a cloud top is white, more opaque the higher
-  the top (low haze faint, storm towers solid).
-- **Rain** from `ABI-L2-RRQPEF`, on top: light blue from 0.5 mm/h, darker blue from 2.5 mm/h and
-  violet from 10 mm/h. Less than 0.5 mm/h is not drawn.
-- The worker reads both every 10 minutes (only the region's window of each file), reprojects
-  them to a 0.02° grid over the region and writes one PNG with transparency
-  (`data/weather/latest.png`) and its scan times. `GET /weather-layer` gives the times and the
-  box; `GET /weather-layer.png` the image. The map places it as an image over the box and
-  reloads it when a new scan arrives.
-- The legend names the layer, its scale and the scan's age. It is GOES's estimate from space:
-  rain rate comes from cloud temperatures, not from a rain gauge or a radar.
+- **Clouds** from `ABI-L2-ACHAF` (cloud top height): a faint veil, a little stronger the higher
+  the tops, so a cloudy day does not turn the map gray. A high top alone is often a thin anvil
+  of cirrus, not a storm, so height never paints a storm: rain does. Edges fade in, since the
+  product's pixels are 10 km wide.
+- **Rain** from `ABI-L2-RRQPEF` (rainfall rate), on top: light blue from 0.5 mm/h, blue from
+  2.5 mm/h and violet from 10 mm/h. Less than 0.5 mm/h is not drawn.
+- **The loop.** The worker keeps one frame per scan for the last two hours (12 frames, one every
+  10 minutes): on each run it paints every scan of that window it does not have yet and deletes
+  older ones. Only the region's window of each file is read; it is reprojected to a grid even
+  in longitude and in Web Mercator rows, so the map can stretch each image over the box.
+- **On the map** every frame is an image layer over the box; playing fades from one to the next
+  (about 0.6 s each, a short pause on the newest). The legend shows the scale, play and pause,
+  and the time of the frame on screen ("hace 40 min" … "hace 10 min"). Paused, it shows the
+  newest scan. People who ask their system for less motion get it paused.
+- `GET /weather-layer` lists the frames (scan times) and the box;
+  `GET /weather-layer/{scan}.png` serves one.
+- It is GOES's estimate from space: rain rate comes from cloud temperatures, not from a rain gauge
+  or a radar.
 
 ## Colors
 

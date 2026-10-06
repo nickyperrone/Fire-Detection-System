@@ -272,13 +272,18 @@ class FireHistoryOut(BaseModel):
     latest: FireDayOut | None
 
 
-class WeatherLayerOut(BaseModel):
-    """The clouds and rain image: its scan times and the box it covers (west, south, east,
-    north)."""
+class WeatherFrameOut(BaseModel):
+    scanned_at: datetime
+    # Names the frame's image: /weather-layer/{id}.png.
+    id: str
 
-    clouds_at: datetime
-    rain_at: datetime
+
+class WeatherLayerOut(BaseModel):
+    """The clouds and rain loop: the box it covers (west, south, east, north) and its frames,
+    oldest first."""
+
     bbox: list[float]
+    frames: list[WeatherFrameOut]
 
 
 class SnapshotOutlineOut(BaseModel):
