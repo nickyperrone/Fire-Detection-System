@@ -6,6 +6,9 @@ region:
   # west, south, east, north (EPSG:4326). Entre Ríos and the Paraná Delta: the fields near
   # Larroque plus the area shown in explore mode and used to train the fire forecast.
   bbox: [-61.0, -34.5, -57.5, -30.0]
+  # Fields outside the region are watched too, in a box this much wider on each side (about
+  # 15 km, more than the 10 km alert radius) (docs/02-architecture.md).
+  field_margin_degrees: 0.15
 
 territories:
   # A section may stick out of its field by this much, to absorb drawing and simplification error.

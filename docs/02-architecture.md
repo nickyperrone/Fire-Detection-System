@@ -41,9 +41,15 @@ flowchart LR
 
 - **Capture and normalize** happen in `providers/`. Each provider returns normalized records
   (`FireObservation`, `HourlyWeather`). Business code never sees provider column names or product codes.
-- **One read per region, not per field.** FIRMS is queried once per sensor for the region bounding box
-  (Entre Ríos and the Paraná Delta: `-61.0,-34.5,-57.5,-30.0`). Matching detections to fields is a PostGIS join, so
-  10 or 10,000 fields cost the same number of external calls. Weather is read in one batched request
+- **One read per watched area, not per field.** The watched areas are the region (Entre Ríos and
+  the Paraná Delta: `-61.0,-34.5,-57.5,-30.0`, shown in explore mode and used to train the fire
+  forecast) plus a box around every field outside it, `region.field_margin_degrees` (0.15°, about
+  15 km, more than the 10 km alert radius) wider on each side; boxes that touch are joined. FIRMS
+  is queried once per sensor and area, and the GOES fire and lightning files are read over every
+  area. A field drawn in Formosa is watched from the next run, and never reported "no fire near"
+  without satellites having been read over it. Matching detections to fields is a PostGIS join,
+  so many fields close together cost the same number of external calls as one. The fire forecast
+  stays on the region, where its model was trained; elsewhere it says it has no forecast. Weather is read in one batched request
   for all field centroids, rounded to a 0.02° grid to share nearby points.
 - **Store, then derive.** Raw observations are stored with their original payload. Fire events,
   field risk events and spray assessments are derived from stored rows and can be recomputed.

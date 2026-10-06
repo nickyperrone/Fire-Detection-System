@@ -126,9 +126,10 @@ flowchart LR
     API & TILES --> WEB
 ```
 
-- **One read per region, not per field.** Every source is queried once for the Entre Ríos and Delta
-  bounding box, and PostGIS matches the data to fields. Ten fields or ten thousand cost the same
-  number of external calls.
+- **One read per watched area, not per field.** Every source is queried once for the Entre Ríos
+  and Delta box plus a box around fields drawn elsewhere (joined when they touch), and PostGIS
+  matches the data to fields. Many fields close together cost the same number of external calls
+  as one.
 - **Writes happen in the worker, the API only reads.** No model, download or heavy query sits in
   the request path; the API answers from stored results.
 - **Thresholds in config.** Correlation radius, severity bands, spray rules, forecast bands and

@@ -17,6 +17,7 @@ from app.providers.goes_fire import parse_fire_file
 from app.providers.goes_lightning import parse_lightning_file
 from app.providers.records import LightningFlash as FlashRecord
 from app.services.fire_ingestion import store_observations
+from app.services.watched_areas import watched_areas
 
 # With no cursor yet, start from the newest files instead of two hours of backlog:
 # 3 fire scans (30 min) and 9 lightning files (3 min).
@@ -72,14 +73,19 @@ def _ingest_files(
 def ingest_goes_fire(
     session: Session, client: httpx.Client, thresholds: dict, now: datetime
 ) -> IngestionRun:
-    goes, bbox = thresholds["goes"], thresholds["region"]["bbox"]
+    goes = thresholds["goes"]
     decimals = thresholds["firms"]["dedup_coordinate_decimals"]
     area = country_area(thresholds)
+    boxes = watched_areas(session, thresholds)
 
     def store(content: bytes) -> tuple[int, int]:
-        observations = parse_fire_file(
-            content, bbox, goes["fire_mask_confidence"], goes["min_confidence"]
-        )
+        observations = [
+            observation
+            for box in boxes
+            for observation in parse_fire_file(
+                content, list(box), goes["fire_mask_confidence"], goes["min_confidence"]
+            )
+        ]
         return len(observations), store_observations(session, observations, now, decimals, area)
 
     return _ingest_files(
@@ -113,11 +119,12 @@ def store_flashes(
 def ingest_lightning(
     session: Session, client: httpx.Client, thresholds: dict, now: datetime
 ) -> IngestionRun:
-    goes, bbox = thresholds["goes"], thresholds["region"]["bbox"]
+    goes = thresholds["goes"]
     area = country_area(thresholds)
+    boxes = watched_areas(session, thresholds)
 
     def store(content: bytes) -> tuple[int, int]:
-        flashes = parse_lightning_file(content, bbox)
+        flashes = [f for box in boxes for f in parse_lightning_file(content, list(box))]
         return len(flashes), store_flashes(session, flashes, now, area)
 
     run = _ingest_files(

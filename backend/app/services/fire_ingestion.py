@@ -11,6 +11,7 @@ from app.boundaries import country_area, inside
 from app.models import IngestionRun, Observation, RunStatus
 from app.providers import firms
 from app.providers.records import FireObservation
+from app.services.watched_areas import watched_areas
 
 
 def dedup_key(observation: FireObservation, decimals: int) -> str:
@@ -64,21 +65,27 @@ def store_observations(
 def ingest_firms(
     session: Session, client: httpx.Client, map_key: str, thresholds: dict, now: datetime
 ) -> list[IngestionRun]:
-    """Read every FIRMS product for the region. A failed product does not stop the rest."""
+    """Read every FIRMS product over every watched area. A failed product does not stop the
+    rest."""
     config = thresholds["firms"]
     area = country_area(thresholds)
+    boxes = watched_areas(session, thresholds)
     runs = []
     for product in config["products"]:
         run = IngestionRun(provider="firms", product=product, started_at=now)
         try:
-            observations = firms.fetch_observations(
-                client,
-                map_key,
-                product,
-                thresholds["region"]["bbox"],
-                config["day_range"],
-                config["modis_confidence"],
-            )
+            observations = [
+                observation
+                for box in boxes
+                for observation in firms.fetch_observations(
+                    client,
+                    map_key,
+                    product,
+                    list(box),
+                    config["day_range"],
+                    config["modis_confidence"],
+                )
+            ]
         except (httpx.HTTPError, firms.FirmsError, KeyError, ValueError) as exc:
             run.status = RunStatus.FAILED
             # httpx errors include the request URL, and the FIRMS key is part of the path.
