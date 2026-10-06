@@ -200,7 +200,7 @@ function Viewer({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-black/50 ${
+      className={`relative select-none overflow-hidden rounded-2xl bg-black/50 ${
         size === "large" ? "mx-auto" : ""
       }`}
       style={{
@@ -212,6 +212,7 @@ function Viewer({
       }}
     >
       <img
+        draggable={false}
         key={`${photo.date}-${view}`}
         src={snapshotUrl(fieldId, photo.date, view)}
         alt={t.photos.photoOf(localDate(t, photo.date))}
@@ -219,6 +220,7 @@ function Viewer({
       />
       {earlier && (
         <img
+          draggable={false}
           key={`before-${earlier.date}-${view}`}
           src={snapshotUrl(fieldId, earlier.date, view)}
           alt={t.photos.photoOf(localDate(t, earlier.date))}
@@ -527,6 +529,7 @@ function Strip({
           className="shrink-0 text-center"
         >
           <img
+            draggable={false}
             src={snapshotUrl(fieldId, s.date, view)}
             alt=""
             loading="lazy"
