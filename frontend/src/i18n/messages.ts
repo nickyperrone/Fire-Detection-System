@@ -169,6 +169,8 @@ const en = {
   weatherLayer: {
     layer: "Clouds and rain",
     title: (age: string) => `Clouds and rain · GOES-19 ${age}`,
+    play: "Play the last 2 hours",
+    pause: "Pause",
     clouds: "Clouds",
     light: "Light rain",
     moderate: "Rain",
@@ -631,6 +633,8 @@ const es: Messages = {
   weatherLayer: {
     layer: "Nubes y lluvia",
     title: (age) => `Nubes y lluvia · GOES-19 ${age}`,
+    play: "Reproducir las últimas 2 h",
+    pause: "Pausar",
     clouds: "Nubes",
     light: "Lluvia débil",
     moderate: "Lluvia",

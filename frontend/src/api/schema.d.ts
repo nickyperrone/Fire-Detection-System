@@ -502,7 +502,7 @@ export interface paths {
         };
         /**
          * Weather Layer
-         * @description When the clouds and rain image was scanned and the box it covers (docs/06-goes.md).
+         * @description The clouds and rain loop: its frames, oldest first, and the box (docs/06-goes.md).
          */
         get: operations["weather_layer_weather_layer_get"];
         put?: never;
@@ -513,15 +513,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/weather-layer.png": {
+    "/weather-layer/{frame}.png": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Weather Layer Image */
-        get: operations["weather_layer_image_weather_layer_png_get"];
+        /** Weather Frame */
+        get: operations["weather_frame_weather_layer__frame__png_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1190,24 +1190,26 @@ export interface components {
             /** Wind Speed Kmh */
             wind_speed_kmh: number | null;
         };
+        /** WeatherFrameOut */
+        WeatherFrameOut: {
+            /** Id */
+            id: string;
+            /**
+             * Scanned At
+             * Format: date-time
+             */
+            scanned_at: string;
+        };
         /**
          * WeatherLayerOut
-         * @description The clouds and rain image: its scan times and the box it covers (west, south, east,
-         *     north).
+         * @description The clouds and rain loop: the box it covers (west, south, east, north) and its frames,
+         *     oldest first.
          */
         WeatherLayerOut: {
             /** Bbox */
             bbox: number[];
-            /**
-             * Clouds At
-             * Format: date-time
-             */
-            clouds_at: string;
-            /**
-             * Rain At
-             * Format: date-time
-             */
-            rain_at: string;
+            /** Frames */
+            frames: components["schemas"]["WeatherFrameOut"][];
         };
     };
     responses: never;
@@ -2221,11 +2223,13 @@ export interface operations {
             };
         };
     };
-    weather_layer_image_weather_layer_png_get: {
+    weather_frame_weather_layer__frame__png_get: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                frame: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -2236,6 +2240,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

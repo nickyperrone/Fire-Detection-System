@@ -1813,8 +1813,27 @@
         "title": "WeatherAnswerOut",
         "type": "object"
       },
+      "WeatherFrameOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "scanned_at": {
+            "format": "date-time",
+            "title": "Scanned At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scanned_at",
+          "id"
+        ],
+        "title": "WeatherFrameOut",
+        "type": "object"
+      },
       "WeatherLayerOut": {
-        "description": "The clouds and rain image: its scan times and the box it covers (west, south, east,\nnorth).",
+        "description": "The clouds and rain loop: the box it covers (west, south, east, north) and its frames,\noldest first.",
         "properties": {
           "bbox": {
             "items": {
@@ -1823,21 +1842,17 @@
             "title": "Bbox",
             "type": "array"
           },
-          "clouds_at": {
-            "format": "date-time",
-            "title": "Clouds At",
-            "type": "string"
-          },
-          "rain_at": {
-            "format": "date-time",
-            "title": "Rain At",
-            "type": "string"
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/WeatherFrameOut"
+            },
+            "title": "Frames",
+            "type": "array"
           }
         },
         "required": [
-          "clouds_at",
-          "rain_at",
-          "bbox"
+          "bbox",
+          "frames"
         ],
         "title": "WeatherLayerOut",
         "type": "object"
@@ -3560,7 +3575,7 @@
     },
     "/weather-layer": {
       "get": {
-        "description": "When the clouds and rain image was scanned and the box it covers (docs/06-goes.md).",
+        "description": "The clouds and rain loop: its frames, oldest first, and the box (docs/06-goes.md).",
         "operationId": "weather_layer_weather_layer_get",
         "responses": {
           "200": {
@@ -3580,15 +3595,36 @@
         ]
       }
     },
-    "/weather-layer.png": {
+    "/weather-layer/{frame}.png": {
       "get": {
-        "operationId": "weather_layer_image_weather_layer_png_get",
+        "operationId": "weather_frame_weather_layer__frame__png_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "frame",
+            "required": true,
+            "schema": {
+              "title": "Frame",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
-        "summary": "Weather Layer Image",
+        "summary": "Weather Frame",
         "tags": [
           "weather"
         ]

@@ -29,9 +29,9 @@ export type Snapshot = Schemas["SnapshotOut"];
 export type SnapshotView = "true_color" | "greenness";
 export type WeatherLayer = Schemas["WeatherLayerOut"];
 
-/** GOES-19's clouds and rain image; the scan time makes each new scan a new address. */
-export function weatherLayerUrl(layer: WeatherLayer): string {
-  return `/api/weather-layer.png?at=${encodeURIComponent(layer.clouds_at)}`;
+/** One frame of the clouds and rain loop; a scan never changes, so the browser keeps it. */
+export function weatherFrameUrl(id: string): string {
+  return `/api/weather-layer/${id}.png`;
 }
 
 /** One satellite photo of a field (docs/12-field-page.md). */

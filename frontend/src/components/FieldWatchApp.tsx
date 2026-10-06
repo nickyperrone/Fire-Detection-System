@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type PortfolioEntry,
   type Territory,
-  weatherLayerUrl,
+  weatherFrameUrl,
 } from "@/api/client";
 import {
   useBoundary,
@@ -21,6 +21,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { hazardTone, TONE_HEX } from "@/lib/status";
 import { leadingTag } from "@/lib/tags";
 import { type FieldTab, formatCamera, useUrlState } from "@/lib/useUrlState";
+import { useWeatherLoop } from "@/lib/useWeatherLoop";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
 import { Dock } from "./Dock";
@@ -90,6 +91,10 @@ export function FieldWatchApp() {
   const tags = useTags(signedIn);
   const boundary = useBoundary();
   const weatherLayer = useWeatherLayer(url.showWeather);
+  const weatherFrames = url.showWeather
+    ? (weatherLayer.data?.frames ?? [])
+    : [];
+  const weatherLoop = useWeatherLoop(weatherFrames.length);
 
   const territoryById = useMemo(
     () => new Map((territories.data ?? []).map((t) => [t.id, t])),
@@ -335,10 +340,14 @@ export function FieldWatchApp() {
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
         weather={
-          url.showWeather && weatherLayer.data
+          weatherLayer.data && weatherFrames.length > 0
             ? {
-                url: weatherLayerUrl(weatherLayer.data),
                 bbox: weatherLayer.data.bbox,
+                frames: weatherFrames.map((f) => ({
+                  id: f.id,
+                  url: weatherFrameUrl(f.id),
+                })),
+                shown: weatherLoop.shown,
               }
             : null
         }
@@ -371,10 +380,18 @@ export function FieldWatchApp() {
                 <MapLegend
                   showFields={signedIn && hasFields}
                   showRisk={url.showRisk}
-                  weatherScannedAt={
+                  weather={
                     url.showWeather
-                      ? (weatherLayer.data?.clouds_at ?? null)
-                      : undefined
+                      ? {
+                          scannedAt:
+                            weatherFrames[weatherLoop.shown]?.scanned_at ??
+                            null,
+                          playing: weatherLoop.playing,
+                          onTogglePlay: weatherLoop.toggle,
+                          shown: weatherLoop.shown,
+                          count: weatherFrames.length,
+                        }
+                      : null
                   }
                   colorBy={url.colorBy}
                   onColorBy={(c) => url.update({ c: c === "tags" ? c : null })}

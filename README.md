@@ -103,7 +103,7 @@ flowchart LR
         J5["forecast · hourly"]
         J6["unusual patches · 6 h"]
         J7["field photos · 6 h"]
-        J8["clouds and rain · 10 min"]
+        J8["clouds and rain loop · 10 min"]
     end
     DB[("PostgreSQL + PostGIS")]
     subgraph READ["Read side"]
@@ -539,8 +539,9 @@ The status dock shows when a satellite last looked, which is GOES-19's newest sc
 20 minutes), not the newest fire detection: no detection means nothing burned, not that nobody
 looked.
 
-"Nubes y lluvia" in the layers menu paints GOES-19's latest scan over the center and east of the
-country: white clouds, more solid the higher their tops, and rain in blues and violet.
+"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over the center and east of
+the country, like a weather radar loop: clouds as a light veil, so a cloudy day never turns the
+map gray, and rain in blues and violet, which is what stands out.
 
 ```mermaid
 flowchart LR
@@ -548,8 +549,8 @@ flowchart LR
     S3 --> R["Rainfall rate<br/>ABI-L2-RRQPEF, 2 km"]
     H & R --> W["Only the box's window<br/>of each full-disk file"]
     W --> G["Reprojected to a grid<br/>even in Web Mercator;<br/>cloud edges interpolated"]
-    G --> P["One transparent PNG<br/>+ scan times"]
-    P --> M["Image over the box<br/>on the map, under the fields"]
+    G --> P["One transparent PNG<br/>per scan, last 12 kept"]
+    P --> M["A loop on the map:<br/>frames fade one into<br/>the next, under the fields"]
 ```
 
 ### Map loading by zoom

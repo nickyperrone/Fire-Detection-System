@@ -9,7 +9,7 @@ import type { ColorBy } from "@/lib/useUrlState";
 
 import { RISK_BANDS } from "./map/overlay";
 
-import { ChevronIcon, PlusIcon } from "./Icons";
+import { ChevronIcon, PauseIcon, PlayIcon, PlusIcon } from "./Icons";
 
 type Props = {
   /** The user has fields: the state and tag legend applies. */
@@ -17,7 +17,7 @@ type Props = {
   /** The fire risk layer is on: its scale is shown too. */
   showRisk: boolean;
   /** The clouds and rain layer is on, with the time of its scan once it has loaded. */
-  weatherScannedAt: string | null | undefined;
+  weather: WeatherLoop | null;
   colorBy: ColorBy;
   onColorBy: (colorBy: ColorBy) => void;
   /** Tags in use, in the order that decides a field's color, with their colors. */
@@ -34,11 +34,21 @@ const STATES: { tone: Tone; name: "danger" | "clear" | "unknown" }[] = [
 ];
 // The colors the worker paints (backend/app/vision/weather_layer.py), lightest rain first.
 const WEATHER_SWATCHES = [
-  { name: "clouds", color: "rgb(236 240 245)" },
-  { name: "light", color: "rgb(125 185 255)" },
+  { name: "clouds", color: "rgb(240 244 248 / 0.35)" },
+  { name: "light", color: "rgb(96 165 250)" },
   { name: "moderate", color: "rgb(37 99 235)" },
-  { name: "heavy", color: "rgb(147 51 234)" },
+  { name: "heavy", color: "rgb(168 85 247)" },
 ] as const;
+
+/** The clouds and rain loop, as the legend shows and steers it. */
+type WeatherLoop = {
+  /** The scan of the frame on screen; null while the frames load. */
+  scannedAt: string | null;
+  playing: boolean;
+  onTogglePlay: () => void;
+  shown: number;
+  count: number;
+};
 const WIDE = "(min-width: 768px)";
 
 function subscribeToWidth(onChange: () => void): () => void {
@@ -55,7 +65,7 @@ const SHOWN_TAGS = 5;
 export function MapLegend({
   showFields,
   showRisk,
-  weatherScannedAt,
+  weather,
   colorBy,
   onColorBy,
   tags,
@@ -148,25 +158,59 @@ export function MapLegend({
           </div>
         </div>
       )}
-      {open && weatherScannedAt !== undefined && (
+      {weather && (
         <div
           className={`px-2 pb-1 pt-1.5 ${showFields || showRisk ? "mt-1 border-t border-white/10" : ""}`}
         >
-          <p className="text-[11px] text-muted">
-            {t.weatherLayer.title(formatAge(t, weatherScannedAt))}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-slate-200">
-            {WEATHER_SWATCHES.map(({ name, color }) => (
-              <span key={name} className="flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className="block size-2.5 rounded-sm ring-1 ring-white/20"
-                  style={{ background: color }}
-                />
-                {t.weatherLayer[name]}
-              </span>
-            ))}
+          {/* The loop's controls stay visible with the legend folded: it is moving on the map. */}
+          <div className="flex items-center gap-2">
+            <button
+              aria-label={
+                weather.playing ? t.weatherLayer.pause : t.weatherLayer.play
+              }
+              onClick={weather.onTogglePlay}
+              disabled={weather.count < 2}
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-40"
+            >
+              {weather.playing ? (
+                <PauseIcon className="size-3.5" />
+              ) : (
+                <PlayIcon className="size-3.5" />
+              )}
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] text-slate-200 tabular-nums">
+                {weather.scannedAt
+                  ? t.weatherLayer.title(formatAge(t, weather.scannedAt))
+                  : t.weatherLayer.layer}
+              </p>
+              {/* Where the frame on screen sits in the two hours, oldest on the left. */}
+              <div className="mt-1 flex gap-0.5" aria-hidden>
+                {Array.from({ length: weather.count }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      i === weather.shown ? "bg-white" : "bg-white/20"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
+          {open && (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-slate-200">
+              {WEATHER_SWATCHES.map(({ name, color }) => (
+                <span key={name} className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="block size-2.5 rounded-sm ring-1 ring-white/20"
+                    style={{ background: color }}
+                  />
+                  {t.weatherLayer[name]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>

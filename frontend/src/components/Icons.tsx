@@ -192,3 +192,15 @@ export const PhotoIcon = (p: IconProps) => (
     <circle cx="16" cy="9" r="1.5" />
   </Icon>
 );
+
+export const PlayIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 5.5v13l10-6.5-10-6.5Z" fill="currentColor" />
+  </Icon>
+);
+
+export const PauseIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 5v14M16 5v14" strokeWidth={3} />
+  </Icon>
+);
