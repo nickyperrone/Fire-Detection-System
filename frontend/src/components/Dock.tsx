@@ -10,7 +10,7 @@ import { formatAge } from "@/i18n/text";
 
 import { AccountMenu } from "./AccountMenu";
 import { PEEK_PX } from "./BottomSheet";
-import { SatelliteIcon } from "./Icons";
+import { BellIcon, SatelliteIcon } from "./Icons";
 
 type Props = {
   /** Undefined while the session is being checked. */
@@ -194,6 +194,23 @@ export function Dock({
         {me !== undefined && (
           <>
             <Divider />
+            {me && (
+              <button
+                aria-label={t.notifications.open}
+                title={t.notifications.open}
+                onClick={() => {
+                  setPanel(null);
+                  onNotifications();
+                }}
+                className="relative grid size-9 place-items-center rounded-full text-slate-200 hover:bg-white/10"
+              >
+                <BellIcon className="size-4" />
+                {/* Telegram is there to connect: a nudge until it is. */}
+                {me.telegram.available && !me.telegram.connected && (
+                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" />
+                )}
+              </button>
+            )}
             {me ? (
               <button
                 aria-expanded={panel === "account"}

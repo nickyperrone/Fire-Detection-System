@@ -3,6 +3,7 @@
 import type { PortfolioEntry, SettingsIn } from "@/api/client";
 import { useChangeSettings, useMe } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { useUrlState } from "@/lib/useUrlState";
 
 import { BellIcon, BellOffIcon, EyeIcon, EyeOffIcon, StarIcon } from "./Icons";
 import { useNotificationPermission } from "./useDangerAlerts";
@@ -15,6 +16,7 @@ export function FieldSettings({ entry }: { entry: PortfolioEntry }) {
   const change = useChangeSettings();
   const me = useMe();
   const { permission, request } = useNotificationPermission();
+  const url = useUrlState();
   const set = (body: SettingsIn) =>
     change.mutate({ id: entry.territory_id, body });
 
@@ -32,7 +34,15 @@ export function FieldSettings({ entry }: { entry: PortfolioEntry }) {
         />
         {entry.alerts && me.data && (
           <p className="px-3 pb-2 text-xs text-muted">
-            {t.settings.alertsHint(me.data.email)}
+            {t.settings.alertsHint(me.data.email)}{" "}
+            <button
+              onClick={() =>
+                url.update({ view: "notifications", f: null, tab: null }, true)
+              }
+              className="font-medium text-accent"
+            >
+              {t.settings.chooseAlerts}
+            </button>
           </p>
         )}
         {entry.alerts && permission === "default" && (

@@ -419,6 +419,7 @@ const en = {
     alerts: "Alert me of danger nearby",
     alertsHint: (email: string) =>
       `By email to ${email}, by Telegram if connected, and in this browser.`,
+    chooseAlerts: "Choose which and where",
     allowBrowser: "Allow alerts in this browser",
     browserBlocked:
       "This browser blocks alerts from Field Watch; allow them in its site settings.",
@@ -930,6 +931,7 @@ const es: Messages = {
     alerts: "Avisarme si hay peligro cerca",
     alertsHint: (email) =>
       `Por mail a ${email}, por Telegram si lo conectaste, y en este navegador.`,
+    chooseAlerts: "Elegir cuáles y por dónde",
     allowBrowser: "Permitir avisos en este navegador",
     browserBlocked:
       "Este navegador bloquea los avisos de Field Watch; permitilos en la configuración del sitio.",
