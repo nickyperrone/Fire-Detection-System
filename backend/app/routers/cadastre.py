@@ -5,7 +5,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 
 from app.config import get_thresholds
-from app.routers.dependencies import SessionDep
+from app.routers.dependencies import OwnerDep, SessionDep
 from app.schemas import SnapIn, SnapOut
 from app.services.cadastre import parcel_at
 from app.services.property_snap import snap_to_property_lines
@@ -16,10 +16,12 @@ router = APIRouter(prefix="/cadastre", tags=["cadastre"])
 @router.get("/parcel")
 def parcel(
     session: SessionDep,
+    _: OwnerDep,
     lat: Annotated[float, Query(ge=-90, le=90)],
     lon: Annotated[float, Query(ge=-180, le=180)],
 ) -> dict:
-    """The official parcel at a point, to draw a field from it (docs/08-cadastre.md)."""
+    """The official parcel at a point, to draw a field from it (docs/08-cadastre.md). Signed in
+    only, like drawing: each new area is fetched from the province."""
     with httpx.Client() as client:
         feature = parcel_at(session, client, get_thresholds()["cadastre"], lat, lon)
     if feature is None:
@@ -28,7 +30,7 @@ def parcel(
 
 
 @router.post("/snap", response_model=SnapOut)
-def snap(session: SessionDep, body: SnapIn):
+def snap(session: SessionDep, _: OwnerDep, body: SnapIn):
     """A hand-drawn outline fitted to the property lines, or unchanged (docs/08-cadastre.md)."""
     with httpx.Client() as client:
         result = snap_to_property_lines(

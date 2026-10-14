@@ -16,7 +16,9 @@ def message(settings: Settings, to: str, subject: str, body: str) -> EmailMessag
     email = EmailMessage()
     email["From"] = settings.smtp_from
     email["To"] = to
-    email["Subject"] = subject
+    # A header with a line break raises, and one bad name would stop everyone's alerts: the
+    # subject is always one line.
+    email["Subject"] = " ".join(subject.split())
     email.set_content(body)
     return email
 

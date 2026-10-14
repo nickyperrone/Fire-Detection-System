@@ -41,6 +41,10 @@ them all would download hundreds of megabytes nobody looks at. Instead:
   zoom 13 and up) and does not depend on the province's server.
 - A cached tile is refreshed after `cadastre.refresh_days` (90): parcels change slowly.
 - Below zoom 13 there are no property lines: they would be a solid mesh.
+- Only a signed-in account makes the server fetch a new area: the map shows signed-out visitors
+  the parcels already cached, and `/cadastre/parcel` and `/cadastre/snap`, used to draw a field,
+  need an account like drawing does. Nobody anonymous can make the server call the province in a
+  loop.
 
 ## In the map
 

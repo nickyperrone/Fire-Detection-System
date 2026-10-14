@@ -1,7 +1,9 @@
+import json
+import unicodedata
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AfterValidator, BaseModel, Field, StringConstraints, field_validator
 
 from app.models import (
     DataQuality,
@@ -15,25 +17,74 @@ from app.models import (
 )
 from app.services.spray_rules import RuleStatus
 
+# Limits on what an account sends (docs/01-product.md#fields-sections-and-tags): names and tags
+# end up in emails and Telegram messages, and shapes in geometry operations.
+MAX_VERTICES = 10_000
+
+
+def _plain_text(value: str) -> str:
+    """One line of visible text: no line breaks or other control characters."""
+    if any(unicodedata.category(c) == "Cc" for c in value):
+        raise ValueError("control characters are not allowed")
+    return value
+
+
+def _small_geometry(value: dict) -> dict:
+    count = 0
+
+    def walk(node) -> None:
+        nonlocal count
+        if isinstance(node, list):
+            if node and isinstance(node[0], int | float):
+                count += 1
+                return
+            for child in node:
+                walk(child)
+
+    walk(value.get("coordinates"))
+    if count > MAX_VERTICES:
+        raise ValueError(f"at most {MAX_VERTICES} vertices")
+    return value
+
+
+def _small_object(value: dict | None) -> dict | None:
+    if value is not None and len(json.dumps(value)) > 2000:
+        raise ValueError("too large")
+    return value
+
+
+Name = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+    AfterValidator(_plain_text),
+]
+TagLabel = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=80),
+    AfterValidator(_plain_text),
+]
+Tags = Annotated[list[TagLabel], Field(max_length=30)]
+Geometry = Annotated[dict, AfterValidator(_small_geometry)]
+
 
 class TerritoryIn(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-    geometry: dict = Field(description="GeoJSON Polygon or MultiPolygon, EPSG:4326")
+    name: Name
+    geometry: Geometry = Field(description="GeoJSON Polygon or MultiPolygon, EPSG:4326")
     parent_id: int | None = Field(None, description="Field id, to create a section")
-    tags: list[str] = Field(default_factory=list, description="key:value or plain labels")
-    cadastre: dict | None = Field(
+    tags: Tags = Field(default_factory=list, description="key:value or plain labels")
+    cadastre: Annotated[dict | None, AfterValidator(_small_object)] = Field(
         None, description="The parcel the outline came from (province, department, partida, plano)"
     )
 
 
 class OutlineIn(BaseModel):
     operation: Literal["add", "remove"]
-    geometry: dict = Field(description="GeoJSON Polygon of the piece, EPSG:4326")
+    geometry: Geometry = Field(description="GeoJSON Polygon of the piece, EPSG:4326")
     preview: bool = Field(False, description="Answer with the result without saving it")
 
 
 class TagsIn(BaseModel):
-    tags: list[str]
+    tags: Tags
 
 
 class TagOut(BaseModel):
@@ -386,7 +437,7 @@ class HealthOut(BaseModel):
 
 
 class SnapIn(BaseModel):
-    geometry: dict = Field(description="GeoJSON Polygon drawn by hand, EPSG:4326")
+    geometry: Geometry = Field(description="GeoJSON Polygon drawn by hand, EPSG:4326")
 
 
 class SnapOut(BaseModel):

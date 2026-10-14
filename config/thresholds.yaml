@@ -251,6 +251,8 @@ alerts:
 
 # Field outlines by computer vision (docs/10-field-detection.md).
 field_detection:
+  # Each detection reads a year of images; one account can ask this many an hour.
+  per_account_hour: 30
   window_m: 4000
   pixels: 400
   months: 12

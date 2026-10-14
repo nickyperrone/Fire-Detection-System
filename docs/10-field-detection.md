@@ -59,3 +59,8 @@ detected from images and asks to check it, and every point can still be dragged.
 - `POST /fields/detect {lat, lon}` answers the polygon, the number of dates used and their range,
   or `no_field_found` / `no_images` (no clear dates in the last 12 months).
 - Results are cached per tapped 100 m cell for a week: tapping the same field again is instant.
+
+## Limit
+
+One detection reads a year of Sentinel-2 images, so an account can ask at most
+`field_detection.per_account_hour` (30) an hour; after that, 429 `{"code": "too_many"}`.

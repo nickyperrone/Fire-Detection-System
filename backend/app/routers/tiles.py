@@ -39,8 +39,9 @@ def tile(
     if x >= 2**z or y >= 2**z:
         raise HTTPException(404, "tile outside the zoom level")
     thresholds = get_thresholds()
-    if layer == Layer.PARCELS:
+    if layer == Layer.PARCELS and user is not None:
         # First view of an area fetches its parcels from the province; then they are cached.
+        # Signed out, only what is cached shows: nobody anonymous makes the server fetch.
         with httpx.Client() as client:
             ensure_tile(session, client, thresholds["cadastre"], z, x, y)
     west, south = thresholds["region"]["bbox"][:2]

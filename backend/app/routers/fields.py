@@ -7,17 +7,23 @@ from fastapi.responses import JSONResponse
 from app.config import REPO_ROOT, get_thresholds
 from app.routers.dependencies import OwnerDep
 from app.schemas import DetectIn, DetectOut
+from app.services.captcha import RateLimit
 from app.vision.field_detection import DetectionError, detect_field
 
 router = APIRouter(prefix="/fields", tags=["fields"])
 
 CACHE_DIR = REPO_ROOT / "data" / "cache" / "sentinel2"
+detections = RateLimit()
 
 
 @router.post("/detect", response_model=DetectOut)
-def detect(_: OwnerDep, body: DetectIn):
+def detect(owner: OwnerDep, body: DetectIn):
     """The outline of the field under a point, from a year of Sentinel-2 images (docs/10)."""
     config = get_thresholds()["field_detection"]
+    if not detections.allow(owner, config["per_account_hour"]):
+        return JSONResponse(
+            status_code=429, content={"detail": "too many detections", "code": "too_many"}
+        )
     try:
         with httpx.Client() as client:
             found = detect_field(

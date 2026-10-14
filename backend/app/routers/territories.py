@@ -187,6 +187,7 @@ def risk_events(
     owner: OwnerDep,
     territory_id: int,
 ):
+    owned(session, owner, territory_id)
     return [
         RiskEventOut(
             id=r.id,
