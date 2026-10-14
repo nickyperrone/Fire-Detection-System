@@ -5,7 +5,9 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Field Watch",
-  description: "Fire, spraying conditions and field anomalies for your fields.",
+  // In Spanish, like the first render (LocaleProvider): it is what a shared link shows.
+  description:
+    "Tus campos, vigilados por satélite: fuegos cerca, cuándo pulverizar, rayos y clima adverso, con alertas por mail o Telegram.",
 };
 
 export const viewport: Viewport = {
@@ -21,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
