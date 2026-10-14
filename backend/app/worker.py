@@ -56,6 +56,9 @@ def telegram_job() -> None:
 
 def main() -> None:
     configure_logging()
+    # Each job logs its own result; the scheduler's "running"/"executed" lines for every job, and
+    # for the bot every 5 seconds, would bury them.
+    logging.getLogger("apscheduler.executors.default").setLevel(logging.WARNING)
     intervals = get_thresholds()["worker"]
     # One job at a time, on the main thread: FIRMS and GOES both correlate fire events and must not
     # interleave, and netCDF only silences HDF5's error printing on the main thread (in another
