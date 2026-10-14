@@ -4,10 +4,11 @@ import { useState } from "react";
 
 import type { PortfolioEntry } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { formatHectares } from "@/i18n/text";
+import { fireLabel, formatHectares, sprayLabel } from "@/i18n/text";
 import {
   allFine,
   attention,
+  fireTone,
   hazardTone,
   lotNeedsALook,
   TONE_HEX,
@@ -41,6 +42,8 @@ export function PortfolioPanel(props: Props) {
   const hiddenEntries = props.entries.filter((e) => hidden.has(e.territory_id));
   const fields = entries.filter((e) => e.kind === "FIELD");
   const withFire = fields.filter((e) => e.fire.severity).length;
+  // "No fires" is only said when the satellites were read.
+  const blind = fields.some((e) => fireTone(e.fire) === "unknown");
   const goodToSpray = entries.filter(
     (e) => e.spray.status === "FAVORABLE",
   ).length;
@@ -48,10 +51,14 @@ export function PortfolioPanel(props: Props) {
 
   return (
     <div>
-      <h2 className={`text-lg font-semibold ${withFire ? "text-bad" : ""}`}>
+      <h2
+        className={`text-lg font-semibold ${withFire ? "text-bad" : blind ? "text-slate-300" : ""}`}
+      >
         {withFire
           ? t.portfolio.withFire(withFire)
-          : t.portfolio.allQuiet(fields.length)}
+          : blind
+            ? t.portfolio.noRecentData
+            : t.portfolio.allQuiet(fields.length)}
       </h2>
       <p className="text-sm text-muted">
         {t.portfolio.sprayNow(goodToSpray, entries.length)} ·{" "}
@@ -254,6 +261,13 @@ function Row(props: Props & { entry: PortfolioEntry; compact?: boolean }) {
   const isPicked = props.picked.includes(entry.territory_id);
   const fine = allFine(entry);
   const weather = weatherLine(t, entry.weather);
+  // The sentence under the chips, unless a chip already says it ("Todavía no hay pronóstico").
+  const sentence = headline(t, entry);
+  const line = [fireLabel(t, entry.fire), sprayLabel(t, entry.spray)].includes(
+    sentence,
+  )
+    ? null
+    : sentence;
 
   return (
     <div className="flex items-stretch">
@@ -311,9 +325,9 @@ function Row(props: Props & { entry: PortfolioEntry; compact?: boolean }) {
         ) : (
           <span className="mt-2 block space-y-1.5 pl-4">
             <FieldChips entry={entry} onlyProblems />
-            {!compact && (
+            {!compact && line && (
               <span className="block truncate text-[13px] text-slate-400">
-                {headline(t, entry)}
+                {line}
               </span>
             )}
           </span>

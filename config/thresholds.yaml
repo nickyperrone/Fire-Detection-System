@@ -200,6 +200,8 @@ spray:
 data_quality:
   fire_stale_after_hours: 12
   weather_stale_after_hours: 3
+  # The forecast is issued every hour; one older than this no longer says what tomorrow brings.
+  forecast_stale_after_hours: 30
   # GLM publishes every 20 s; 10 minutes without a file means the feed stopped.
   lightning_stale_after_minutes: 10
 

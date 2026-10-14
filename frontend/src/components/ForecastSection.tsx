@@ -2,7 +2,7 @@
 
 import type { ForecastAnswer } from "@/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { formatNumber } from "@/i18n/text";
+import { formatAge, formatNumber } from "@/i18n/text";
 import { forecastTone, TONE_HEX } from "@/lib/status";
 
 /** Three boxes (tomorrow, the day after, in 3 days), the main sentence and plain factors. */
@@ -11,6 +11,13 @@ export function ForecastSection({ forecast }: { forecast: ForecastAnswer }) {
   const tomorrow = forecast.days[0];
   if (!tomorrow)
     return <p className="text-sm text-slate-400">{t.forecast.noData}</p>;
+  // An old forecast's "tomorrow" may be past: its numbers are not shown as today's.
+  if (forecast.data_quality === "STALE")
+    return (
+      <p className="text-sm text-slate-400">
+        {t.forecast.old(formatAge(t, forecast.issued_at))}
+      </p>
+    );
   const percent = `${formatNumber(t, tomorrow.probability * 100)} %`;
 
   return (

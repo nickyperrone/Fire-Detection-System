@@ -51,6 +51,10 @@ describe("ruleSentence", () => {
     expect(ruleSentence(en, rule)).toBe("Gusts 23 km/h, over 20 km/h");
     expect(ruleSentence(es, rule)).toBe("Ráfagas 23 km/h, más que 20 km/h");
   });
+  it("never says a value is over a limit that reads the same", () => {
+    const wind = { ...rule, rule: "wind", value: 15.2, limit: 15 };
+    expect(ruleSentence(es, wind)).toBe("Viento 15,2 km/h, más que 15 km/h");
+  });
   it("explains calm wind and rain chance", () => {
     expect(
       ruleSentence(es, {

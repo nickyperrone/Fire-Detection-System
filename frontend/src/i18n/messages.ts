@@ -57,6 +57,8 @@ const en = {
     noneWithin: "No fire detected within 10 km",
     notReadYet: "Satellite data has not been read yet",
     lastRead: (age: string) => `Satellites last read ${age}`,
+    staleSentence: (age: string) =>
+      `No recent fire data: satellites last read ${age}`,
     more: (n: number) => `+${n} more`,
     seenBy: (sensors: string) => `Seen by ${sensors}`,
     confidence: (level: string) => `${level} confidence`,
@@ -133,6 +135,8 @@ const en = {
       "NASA FIRMS archive, VIIRS S-NPP. A fire day is a day with at least one detection.",
   },
   forecast: {
+    old: (age: string) =>
+      `The last forecast is from ${age}; waiting for a new one.`,
     title: "Fire risk, next 3 days",
     days: ["Tomorrow", "Day after", "In 3 days"],
     band: {
@@ -256,6 +260,7 @@ const en = {
     photoOf: (date: string) => `Photo of ${date}`,
   },
   portfolio: {
+    noRecentData: "No recent fire data",
     allQuiet: (fields: number) =>
       fields === 1
         ? "No fires near your field"
@@ -537,6 +542,8 @@ const es: Messages = {
     noneWithin: "Ningún fuego detectado a menos de 10 km",
     notReadYet: "Todavía no se leyeron los satélites",
     lastRead: (age) => `Satélites leídos ${age}`,
+    staleSentence: (age) =>
+      `Sin datos de fuego recientes: satélites leídos ${age}`,
     more: (n) => `+${n} más`,
     seenBy: (sensors) => `Lo vio ${sensors}`,
     confidence: (level) => `confianza ${level}`,
@@ -608,6 +615,7 @@ const es: Messages = {
       "Archivo de NASA FIRMS, VIIRS S-NPP. Un día con fuego es un día con al menos una detección.",
   },
   forecast: {
+    old: (age) => `El último pronóstico es de ${age}; esperando uno nuevo.`,
     title: "Riesgo de fuego, próximos 3 días",
     days: ["Mañana", "Pasado", "En 3 días"],
     band: {
@@ -722,6 +730,7 @@ const es: Messages = {
     photoOf: (date) => `Foto del ${date}`,
   },
   portfolio: {
+    noRecentData: "Sin datos de fuego recientes",
     allQuiet: (fields) =>
       fields === 1
         ? "Sin fuegos cerca de tu campo"

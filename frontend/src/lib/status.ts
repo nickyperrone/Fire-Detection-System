@@ -47,7 +47,8 @@ export function forecastTone(
   band: string | undefined,
   dataQuality: DataQuality,
 ): Tone {
-  if (!band || dataQuality === "NO_DATA") return "unknown";
+  if (!band || dataQuality === "NO_DATA" || dataQuality === "STALE")
+    return "unknown";
   return band === "LOW" ? "good" : "bad";
 }
 

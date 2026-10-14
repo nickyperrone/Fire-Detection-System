@@ -85,3 +85,6 @@ def test_a_new_field_has_spray_conditions_and_forecast_at_once(client, session, 
 
     hours = session.scalar(select(func.count()).where(SprayAssessment.territory_id == field["id"]))
     assert hours == HOURS * len(thresholds["spray"]["profiles"])
+    # Issued days ago: its "tomorrow" is past, so the field's answer says the forecast is old.
+    entry = next(e for e in client.get("/portfolio").json() if e["territory_id"] == field["id"])
+    assert entry["forecast"]["data_quality"] == "STALE"

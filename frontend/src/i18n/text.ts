@@ -87,7 +87,7 @@ export function fireSentence(t: Messages, fire: FireAnswer): string {
   if (!fire.severity) {
     if (fire.data_quality === "NO_DATA") return t.fire.notReadYet;
     if (fire.data_quality === "STALE")
-      return t.fire.lastRead(formatAge(t, fire.last_read_at));
+      return t.fire.staleSentence(formatAge(t, fire.last_read_at));
     return t.fire.noneWithin;
   }
   const where = fire.distance_m ? direction(t, fire.direction) : "";
@@ -119,10 +119,15 @@ export function ruleSentence(t: Messages, rule: SprayRule): string {
   if (rule.status === "UNKNOWN" || rule.value === null)
     return t.rules.missing(name);
 
-  const withUnit = (n: number) =>
-    `${formatNumber(t, n, rule.unit === "°C" ? 1 : 0)} ${rule.unit}`;
-  const value = withUnit(rule.value);
+  const digits = rule.unit === "°C" ? 1 : 0;
+  const withUnit = (n: number, d = digits) =>
+    `${formatNumber(t, n, d)} ${rule.unit}`;
   const limit = rule.limit == null ? "" : withUnit(rule.limit);
+  // 15.2 km/h over a 15 km/h limit would read "15 km/h, more than 15 km/h": one more decimal.
+  const value =
+    withUnit(rule.value) === limit && rule.value !== rule.limit
+      ? withUnit(rule.value, digits + 1)
+      : withUnit(rule.value);
   const belowLimit = rule.limit != null && rule.value < rule.limit;
   const overOrNear = rule.status === "FAIL" ? t.rules.over : t.rules.near;
 

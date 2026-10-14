@@ -151,7 +151,8 @@ def build_portfolio(
         now,
     )
     lightning = nearby_lightning(session, ids, thresholds["lightning"], now)
-    forecasts = _forecasts(session, ids)
+    forecast_fresh_since = now - timedelta(hours=quality["forecast_stale_after_hours"])
+    forecasts = _forecasts(session, ids, forecast_fresh_since)
     reads = [s.last_success_at for s in statuses if s.last_success_at is not None]
     last_read_at = max(reads) if reads else None
     risks = _open_risks(session, ids)
@@ -215,7 +216,11 @@ def _anomalies(session: Session, ids: list[int]) -> dict[int, AnomalyAnswer]:
     return answers
 
 
-def _forecasts(session: Session, ids: list[int]) -> dict[int, ForecastAnswer]:
+def _forecasts(
+    session: Session, ids: list[int], fresh_since: datetime
+) -> dict[int, ForecastAnswer]:
+    """Each field's forecast; one issued before `fresh_since` is STALE, as its "tomorrow" may
+    be past."""
     rows = session.scalars(
         select(FireForecast)
         .where(FireForecast.territory_id.in_(ids))
@@ -223,8 +228,9 @@ def _forecasts(session: Session, ids: list[int]) -> dict[int, ForecastAnswer]:
     ).all()
     answers: dict[int, ForecastAnswer] = {}
     for r in rows:
+        quality = DataQuality.STALE if r.issued_at < fresh_since else r.data_quality
         answer = answers.setdefault(
-            r.territory_id, ForecastAnswer(data_quality=r.data_quality, issued_at=r.issued_at)
+            r.territory_id, ForecastAnswer(data_quality=quality, issued_at=r.issued_at)
         )
         answer.days.append(
             ForecastDay(r.horizon_days, r.valid_from, r.probability, r.band, r.factors)

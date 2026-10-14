@@ -77,11 +77,12 @@ export function FieldChips({
           {sprayLabel(t, entry.spray)}
         </StatusChip>
       )}
-      {["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "") && (
-        <StatusChip tone="bad" icon={<ForecastIcon className="size-3.5" />}>
-          {t.forecast.chip(t.forecast.band[entry.forecast.days[0].band])}
-        </StatusChip>
-      )}
+      {entry.forecast.data_quality !== "STALE" &&
+        ["HIGH", "VERY_HIGH"].includes(entry.forecast.days[0]?.band ?? "") && (
+          <StatusChip tone="bad" icon={<ForecastIcon className="size-3.5" />}>
+            {t.forecast.chip(t.forecast.band[entry.forecast.days[0].band])}
+          </StatusChip>
+        )}
       {entry.lightning.flashes > 0 && (
         <StatusChip tone="bad" icon={<BoltIcon className="size-3.5" />}>
           {t.lightning.count(entry.lightning.flashes)}
