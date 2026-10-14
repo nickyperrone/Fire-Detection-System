@@ -325,6 +325,8 @@ const en = {
     sent: (email: string) => `Check ${email}: the link expires in 15 minutes.`,
     expired: "That link was already used or expired. Ask for a new one.",
     failed: "The email could not be sent. Try again in a minute.",
+    captchaFailed: "The check did not pass. Try again.",
+    tooMany: "Too many attempts from this connection. Try again in an hour.",
     close: "Close",
     account: (email: string) => `Signed in as ${email}`,
     signOut: "Sign out",
@@ -895,6 +897,9 @@ const es: Messages = {
     sent: (email) => `Revisá ${email}: el link vence en 15 minutos.`,
     expired: "Ese link ya se usó o venció. Pedí otro.",
     failed: "No se pudo mandar el mail. Probá de nuevo en un minuto.",
+    captchaFailed: "No se pudo comprobar que no sos un robot. Probá de nuevo.",
+    tooMany:
+      "Demasiados intentos desde esta conexión. Probá de nuevo en una hora.",
     close: "Cerrar",
     account: (email) => `Entraste como ${email}`,
     signOut: "Salir",

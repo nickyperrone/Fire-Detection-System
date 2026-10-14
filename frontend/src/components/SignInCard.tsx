@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { useLogin } from "@/api/queries";
+import { ApiError } from "@/api/client";
+import { useAuthConfig, useLogin } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
+
+import { Turnstile, type TurnstileHandle } from "./Turnstile";
 
 type Props = {
   /** The link the user came back with was used or expired. */
@@ -15,7 +18,14 @@ type Props = {
 export function SignInCard({ expired, onClose }: Props) {
   const { t, locale } = useLocale();
   const login = useLogin();
+  const config = useAuthConfig();
+  const siteKey = config.data?.captcha_site_key ?? null;
   const [email, setEmail] = useState("");
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const check = useRef<TurnstileHandle>(null);
+  // With Cloudflare's check set up, the link is asked for once it has passed.
+  const ready = config.isSuccess && (!siteKey || captcha !== null);
+  const errorCode = login.error instanceof ApiError ? login.error.code : null;
 
   return (
     <div
@@ -41,7 +51,10 @@ export function SignInCard({ expired, onClose }: Props) {
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
-              login.mutate({ email, locale });
+              login.mutate(
+                { email, locale, captcha },
+                { onSettled: () => check.current?.reset() },
+              );
             }}
           >
             {expired && <p className="text-sm text-bad">{t.signIn.expired}</p>}
@@ -57,15 +70,29 @@ export function SignInCard({ expired, onClose }: Props) {
               aria-label={t.signIn.email}
               className="h-11 w-full rounded-xl border border-line bg-surface-2 px-3 outline-none focus:border-accent"
             />
+            {siteKey && (
+              <Turnstile
+                ref={check}
+                siteKey={siteKey}
+                locale={locale}
+                onToken={setCaptcha}
+              />
+            )}
             <button
               type="submit"
-              disabled={login.isPending}
+              disabled={login.isPending || !ready}
               className="h-11 w-full rounded-xl bg-accent font-semibold text-slate-950 disabled:opacity-50"
             >
               {login.isPending ? t.signIn.sending : t.signIn.send}
             </button>
             {login.isError && (
-              <p className="text-sm text-bad">{t.signIn.failed}</p>
+              <p className="text-sm text-bad">
+                {errorCode === "captcha"
+                  ? t.signIn.captchaFailed
+                  : errorCode === "too_many"
+                    ? t.signIn.tooMany
+                    : t.signIn.failed}
+              </p>
             )}
           </form>
         )}

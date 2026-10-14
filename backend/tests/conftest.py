@@ -68,6 +68,10 @@ def outbox() -> list[EmailMessage]:
 @pytest.fixture
 def anonymous(session, outbox):
     """The API with the test database and an outbox instead of SMTP, signed out."""
+    from app.services.captcha import login_requests
+
+    # The sign-in limit per network address counts across tests otherwise.
+    login_requests._hits.clear()
     app.dependency_overrides[get_session] = lambda: session
     app.dependency_overrides[mail_sender] = lambda: outbox.append
     # No test reaches the internet: outside services answer "unavailable" unless a test says more.

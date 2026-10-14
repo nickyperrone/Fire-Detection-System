@@ -41,6 +41,7 @@ flowchart LR
    | `FIRMS_MAP_KEY` | The NASA FIRMS key |
    | `SMTP_HOST` `SMTP_PORT` `SMTP_USERNAME` `SMTP_PASSWORD` `SMTP_STARTTLS` `SMTP_FROM` | As in `.env` (Resend) |
    | `TELEGRAM_BOT_TOKEN` | The bot's token |
+   | `TURNSTILE_SITE_KEY` `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile, for the sign-in form ([09](09-accounts-and-alerts.md#bots)) |
 
    With `APP_URL` on `https://`, the sign-in cookie is Secure and Telegram alerts get the
    **Abrir en el mapa** button.

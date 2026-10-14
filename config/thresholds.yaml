@@ -226,6 +226,8 @@ auth:
   link_minutes: 15
   session_days: 30
   login_links_per_hour: 5
+  # Sign-in requests from one network address in an hour, whatever the addresses (docs/09#bots).
+  login_requests_per_ip_hour: 20
 
 alerts:
   # A field gets at most one lightning email in this time, however long the storm lasts.

@@ -85,6 +85,26 @@
         "title": "AnomalyPatchOut",
         "type": "object"
       },
+      "AuthConfigOut": {
+        "properties": {
+          "captcha_site_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captcha Site Key"
+          }
+        },
+        "required": [
+          "captcha_site_key"
+        ],
+        "title": "AuthConfigOut",
+        "type": "object"
+      },
       "Channels": {
         "description": "Where one kind of alert goes (docs/13-notifications.md#channels).",
         "properties": {
@@ -714,6 +734,18 @@
       },
       "LoginIn": {
         "properties": {
+          "captcha": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captcha"
+          },
           "email": {
             "maxLength": 254,
             "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
@@ -2073,9 +2105,31 @@
         ]
       }
     },
+    "/auth/config": {
+      "get": {
+        "description": "What the sign-in card needs before asking for an address.",
+        "operationId": "auth_config_auth_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Config",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
-        "description": "Emails a sign-in link. The answer is the same for every address (docs/09).",
+        "description": "Emails a sign-in link. The answer is the same for every address (docs/09); bots are kept\nout by Cloudflare's check and a limit per network address (docs/09#bots).",
         "operationId": "login_auth_login_post",
         "requestBody": {
           "content": {

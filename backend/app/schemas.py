@@ -66,6 +66,8 @@ class DetectOut(BaseModel):
 class LoginIn(BaseModel):
     email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     locale: Literal["es", "en"] = "es"
+    # Cloudflare Turnstile's token (docs/09-accounts-and-alerts.md#bots).
+    captcha: str | None = Field(default=None, max_length=2048)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -109,6 +111,11 @@ class MeIn(BaseModel):
 
     summary: SummaryFrequency | None = None
     notifications: Notifications | None = None
+
+
+class AuthConfigOut(BaseModel):
+    # Public: the page needs it to show Cloudflare's check. None when there is no check.
+    captcha_site_key: str | None
 
 
 class TelegramLinkOut(BaseModel):

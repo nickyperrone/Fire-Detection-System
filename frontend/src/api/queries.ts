@@ -30,8 +30,24 @@ export function useMe() {
 
 export function useLogin() {
   return useMutation({
-    mutationFn: ({ email, locale }: { email: string; locale: string }) =>
-      api.login(email, locale),
+    mutationFn: ({
+      email,
+      locale,
+      captcha,
+    }: {
+      email: string;
+      locale: string;
+      captcha: string | null;
+    }) => api.login(email, locale, captcha),
+  });
+}
+
+/** Whether sign-in shows Cloudflare's check, and its public key (docs/09#bots). */
+export function useAuthConfig() {
+  return useQuery({
+    queryKey: ["auth-config"],
+    queryFn: api.authConfig,
+    staleTime: Infinity,
   });
 }
 

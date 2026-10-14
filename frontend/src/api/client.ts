@@ -120,10 +120,12 @@ export const api = {
     request<SprayHour[]>(`/territories/${id}/spray-conditions`),
   health: () => request<Health>("/health"),
   me: () => request<Me>("/auth/me"),
-  login: (email: string, locale: string) =>
+  authConfig: () =>
+    request<{ captcha_site_key: string | null }>("/auth/config"),
+  login: (email: string, locale: string, captcha: string | null) =>
     request<void>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, locale }),
+      body: JSON.stringify({ email, locale, captcha }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   changeSummary: (summary: SummaryFrequency) =>

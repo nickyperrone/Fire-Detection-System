@@ -22,6 +22,22 @@ than a password, and the click proves the address the alerts will go to.
   flood someone's inbox.
 - The address is stored lowercased; the language chosen at sign-in is the language of the emails.
 
+### Bots
+
+The sign-in form sends an email, so a bot could use it to flood inboxes or to spend the email
+quota. Three limits stand in the way:
+
+- **Cloudflare Turnstile.** The sign-in card shows Cloudflare's check, which most people pass
+  without doing anything. `POST /auth/login` takes its token as `captcha` and asks Cloudflare
+  whether it is valid before sending anything; without a valid one the answer is 403
+  `{"code": "captcha"}`. The keys are `TURNSTILE_SITE_KEY` (public, given to the page by
+  `GET /auth/config`) and `TURNSTILE_SECRET_KEY` (only on the server). Without them, as in
+  development, there is no check.
+- **Per address:** at most 5 links an hour (above).
+- **Per network address:** at most 20 sign-in requests an hour from one IP
+  (`auth.login_requests_per_ip_hour`); after that, 429 `{"code": "too_many"}`. Behind Cloudflare
+  the IP is `CF-Connecting-IP`.
+
 ## What needs an account
 
 | | Signed out | Signed in |

@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Cookie, HTTPException, Response
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import Settings, get_thresholds
@@ -16,8 +16,9 @@ from app.routers.dependencies import (
     SettingsDep,
     UserDep,
 )
-from app.schemas import LoginIn, MeIn, MeOut, TelegramLinkOut, TelegramOut
+from app.schemas import AuthConfigOut, LoginIn, MeIn, MeOut, TelegramLinkOut, TelegramOut
 from app.services.auth import create_login_link, end_session, normalize_email, use_login_link
+from app.services.captcha import client_ip, login_requests, turnstile_passed
 from app.services.email_text import login_email
 from app.services.mail import SEND_ERRORS, message
 from app.services.notification_prefs import preferences
@@ -27,10 +28,35 @@ from app.services.telegram_bot import bot_username, link_code
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+@router.get("/config", response_model=AuthConfigOut)
+def auth_config(settings: SettingsDep):
+    """What the sign-in card needs before asking for an address."""
+    return AuthConfigOut(captcha_site_key=settings.turnstile_site_key or None)
+
+
 @router.post("/login", status_code=202)
-def login(session: SessionDep, settings: SettingsDep, send: MailDep, body: LoginIn):
-    """Emails a sign-in link. The answer is the same for every address (docs/09)."""
+def login(
+    request: Request,
+    session: SessionDep,
+    settings: SettingsDep,
+    send: MailDep,
+    http: HttpDep,
+    body: LoginIn,
+):
+    """Emails a sign-in link. The answer is the same for every address (docs/09); bots are kept
+    out by Cloudflare's check and a limit per network address (docs/09#bots)."""
     config = get_thresholds()["auth"]
+    ip = client_ip(request.headers, request.client.host if request.client else None)
+    if not login_requests.allow(ip or "unknown", config["login_requests_per_ip_hour"]):
+        return JSONResponse(
+            status_code=429, content={"detail": "too many sign-in requests", "code": "too_many"}
+        )
+    if settings.turnstile_secret_key and not turnstile_passed(
+        http, settings.turnstile_secret_key, body.captcha, ip
+    ):
+        return JSONResponse(
+            status_code=403, content={"detail": "the check did not pass", "code": "captcha"}
+        )
     email = normalize_email(body.email)
     token = create_login_link(session, email, body.locale, config, datetime.now(UTC))
     session.commit()

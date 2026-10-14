@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     smtp_from: str = "Field Watch <alerts@fieldwatch.local>"
     # docs/13-notifications.md#telegram: empty turns Telegram off.
     telegram_bot_token: str = ""
+    # docs/09-accounts-and-alerts.md#bots: both empty turn the check off, as in development.
+    turnstile_site_key: str = ""
+    turnstile_secret_key: str = ""
 
 
 @lru_cache
