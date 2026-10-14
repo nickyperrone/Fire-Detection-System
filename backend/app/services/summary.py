@@ -166,7 +166,7 @@ def send_summary(
         # The same words as the email; Telegram takes up to 4,096 characters.
         text = f"<b>{escape(subject)}</b>\n\n{escape(body)}"
         try:
-            telegram.send_text(user.telegram_chat_id, text[:4096])
+            telegram.send_text(user.telegram_chat_id, text[:4096], silent=True)
         except (TelegramError, httpx.HTTPError) as exc:
             log.warning("summary to user %s not sent by telegram: %s", user.id, exc)
     user.summary_sent_at = now

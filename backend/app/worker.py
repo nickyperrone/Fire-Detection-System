@@ -10,6 +10,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from app.config import get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
+from app.providers.telegram import TelegramError
 from app.services.pipeline import (
     run_alert_pipeline,
     run_anomaly_pipeline,
@@ -22,6 +23,7 @@ from app.services.pipeline import (
     run_summary_pipeline,
     run_telegram_pipeline,
     run_weather_layer_pipeline,
+    set_up_telegram,
 )
 
 log = logging.getLogger("worker")
@@ -126,6 +128,11 @@ def main() -> None:
         # next_run_time=now runs each job once at startup instead of waiting a full interval.
         scheduler.add_job(run, "interval", minutes=minutes, next_run_time=start, executor=executor)
     if get_settings().telegram_bot_token:
+        try:
+            with httpx.Client() as client:
+                set_up_telegram(client, get_settings())
+        except (TelegramError, httpx.HTTPError) as exc:
+            log.warning("telegram profile not set: %s", exc)
         # Quiet: it runs every few seconds and logs only when the bot got something.
         scheduler.add_job(
             telegram_job,

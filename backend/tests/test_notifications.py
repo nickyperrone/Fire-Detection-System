@@ -36,13 +36,34 @@ class FakeTelegram:
         self.sent: list[dict] = []
         self.queue: list[dict] = []
         self.answers: list[str] = []
-        self.buttons: list[list[dict]] = []
+        self.buttons: list[list[list[dict]]] = []
+        self.edits: list[dict] = []
+        self.actions: list[str] = []
 
-    def send_photo(self, chat_id, photo, caption, buttons=None):
-        self.sent.append({"chat": chat_id, "photo": photo, "text": caption, "buttons": buttons})
+    def send_photo(self, chat_id, photo, caption, buttons=None, silent=False):
+        self.sent.append(
+            {"chat": chat_id, "photo": photo, "text": caption, "buttons": buttons, "silent": silent}
+        )
 
-    def send_text(self, chat_id, text, buttons=None):
-        self.sent.append({"chat": chat_id, "photo": None, "text": text, "buttons": buttons})
+    def send_text(
+        self, chat_id, text, buttons=None, silent=False, keyboard=None, remove_keyboard=False
+    ):
+        self.sent.append(
+            {
+                "chat": chat_id,
+                "photo": None,
+                "text": text,
+                "buttons": buttons,
+                "silent": silent,
+                "keyboard": keyboard,
+            }
+        )
+
+    def edit_text(self, chat_id, message_id, text, buttons):
+        self.edits.append({"message": message_id, "text": text, "buttons": buttons})
+
+    def chat_action(self, chat_id, action):
+        self.actions.append(action)
 
     def updates(self, offset):
         if offset is not None:
@@ -85,6 +106,10 @@ def linked(session, **notifications):
     return user
 
 
+def texts(buttons):
+    return [[b["text"] for b in row] for row in buttons]
+
+
 def alert(session, thresholds, outbox, bot, app_url="https://fieldwatch.example"):
     return send_alerts(
         session,
@@ -108,8 +133,15 @@ def test_a_fire_goes_by_email_and_as_a_telegram_photo(session, thresholds, outbo
     assert message["text"].startswith(
         "🔴 <b>ALERTA!</b>\n<b>Posible fuego a 1,9 km al E de La Esperanza</b>"
     )
-    assert [b["text"] for b in message["buttons"]] == ["Abrir en el mapa", "Ya lo vi"]
-    assert message["buttons"][0]["url"] == f"https://fieldwatch.example/?f={field.id}"
+    assert texts(message["buttons"]) == [
+        ["Abrir en el mapa", "📍 Cómo llegar"],
+        ["Ya lo vi", "Ver el campo"],
+    ]
+    assert message["buttons"][0][0]["url"] == f"https://fieldwatch.example/?f={field.id}"
+    assert message["buttons"][0][1]["url"].startswith(
+        "https://www.google.com/maps/search/?api=1&query=-32.995,-59.07"
+    )
+    assert bot.actions == ["upload_photo"] and not message["silent"]
     channels = session.scalars(select(AlertDelivery.channel)).all()
     assert sorted(channels) == ["email", "telegram"]
 
@@ -120,7 +152,7 @@ def test_a_local_app_url_is_left_out(session, thresholds, outbox, bot, field):
     alert(session, thresholds, outbox, bot, app_url="http://localhost:3000")
     message = bot.sent[0]
     assert "localhost" not in message["text"]
-    assert [b["text"] for b in message["buttons"]] == ["Ya lo vi"]
+    assert texts(message["buttons"]) == [["📍 Cómo llegar"], ["Ya lo vi", "Ver el campo"]]
 
 
 def test_a_kind_turned_off_is_not_sent_but_is_marked(session, thresholds, outbox, bot, field):
@@ -186,7 +218,7 @@ def test_adverse_weather_is_announced_once_per_episode(session, thresholds, outb
     )
     assert outbox[0]["Subject"] == "La Esperanza: clima adverso: ráfagas de 72 km/h el sáb 3 18:00"
     # No fire to mark as seen: only the link.
-    assert [b["text"] for b in bot.sent[0]["buttons"]] == ["Abrir en el mapa"]
+    assert texts(bot.sent[0]["buttons"]) == [["Abrir en el mapa"], ["Ver el campo"]]
 
     # Still coming an hour later: the same episode, not announced again.
     later = NOW + timedelta(hours=1)
@@ -212,7 +244,9 @@ def test_the_bot_links_a_chat_with_a_code_once(session, bot, field):
     bot.queue = [{"update_id": 1, "message": start}]
     assert answer_updates(session, bot, NOW) == 1
     assert user.telegram_chat_id == CHAT and user.telegram_code_hash is None
-    assert bot.sent[-1]["text"].startswith("Listo: las alertas de Field Watch")
+    assert bot.sent[-1]["text"].startswith("<b>Listo, Telegram quedó conectado</b>")
+    # The menu stays below the chat, so nothing has to be typed.
+    assert bot.sent[-1]["keyboard"]["keyboard"][0][0] == {"text": "📋 Mis campos"}
     assert bot.queue == []
 
     # The code works once; another chat using it is told so.
@@ -230,20 +264,29 @@ def test_ya_lo_vi_marks_the_fires_near_the_field_as_seen(session, thresholds, bo
     linked(session)
     fire(session, thresholds, -59.07)
     url_button = {"text": "Abrir en el mapa", "url": "https://fieldwatch.example/"}
+    field_button = {"text": "Ver el campo", "callback_data": f"f:{field.id}"}
     tap = {
         "id": "q1",
         "data": f"seen:{field.id}",
         "message": {
             "message_id": 10,
             "chat": {"id": CHAT},
-            "reply_markup": {"inline_keyboard": [[url_button, {"text": "Ya lo vi"}]]},
+            "reply_markup": {
+                "inline_keyboard": [
+                    [url_button],
+                    [{"text": "Ya lo vi", "callback_data": f"seen:{field.id}"}, field_button],
+                ]
+            },
         },
     }
     bot.queue = [{"update_id": 1, "callback_query": tap}]
     answer_updates(session, bot, NOW)
     assert session.scalars(select(FieldRiskEvent.status)).all() == [RiskStatus.SEEN]
     assert bot.answers == ["Marcado como visto"]
-    assert bot.buttons[0] == [url_button, {"text": "✓ Visto", "callback_data": "seen:"}]
+    assert bot.buttons[0] == [
+        [url_button],
+        [{"text": "✓ Visto", "callback_data": "seen:"}, field_button],
+    ]
 
 
 def test_someone_elses_field_cannot_be_marked_seen(session, thresholds, bot, field):
@@ -254,6 +297,109 @@ def test_someone_elses_field_cannot_be_marked_seen(session, thresholds, bot, fie
     bot.queue = [{"update_id": 1, "callback_query": tap}]
     answer_updates(session, bot, NOW)
     assert session.scalars(select(FieldRiskEvent.status)).all() == [RiskStatus.NEW]
+
+
+def tap(data, message_id=20, photo=False):
+    message = {"message_id": message_id, "chat": {"id": CHAT}}
+    if photo:
+        message["photo"] = [{}]
+    return {
+        "update_id": message_id,
+        "callback_query": {"id": "q", "data": data, "message": message},
+    }
+
+
+def say(text, update_id=30):
+    return {"update_id": update_id, "message": {"chat": {"id": CHAT}, "text": text}}
+
+
+def test_mis_campos_lists_each_field_and_opens_one_in_place(session, thresholds, bot, field):
+    linked(session)
+    fire(session, thresholds, -59.07)
+    adverse_hours(session, field.id, gusts=40)
+    bot.queue = [say("📋 Mis campos")]
+    answer_updates(session, bot, NOW)
+    listing = bot.sent[-1]
+    assert listing["text"].startswith("📋 <b>Tus campos</b>\n\n<b>La Esperanza</b> · ")
+    assert "🔥 Posible fuego a 1,9 km al E" in listing["text"]
+    assert texts(listing["buttons"]) == [["La Esperanza ›"]]
+
+    # The field opens in the same message, with the way back.
+    bot.queue = [tap(f"f:{field.id}")]
+    answer_updates(session, bot, NOW)
+    detail = bot.edits[-1]
+    assert detail["message"] == 20
+    assert detail["text"].startswith("<b>La Esperanza</b>\n")
+    assert "Pulverizar ahora" in detail["text"]
+    assert texts(detail["buttons"]) == [["‹ Mis campos"]]
+
+    bot.queue = [tap("fields")]
+    answer_updates(session, bot, NOW)
+    assert bot.edits[-1]["text"] == listing["text"]
+
+
+def test_ver_el_campo_under_an_alert_answers_with_a_new_message(session, thresholds, bot, field):
+    linked(session)
+    bot.queue = [tap(f"f:{field.id}", photo=True)]
+    answer_updates(session, bot, NOW)
+    assert bot.edits == [] and bot.sent[-1]["text"].startswith("<b>La Esperanza</b>")
+
+
+def test_mis_alertas_turns_kinds_on_and_off_from_the_chat(session, bot, field):
+    user = linked(session)
+    bot.queue = [say("🔔 Mis alertas")]
+    answer_updates(session, bot, NOW)
+    assert texts(bot.sent[-1]["buttons"])[2] == ["▫️ Fuego lejano"]
+    bot.queue = [tap("t:fire_far")]
+    answer_updates(session, bot, NOW)
+    assert bot.answers[-1] == "Prendida"
+    assert texts(bot.edits[-1]["buttons"])[2] == ["✅ Fuego lejano"]
+    assert user.notifications["fire_far"] == {"email": False, "telegram": True}
+
+
+def test_anything_else_typed_gets_the_help_and_the_menu(session, bot, field):
+    linked(session)
+    bot.queue = [say("hola")]
+    answer_updates(session, bot, NOW)
+    assert bot.sent[-1]["text"].startswith("<b>Field Watch</b> te avisa acá")
+    assert bot.sent[-1]["keyboard"] is not None
+
+
+def test_a_blocked_bot_disconnects_the_account(session, thresholds, outbox, bot, field):
+    from app.providers.telegram import TelegramBlocked
+
+    user = linked(session)
+
+    def blocked(*_, **__):
+        raise TelegramBlocked("Forbidden: bot was blocked by the user")
+
+    bot.send_photo = blocked
+    fire(session, thresholds, -59.07)
+    alert(session, thresholds, outbox, bot)
+    assert user.telegram_chat_id is None
+    # Email carried it, so it is not retried.
+    assert session.scalars(select(FieldRiskEvent.notified_severity)).all() != [None]
+
+
+def test_distant_fires_alone_arrive_silently(session, thresholds, outbox, bot, field):
+    linked(session, fire_far={"email": False, "telegram": True})
+    fire(session, thresholds, -58.99)  # about 9.3 km: Fuego lejano
+    alert(session, thresholds, outbox, bot)
+    assert bot.sent[0]["silent"]
+
+
+def test_telegram_asks_to_slow_down_and_the_message_waits(monkeypatch):
+    from app.providers import telegram as provider
+
+    answers = [
+        httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 1}}),
+        httpx.Response(200, json={"ok": True, "result": {"message_id": 1}}),
+    ]
+    waits = []
+    monkeypatch.setattr(provider.time, "sleep", waits.append)
+    client = httpx.Client(transport=httpx.MockTransport(lambda _: answers.pop(0)))
+    assert provider.Telegram(client, "t").send_text(1, "hola") == {"message_id": 1}
+    assert waits == [1]
 
 
 def test_the_area_picture_is_drawn_over_the_tiles(thresholds):

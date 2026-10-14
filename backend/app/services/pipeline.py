@@ -15,7 +15,7 @@ from app.forecast.recent_fires import top_up
 from app.forecast.serve import cells_of, forecast_grid, forecast_territories, issue_forecast
 from app.models import IngestionRun, RunStatus
 from app.providers.telegram import Telegram
-from app.services.alerts import send_alerts
+from app.services.alerts import public_url, send_alerts
 from app.services.anomalies import check_fields
 from app.services.area_picture import area_picture
 from app.services.field_risk import assess_active_fire_events
@@ -27,7 +27,7 @@ from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
 from app.services.summary import send_due_summaries
-from app.services.telegram_bot import answer_updates
+from app.services.telegram_bot import answer_updates, configure_bot
 from app.services.weather_layer import WEATHER_ROOT, refresh_weather_layer
 from app.versioning import processing_version
 
@@ -157,7 +157,17 @@ def run_telegram_pipeline(
 ) -> dict:
     """Messages and button taps sent to the bot (docs/13-notifications.md#telegram)."""
     bot = telegram_bot(client, settings)
-    return {"updates": answer_updates(session, bot, datetime.now(UTC)) if bot else 0}
+    if bot is None:
+        return {"updates": 0}
+    app_url = settings.app_url if public_url(settings.app_url) else None
+    return {"updates": answer_updates(session, bot, datetime.now(UTC), app_url)}
+
+
+def set_up_telegram(client: httpx.Client, settings: Settings) -> None:
+    """The bot's commands and descriptions, from the repository (docs/13-notifications.md)."""
+    bot = telegram_bot(client, settings)
+    if bot is not None:
+        configure_bot(bot)
 
 
 def answer_territories(

@@ -50,6 +50,8 @@ class Danger:
     rain_hour_at: str | None = None
     fire_event_id: int | None = None
     bearing_deg: float | None = None
+    # The fire's (lat, lon), for directions.
+    fire_at: tuple[float, float] | None = None
 
 
 DIRECTIONS = {

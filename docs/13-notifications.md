@@ -50,10 +50,39 @@ the repository.
     confidence and times;
   - the photo is the affected area: the field's outline, the fires in red with the distance, the
     lightning, the wind arrow, a scale and north, over the satellite basemap;
-  - two buttons: **Abrir en el mapa** (the field in the app) and **Ya lo vi**, which marks the
-    fire as seen on that field and changes the message to say so. With a local `APP_URL` there is
-    no link: it would not open on a phone, and Telegram refuses it in a button.
-- **Summaries** by Telegram are the same text as the email, without a photo.
+  - buttons: **Abrir en el mapa** (the field in the app), **📍 Cómo llegar**, **Ya lo vi**, which
+    marks the fire as seen on that field and changes the button to say so, and **Ver el campo**
+    ([The bot](#the-bot)). With a local `APP_URL` there is no **Abrir en el mapa**: it would not
+    open on a phone, and Telegram refuses it in a button.
+- **Summaries** by Telegram are the same text as the email, without a photo, and arrive silently.
+
+### The bot
+
+- **Profile.** The worker sets the bot's commands, description (shown before Start) and short
+  description (shown in its profile) on start, in Spanish and in English, through the API: the
+  bot is defined in the repository, not by hand in BotFather. Only the name and photo stay in
+  BotFather; the photo is `docs/brand/field-watch-bot.png`, the Field Watch logo.
+- **Driven by buttons.** Nothing has to be typed:
+  - Three buttons stay below the chat once it is linked: **📋 Mis campos**, **🔔 Mis alertas**
+    and **❓ Ayuda**.
+  - **Mis campos** lists each field with its closest active fire (or none within 10 km) and
+    whether it is good to spray this hour, and a button per field. A field's button turns the same
+    message into the field in detail: hectares and lots, the fire, spraying now and the next window
+    to spray in 48 hours, with **‹ Mis campos** to go back. Views change the message in place, so
+    moving around does not fill the chat.
+  - **Mis alertas** shows each kind as a button, ✅ on or ▫️ off for this chat; a tap turns it
+    over and the message updates. Email stays in the notifications page.
+  - Anything else typed gets the help and the buttons again.
+- **Commands**, in the menu next to the text box, for whoever prefers them: `/campos`,
+  `/alertas`, `/ayuda`, `/stop`. `/start <code>` links the chat; `/start` alone explains how.
+- **Sound.** Fuego lejano and summaries arrive without sound; the rest ring.
+- **The alert's buttons**, in two rows: **Abrir en el mapa** (public address only) and
+  **📍 Cómo llegar**, which opens the closest fire in Google Maps; then **Ya lo vi** and **Ver el
+  campo**, which answers below the photo with the field in detail.
+- **While the photo is drawn**, the chat shows "sending photo…".
+- **Limits.** When Telegram asks to slow down (HTTP 429), the message waits the time it says and
+  is sent once more. When the user blocks the bot or deletes the chat (HTTP 403), the account is
+  disconnected, as with `/stop`, instead of failing on every alert.
 - Every message sent, by any channel, is recorded in `alert_delivery` (account, channel, time,
   fields, dangers, processing version); the "already announced" marks are written only once a
   channel accepted it, so a failed send is retried on the next run.

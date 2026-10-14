@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 import httpx
+from geoalchemy2.shape import to_shape
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -24,7 +25,7 @@ from app.models import (
     Territory,
     User,
 )
-from app.providers.telegram import Telegram, TelegramError
+from app.providers.telegram import Telegram, TelegramBlocked, TelegramError
 from app.services.email_text import Danger, alert_caption, alert_email
 from app.services.field_risk import SEVERITY_RANK, compass
 from app.services.lightning import nearby_lightning
@@ -105,12 +106,18 @@ def _fires(session: Session) -> list[Found]:
             seen_at=event.last_detected_at,
             fire_event_id=event.id,
             bearing_deg=risk.bearing_deg,
+            fire_at=_lat_lon(event),
         )
         found.append(Found(user, territory, FIRE_KIND[risk.severity], danger, _mark_fire(risk)))
     shown = {(f.territory.id, f.danger.fire_event_id) for f in found}
     for f in found:
         f.shown = (f.territory.parent_id, f.danger.fire_event_id) not in shown
     return found
+
+
+def _lat_lon(event: FireEvent) -> tuple[float, float]:
+    point = to_shape(event.geom).centroid
+    return (round(point.y, 5), round(point.x, 5))
 
 
 def _mark_fire(risk: FieldRiskEvent) -> Callable[[], None]:
@@ -302,7 +309,9 @@ def send_alerts(
         for territory_id, field_items in by_field.items():
             territory = field_items[0].territory
             dangers = sorted((f.danger for f in field_items), key=_rank)
-            if _send_telegram(
+            # Distant fires alone arrive without sound; anything closer rings.
+            silent = all(f.kind == "fire_far" for f in field_items)
+            result = _send_telegram(
                 telegram,
                 picture,
                 settings,
@@ -312,7 +321,15 @@ def send_alerts(
                 wind.get(territory_id),
                 window_minutes,
                 now,
-            ):
+                silent,
+            )
+            if result == "blocked":
+                # The user blocked the bot or deleted the chat: disconnected, as with /stop.
+                log.info("user %s blocked the bot; telegram disconnected", user.id)
+                user.telegram_chat_id = None
+                counts["telegram_failed"] += 1
+                break
+            if result == "sent":
                 delivered.add(("telegram", territory_id))
                 _log(session, user, "telegram", dangers, version, now)
                 counts["telegram_sent"] += 1
@@ -341,10 +358,11 @@ def _send_telegram(
     wind: tuple[float, float] | None,
     window_minutes: int,
     now: datetime,
-) -> bool:
-    link = f"{settings.app_url}/?f={territory.id}"
-    linkable = public_url(settings.app_url)
+    silent: bool,
+) -> str:
+    """One field's photo alert; "sent", "failed" (retried on the next run) or "blocked"."""
     es = user.locale == "es"
+    chat = user.telegram_chat_id
     fire = next((d for d in dangers if d.kind == "fire"), None)
     caption = alert_caption(
         user.locale,
@@ -354,15 +372,35 @@ def _send_telegram(
         window_minutes,
         now,
     )
-    buttons = []
+    links = []
     # Only to a public address: a link to this computer would not open on a phone, and Telegram
     # refuses it in a button.
-    if linkable:
-        buttons.append({"text": "Abrir en el mapa" if es else "Open in the map", "url": link})
-    if fire:
-        buttons.append(
-            {"text": "Ya lo vi" if es else "Seen it", "callback_data": f"seen:{territory.id}"}
+    if public_url(settings.app_url):
+        links.append(
+            {
+                "text": "Abrir en el mapa" if es else "Open in the map",
+                "url": f"{settings.app_url}/?f={territory.id}",
+            }
         )
+    if fire and fire.fire_at:
+        lat, lon = fire.fire_at
+        links.append(
+            {
+                "text": "📍 Cómo llegar" if es else "📍 Directions",
+                "url": f"https://www.google.com/maps/search/?api=1&query={lat},{lon}",
+            }
+        )
+    see = "Ver el campo" if es else "See the field"
+    actions = [{"text": see, "callback_data": f"f:{territory.id}"}]
+    if fire:
+        actions.insert(
+            0, {"text": "Ya lo vi" if es else "Seen it", "callback_data": f"seen:{territory.id}"}
+        )
+    buttons = [row for row in (links, actions) if row]
+    try:
+        telegram.chat_action(chat, "upload_photo")
+    except (TelegramError, httpx.HTTPError):
+        pass  # only the "sending photo…" hint; the alert goes on
     try:
         photo = picture(territory, dangers, wind, user.locale) if picture else None
     except Exception:  # noqa: BLE001 — a failed picture must not hold back the alert
@@ -370,10 +408,12 @@ def _send_telegram(
         photo = None
     try:
         if photo:
-            telegram.send_photo(user.telegram_chat_id, photo, caption, buttons)
+            telegram.send_photo(chat, photo, caption, buttons, silent=silent)
         else:
-            telegram.send_text(user.telegram_chat_id, caption, buttons)
+            telegram.send_text(chat, caption, buttons, silent=silent)
+    except TelegramBlocked:
+        return "blocked"
     except (TelegramError, httpx.HTTPError, ValueError) as exc:
         log.warning("telegram alert to user %s not sent: %s", user.id, exc)
-        return False
-    return True
+        return "failed"
+    return "sent"
