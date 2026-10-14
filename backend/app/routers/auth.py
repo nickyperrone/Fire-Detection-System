@@ -1,23 +1,28 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Cookie, HTTPException, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from app.config import get_thresholds
+from app.config import Settings, get_thresholds
 from app.models import User
+from app.providers.telegram import Telegram, TelegramError
 from app.routers.dependencies import (
     SESSION_COOKIE,
+    HttpDep,
     MailDep,
     SessionDep,
     SettingsDep,
     UserDep,
 )
-from app.schemas import LoginIn, MeIn, MeOut
+from app.schemas import LoginIn, MeIn, MeOut, TelegramLinkOut, TelegramOut
 from app.services.auth import create_login_link, end_session, normalize_email, use_login_link
 from app.services.email_text import login_email
 from app.services.mail import SEND_ERRORS, message
+from app.services.notification_prefs import preferences
 from app.services.summary import send_summary
+from app.services.telegram_bot import bot_username, link_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -65,18 +70,56 @@ def _signed_in(user: User | None) -> User:
     return user
 
 
+def _me(user: User, settings: Settings) -> MeOut:
+    return MeOut(
+        email=user.email,
+        locale=user.locale,
+        summary=user.summary,
+        notifications=preferences(user),
+        telegram=TelegramOut(
+            available=bool(settings.telegram_bot_token),
+            connected=user.telegram_chat_id is not None,
+        ),
+    )
+
+
 @router.get("/me", response_model=MeOut)
-def me(user: UserDep):
-    user = _signed_in(user)
-    return MeOut(email=user.email, locale=user.locale, summary=user.summary)
+def me(settings: SettingsDep, user: UserDep):
+    return _me(_signed_in(user), settings)
 
 
 @router.patch("/me", response_model=MeOut)
-def change_me(session: SessionDep, user: UserDep, body: MeIn):
+def change_me(session: SessionDep, settings: SettingsDep, user: UserDep, body: MeIn):
     user = _signed_in(user)
-    user.summary = body.summary
+    if body.summary is not None:
+        user.summary = body.summary
+    if body.notifications is not None:
+        user.notifications = body.notifications.model_dump()
     session.commit()
-    return MeOut(email=user.email, locale=user.locale, summary=user.summary)
+    return _me(user, settings)
+
+
+@router.post("/me/telegram", response_model=TelegramLinkOut)
+def connect_telegram(session: SessionDep, settings: SettingsDep, http: HttpDep, user: UserDep):
+    """A link that opens the bot with a one-time code (docs/13-notifications.md#telegram)."""
+    user = _signed_in(user)
+    if not settings.telegram_bot_token:
+        raise HTTPException(503, "Telegram is not set up on this server")
+    try:
+        name = bot_username(Telegram(http, settings.telegram_bot_token))
+    except (TelegramError, httpx.HTTPError) as exc:
+        raise HTTPException(503, "Telegram could not be reached") from exc
+    code = link_code(session, user, datetime.now(UTC))
+    session.commit()
+    return TelegramLinkOut(url=f"https://t.me/{name}?start={code}")
+
+
+@router.delete("/me/telegram", response_model=MeOut)
+def disconnect_telegram(session: SessionDep, settings: SettingsDep, user: UserDep):
+    user = _signed_in(user)
+    user.telegram_chat_id = None
+    session.commit()
+    return _me(user, settings)
 
 
 @router.post("/me/summary", status_code=202)

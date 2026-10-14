@@ -74,14 +74,46 @@ class LoginIn(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
 
+class Channels(BaseModel):
+    """Where one kind of alert goes (docs/13-notifications.md#channels)."""
+
+    email: bool
+    telegram: bool
+
+
+class Notifications(BaseModel):
+    fire_high: Channels
+    fire_medium: Channels
+    fire_far: Channels
+    lightning: Channels
+    weather: Channels
+    summary: Channels
+
+
+class TelegramOut(BaseModel):
+    # False when the server has no bot set up: the page says Telegram is not available.
+    available: bool
+    connected: bool
+
+
 class MeOut(BaseModel):
     email: str
     locale: str
     summary: SummaryFrequency
+    notifications: Notifications
+    telegram: TelegramOut
 
 
 class MeIn(BaseModel):
-    summary: SummaryFrequency
+    """Only what is given changes."""
+
+    summary: SummaryFrequency | None = None
+    notifications: Notifications | None = None
+
+
+class TelegramLinkOut(BaseModel):
+    # Opens the bot in Telegram with the one-time code.
+    url: str
 
 
 class SettingsIn(BaseModel):
