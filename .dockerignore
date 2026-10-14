@@ -1,0 +1,19 @@
+# Only what the image needs (Dockerfile); secrets and local state stay out.
+.env
+.git
+.github
+.claude
+**/.DS_Store
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+backend/.venv
+backend/tests
+frontend/node_modules
+frontend/.next
+frontend/tsconfig.tsbuildinfo
+data/cache
+data/snapshots
+data/weather
+data/aoi/private
+ml

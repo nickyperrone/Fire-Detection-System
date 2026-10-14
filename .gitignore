@@ -6,7 +6,6 @@ __pycache__/
 .ruff_cache/
 .DS_Store
 data/cache/
-data/models/
 data/snapshots/
 data/weather/
 ml/datasets/

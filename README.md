@@ -61,6 +61,12 @@ make web                  # in a second terminal: the map on http://localhost:30
   works but makes the first start take about a minute.
 - Real fields go in `data/aoi/private/`, which is not committed: field outlines are private data.
 
+## Deploy
+
+One `Dockerfile` at the root builds the whole app (web, API and worker) for
+[Dokploy](https://dokploy.com); PostGIS runs as a Dokploy database. Publish **container port 3000**
+([14-deploy](docs/14-deploy.md)).
+
 Other commands: `make test` (backend tests), `make web-check` (frontend types, lint and tests),
 `make codegen` (regenerate the frontend API types), `make lint`, `make migration m="..."`.
 
@@ -598,6 +604,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [11-field-anomalies](docs/11-field-anomalies.md) | Something unusual in a field: patches that change unlike the rest of their lot |
 | [12-field-page](docs/12-field-page.md) | A page per field and lot: breadcrumbs, tabs, satellite photos and greenness over time |
 | [13-notifications](docs/13-notifications.md) | Which dangers to hear about (fire by distance, lightning, adverse weather, summaries) and where: email or Telegram, with a photo of the area |
+| [14-deploy](docs/14-deploy.md) | One image on Dokploy: what runs where, the settings, and moving the data from the laptop |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
