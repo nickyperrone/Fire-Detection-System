@@ -48,10 +48,22 @@ def job(
     return run
 
 
+_telegram_error: list[str] = []
+
+
 def telegram_job() -> None:
     settings, thresholds = get_settings(), get_thresholds()
     with session_factory()() as session, httpx.Client() as client:
-        result = run_telegram_pipeline(session, client, settings, thresholds)
+        try:
+            result = run_telegram_pipeline(session, client, settings, thresholds)
+        except (TelegramError, httpx.HTTPError) as exc:
+            # Every 5 seconds: said once, not on every run, until it changes. "Conflict" means
+            # another worker answers the same bot (docs/14-deploy.md#moving-from-the-laptop).
+            if _telegram_error != [str(exc)]:
+                log.warning("telegram: %s", exc)
+                _telegram_error[:] = [str(exc)]
+            return
+        _telegram_error.clear()
         if result["updates"]:
             log.info("telegram: %s", result)
 
