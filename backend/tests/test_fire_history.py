@@ -63,7 +63,8 @@ def test_field_history_counts_fire_days(session, thresholds, history_config, tmp
             thresholds["firms"]["dedup_coordinate_decimals"],
             tmp_path,
         )
-    history = field_history(session, 1, history_config)  # La Esperanza
+    region = thresholds["region"]["bbox"]
+    history = field_history(session, 1, history_config, region)  # La Esperanza
     # Two detections on 12 Aug are one fire day; 3 Sep is a day inside the field.
     assert history.fire_days == 2
     assert history.inside_days == 1
@@ -73,3 +74,6 @@ def test_field_history_counts_fire_days(session, thresholds, history_config, tmp
     assert history.nearest.day == date(2020, 9, 3) and history.nearest.distance_m == 0
     assert history.latest.day == date(2020, 9, 3)
     assert history.years_loaded == [2020]
+    # Where the archive was not loaded, no year counts: never "no fire" where nobody looked.
+    elsewhere = field_history(session, 1, history_config, [-66.0, -27.0, -65.0, -26.0])
+    assert (elsewhere.years_loaded, elsewhere.fire_days) == ([], 2)

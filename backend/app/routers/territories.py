@@ -237,7 +237,11 @@ def snapshot_image(
 @router.get("/{territory_id}/fire-history", response_model=FireHistoryOut)
 def fire_history(session: SessionDep, owner: OwnerDep, territory_id: int):
     owned(session, owner, territory_id)
-    return asdict(field_history(session, territory_id, get_thresholds()["history"]))
+    thresholds = get_thresholds()
+    # The archive is loaded for the region (`load-history`).
+    return asdict(
+        field_history(session, territory_id, thresholds["history"], thresholds["region"]["bbox"])
+    )
 
 
 @router.get("/{territory_id}/spray-conditions", response_model=list[SprayHourOut])

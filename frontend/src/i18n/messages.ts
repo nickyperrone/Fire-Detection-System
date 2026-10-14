@@ -130,7 +130,7 @@ const en = {
     neverInside: "Never inside the field",
     perYear: "Fire days per year",
     perMonth: "By month",
-    noData: "Fire history has not been loaded yet.",
+    noData: "Fire history for this area has not been loaded yet.",
     source:
       "NASA FIRMS archive, VIIRS S-NPP. A fire day is a day with at least one detection.",
   },
@@ -610,7 +610,7 @@ const es: Messages = {
     neverInside: "Nunca dentro del campo",
     perYear: "Días con fuego por año",
     perMonth: "Por mes",
-    noData: "Todavía no se cargó el historial de fuegos.",
+    noData: "Todavía no se cargó el historial de fuegos de esta zona.",
     source:
       "Archivo de NASA FIRMS, VIIRS S-NPP. Un día con fuego es un día con al menos una detección.",
   },

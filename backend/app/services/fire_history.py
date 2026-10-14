@@ -148,20 +148,45 @@ class FireHistory:
     latest: FireDay | None = None
 
 
-def field_history(session: Session, territory_id: int, config: dict) -> FireHistory:
+# The field and its radius lie inside the box the archive was loaded for.
+COVERED_SQL = text("""
+    SELECT ST_Expand(geom, :radius_deg) @ ST_MakeEnvelope(:west, :south, :east, :north, 4326)
+    FROM territory WHERE id = :territory_id
+""")
+
+
+def field_history(
+    session: Session, territory_id: int, config: dict, loaded_bbox: list[float]
+) -> FireHistory:
+    """Fire days near the field. Outside the box the archive was loaded for, no year counts as
+    loaded: "no fire in 10 years" is never said where nobody looked."""
     first, last = config["first_year"], config["last_year"]
+    radius_deg = config["radius_m"] / METERS_PER_DEGREE_SOUTHERNMOST
+    west, south, east, north = loaded_bbox
+    covered = session.scalar(
+        COVERED_SQL,
+        {
+            "territory_id": territory_id,
+            "radius_deg": radius_deg,
+            "west": west,
+            "south": south,
+            "east": east,
+            "north": north,
+        },
+    )
+    years = loaded_years(session, config["product"]) if covered else []
     history = FireHistory(
         first_year=first,
         last_year=last,
         radius_m=config["radius_m"],
-        years_loaded=[y for y in loaded_years(session, config["product"]) if first <= y <= last],
+        years_loaded=[y for y in years if first <= y <= last],
     )
     rows = session.execute(
         FIRE_DAYS_SQL,
         {
             "territory_id": territory_id,
             "radius_m": config["radius_m"],
-            "radius_deg": config["radius_m"] / METERS_PER_DEGREE_SOUTHERNMOST,
+            "radius_deg": radius_deg,
             "since": datetime(first, 1, 1, tzinfo=UTC),
             "until": datetime(last + 1, 1, 1, tzinfo=UTC),
         },
