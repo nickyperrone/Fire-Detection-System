@@ -114,12 +114,12 @@ def test_a_fire_goes_by_email_and_as_a_telegram_photo(session, thresholds, outbo
     assert sorted(channels) == ["email", "telegram"]
 
 
-def test_a_local_app_url_goes_in_the_text_not_in_a_button(session, thresholds, outbox, bot, field):
+def test_a_local_app_url_is_left_out(session, thresholds, outbox, bot, field):
     linked(session)
     fire(session, thresholds, -59.07)
     alert(session, thresholds, outbox, bot, app_url="http://localhost:3000")
     message = bot.sent[0]
-    assert f"http://localhost:3000/?f={field.id}" in message["text"]
+    assert "localhost" not in message["text"]
     assert [b["text"] for b in message["buttons"]] == ["Ya lo vi"]
 
 

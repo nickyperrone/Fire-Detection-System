@@ -199,13 +199,12 @@ def alert_caption(
     dangers: list[Danger],
     wind: tuple[float, float] | None,
     bearing_deg: float | None,
-    link: str | None,
     window_minutes: int,
     now: datetime,
 ) -> str:
     """The Telegram message of one field's new dangers, worst first, in Telegram's HTML.
     `wind` is (km/h, degrees it blows from) now at the field; `bearing_deg` is toward the closest
-    fire; `link` goes in the text when it cannot go in a button."""
+    fire. The link to the field is a button, not part of the text."""
     es = locale == "es"
     lines = ["🔴 <b>ALERTA!</b>"]
     for i, danger in enumerate(dangers):
@@ -224,8 +223,6 @@ def alert_caption(
             if es
             else f"💨 Wind of {speed} blowing from the fire toward the field."
         )
-    if link:
-        lines.append(link)
     return "\n".join(lines)[:1024]
 
 

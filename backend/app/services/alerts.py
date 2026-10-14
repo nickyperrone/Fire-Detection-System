@@ -351,11 +351,12 @@ def _send_telegram(
         dangers,
         wind,
         fire.bearing_deg if fire else None,
-        None if linkable else link,
         window_minutes,
         now,
     )
     buttons = []
+    # Only to a public address: a link to this computer would not open on a phone, and Telegram
+    # refuses it in a button.
     if linkable:
         buttons.append({"text": "Abrir en el mapa" if es else "Open in the map", "url": link})
     if fire:

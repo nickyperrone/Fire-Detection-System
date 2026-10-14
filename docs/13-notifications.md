@@ -51,8 +51,8 @@ the repository.
   - the photo is the affected area: the field's outline, the fires in red with the distance, the
     lightning, the wind arrow, a scale and north, over the satellite basemap;
   - two buttons: **Abrir en el mapa** (the field in the app) and **Ya lo vi**, which marks the
-    fire as seen on that field and changes the message to say so. Telegram only accepts public
-    addresses in buttons, so with a local `APP_URL` the link goes in the caption instead.
+    fire as seen on that field and changes the message to say so. With a local `APP_URL` there is
+    no link: it would not open on a phone, and Telegram refuses it in a button.
 - **Summaries** by Telegram are the same text as the email, without a photo.
 - Every message sent, by any channel, is recorded in `alert_delivery` (account, channel, time,
   fields, dangers, processing version); the "already announced" marks are written only once a
