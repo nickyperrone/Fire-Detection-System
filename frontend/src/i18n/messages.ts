@@ -9,10 +9,10 @@ export const LOCALES: Locale[] = ["es", "en"];
 const en = {
   intl: "en-GB",
   app: {
-    apiDown: "Cannot reach the Field Watch API.",
-    exploreTitle: "Fires in Entre Ríos and the Delta",
+    apiDown: "Cannot connect to Field Watch. Try again in a few minutes.",
+    exploreTitle: "Field Watch",
     exploreBody:
-      "The map shows satellite fire detections as they arrive. Add your first field to see how far fires are and when it is good to spray.",
+      "Add your first field with + to watch it: fires nearby, when it is good to spray, and an alert when there is danger.",
   },
   age: {
     unknown: "unknown",
@@ -77,7 +77,7 @@ const en = {
     now: "Now",
     driftToward: (side: string) => `Spray drift goes toward the ${side} side`,
     disclaimer:
-      "Decision support with the default profile. Check the product label and your equipment.",
+      "A guide, with standard settings. Check the product label and your equipment.",
     everyRulePasses: "Every condition passes.",
     estimate: "estimate",
     timelineLabel: "Spraying conditions by hour",
@@ -132,7 +132,7 @@ const en = {
     perMonth: "By month",
     noData: "Fire history for this area has not been loaded yet.",
     source:
-      "NASA FIRMS archive, VIIRS S-NPP. A fire day is a day with at least one detection.",
+      "NASA satellite archive (FIRMS, VIIRS sensor). A fire day is a day with at least one detection.",
   },
   forecast: {
     old: (age: string) =>
@@ -162,7 +162,7 @@ const en = {
       dry_air: (v: number) => `Very dry air (${v} % humidity)`,
       no_rain: (v: number) => `${v} days without rain`,
       hot: (v: number) => `Hot (${v} °C)`,
-      high_fwi: (v: number) => `High fire weather index (FWI ${v})`,
+      high_fwi: (v: number) => `Weather with high fire danger (index ${v})`,
       burning_month: () => "This month usually burns here",
     } as Record<string, (v: number) => string>,
     layer: "Fire risk",
@@ -172,7 +172,7 @@ const en = {
   },
   weatherLayer: {
     layer: "Clouds and rain",
-    title: (age: string) => `Clouds and rain · GOES-19 ${age}`,
+    title: (age: string) => `Clouds and rain · image from ${age}`,
     play: "Play the last 2 hours",
     pause: "Pause",
     clouds: "Clouds",
@@ -191,7 +191,7 @@ const en = {
     kinds: {
       less_green: "Less green",
       water: "Water",
-      burnt: "Burnt",
+      burnt: "Burned",
     } as Record<string, string>,
     line: (what: string, ha: string, where: string) =>
       `${what} in ${ha} ha ${where}`,
@@ -236,7 +236,7 @@ const en = {
     danger: "Delete",
   },
   photos: {
-    none: "No photos yet. Sentinel-2 passes every 2 to 5 days; the first ones arrive within a few hours.",
+    none: "No photos yet. A satellite passes over the field every 2 to 5 days; the first ones arrive within a few hours.",
     views: { true_color: "True color", greenness: "Greenness" } as Record<
       "true_color" | "greenness",
       string
@@ -289,7 +289,7 @@ const en = {
   tags: {
     title: "Tags",
     add: "Add",
-    addPlaceholder: "casa, cliente 1, crop:soy",
+    addPlaceholder: "home, client 1, crop:soybean",
     remove: (label: string) => `Remove ${label}`,
     changeColor: (label: string) => `Color of ${label}`,
   },
@@ -318,7 +318,7 @@ const en = {
   signIn: {
     button: "Sign in",
     title: "Sign in to Field Watch",
-    why: "We email you a link, no password. Your fields stay in your account and alerts go to that address.",
+    why: "We email you a link, no password. Your fields stay in your account; alerts come by email and, if you connect it, by Telegram.",
     email: "Email",
     send: "Email me the link",
     sending: "Sending…",
@@ -329,15 +329,15 @@ const en = {
     account: (email: string) => `Signed in as ${email}`,
     signOut: "Sign out",
     signedOutBody:
-      "Sign in with your email to mark your fields, see how far fires are from them and get alerts by email.",
+      "Your fields, watched by satellite: fires nearby, when to spray, lightning, adverse weather and changes in the crop, with alerts by email or Telegram. Sign in with your email to start.",
   },
   notifications: {
     title: "Notifications",
     open: "Notifications",
-    intro: "Which dangers near your fields you hear about, and where.",
+    intro: "Which dangers near your fields you get alerts for, and where.",
     kinds: {
-      fire_high: "High fire",
-      fire_medium: "Medium fire",
+      fire_high: "Fire very close",
+      fire_medium: "Fire close",
       fire_far: "Distant fire",
       lightning: "Lightning",
       weather: "Adverse weather",
@@ -389,8 +389,7 @@ const en = {
     needsTelegram: "Connect Telegram first",
   },
   summary: {
-    title: "Summary by email",
-    frequency: { WEEKLY: "Weekly", DAILY: "Daily", OFF: "None" } as Record<
+    frequency: { WEEKLY: "Weekly", DAILY: "Daily", OFF: "Never" } as Record<
       "WEEKLY" | "DAILY" | "OFF",
       string
     >,
@@ -435,7 +434,7 @@ const en = {
     searching: "Searching places…",
   },
   freshness: {
-    apiDown: "API unreachable",
+    apiDown: "No connection",
     noData: "No satellite data yet",
     lastPass: (sensor: string, age: string) => `Last pass ${sensor} · ${age}`,
     checked: (age: string) => `checked ${age}`,
@@ -513,6 +512,7 @@ const en = {
     fitAgain: "Fit to property lines",
     adjust: "Drag the points on the map to fit the edge exactly.",
     namePlaceholder: "Name, e.g. La Esperanza",
+    tagsPlaceholder: "client:Juan Pérez, crop:soybean",
     name: "Name",
     save: "Save",
     saving: "Saving…",
@@ -556,10 +556,10 @@ export type Messages = typeof en;
 const es: Messages = {
   intl: "es-AR",
   app: {
-    apiDown: "No se puede conectar con la API de Field Watch.",
-    exploreTitle: "Fuegos en Entre Ríos y el Delta",
+    apiDown: "No hay conexión con Field Watch. Probá de nuevo en unos minutos.",
+    exploreTitle: "Field Watch",
     exploreBody:
-      "El mapa muestra los focos detectados por satélite a medida que llegan. Agregá tu primer campo para ver a qué distancia están y cuándo conviene pulverizar.",
+      "Agregá tu primer campo con + para vigilarlo: fuegos cerca, cuándo conviene pulverizar y un aviso cuando hay peligro.",
   },
   age: {
     unknown: "sin dato",
@@ -621,7 +621,7 @@ const es: Messages = {
     now: "Ahora",
     driftToward: (side) => `La deriva va hacia el lado ${side}`,
     disclaimer:
-      "Ayuda para decidir con el perfil por defecto. Revisá la etiqueta del producto y tu equipo.",
+      "Orientativo, con la configuración estándar. Revisá la etiqueta del producto y tu equipo.",
     everyRulePasses: "Todas las condiciones se cumplen.",
     estimate: "estimado",
     timelineLabel: "Condiciones para pulverizar por hora",
@@ -671,7 +671,7 @@ const es: Messages = {
     perMonth: "Por mes",
     noData: "Todavía no se cargó el historial de fuegos de esta zona.",
     source:
-      "Archivo de NASA FIRMS, VIIRS S-NPP. Un día con fuego es un día con al menos una detección.",
+      "Archivo satelital de la NASA (FIRMS, sensor VIIRS). Un día con fuego es un día con al menos una detección.",
   },
   forecast: {
     old: (age) => `El último pronóstico es de ${age}; esperando uno nuevo.`,
@@ -699,7 +699,7 @@ const es: Messages = {
       dry_air: (v) => `Aire muy seco (${v} % de humedad)`,
       no_rain: (v) => `${v} días sin llover`,
       hot: (v) => `Calor (${v} °C)`,
-      high_fwi: (v) => `Índice de peligro de incendio alto (FWI ${v})`,
+      high_fwi: (v) => `Clima de alto peligro de incendio (índice ${v})`,
       burning_month: () => "En este mes suele haber quemas acá",
     },
     layer: "Riesgo de fuego",
@@ -709,7 +709,7 @@ const es: Messages = {
   },
   weatherLayer: {
     layer: "Nubes y lluvia",
-    title: (age) => `Nubes y lluvia · GOES-19 ${age}`,
+    title: (age) => `Nubes y lluvia · imagen de ${age}`,
     play: "Reproducir las últimas 2 h",
     pause: "Pausar",
     clouds: "Nubes",
@@ -763,12 +763,12 @@ const es: Messages = {
     },
     tabsLabel: "Secciones del campo",
     lots: "Lotes",
-    noLots: "Todavía no tiene lotes. Dividí el campo con + en el mapa.",
+    noLots: "Todavía no tenés lotes. Dividí el campo con + en el mapa.",
     outline: "Borde",
     danger: "Borrar",
   },
   photos: {
-    none: "Todavía no hay fotos. Sentinel-2 pasa cada 2 a 5 días; las primeras llegan en unas horas.",
+    none: "Todavía no hay fotos. Un satélite pasa por el campo cada 2 a 5 días; las primeras llegan en unas horas.",
     views: { true_color: "Color real", greenness: "Verdor" },
     viewLabel: "Cómo mostrar la foto",
     clouds: (pct) => `${pct} % nubes`,
@@ -808,7 +808,7 @@ const es: Messages = {
     clear: "Limpiar",
     hidden: (n) => `Ocultos (${n})`,
     highPriority: "Prioridad alta",
-    alertsOff: "Sin avisos",
+    alertsOff: "Sin alertas",
     unusual: (n) => `${n} con algo raro`,
     allFine: "Todo en orden",
     lots: (n) => `${n} ${n === 1 ? "lote" : "lotes"}`,
@@ -818,7 +818,7 @@ const es: Messages = {
   tags: {
     title: "Etiquetas",
     add: "Agregar",
-    addPlaceholder: "casa, cliente 1, crop:soy",
+    addPlaceholder: "casa, cliente 1, cultivo:soja",
     remove: (label) => `Quitar ${label}`,
     changeColor: (label) => `Color de ${label}`,
   },
@@ -848,7 +848,7 @@ const es: Messages = {
   signIn: {
     button: "Entrar",
     title: "Entrá a Field Watch",
-    why: "Te mandamos un link por mail, sin contraseña. Tus campos quedan en tu cuenta y los avisos llegan a esa dirección.",
+    why: "Te mandamos un link por mail, sin contraseña. Tus campos quedan en tu cuenta; las alertas llegan por mail y, si lo conectás, por Telegram.",
     email: "Mail",
     send: "Mandame el link",
     sending: "Mandando…",
@@ -859,15 +859,15 @@ const es: Messages = {
     account: (email) => `Entraste como ${email}`,
     signOut: "Salir",
     signedOutBody:
-      "Entrá con tu mail para marcar tus campos, ver a qué distancia están los fuegos y recibir avisos por mail.",
+      "Tus campos, vigilados por satélite: fuegos cerca, cuándo pulverizar, rayos, clima adverso y cambios en el cultivo, con avisos por mail o Telegram. Entrá con tu mail para empezar.",
   },
   notifications: {
     title: "Notificaciones",
     open: "Notificaciones",
     intro: "De qué peligros cerca de tus campos te enterás, y por dónde.",
     kinds: {
-      fire_high: "Fuego alto",
-      fire_medium: "Fuego medio",
+      fire_high: "Fuego muy cerca",
+      fire_medium: "Fuego cerca",
       fire_far: "Fuego lejano",
       lightning: "Rayos",
       weather: "Clima adverso",
@@ -904,8 +904,7 @@ const es: Messages = {
     needsTelegram: "Primero conectá Telegram",
   },
   summary: {
-    title: "Resumen por mail",
-    frequency: { WEEKLY: "Semanal", DAILY: "Diario", OFF: "No" },
+    frequency: { WEEKLY: "Semanal", DAILY: "Diario", OFF: "Nunca" },
     sendNow: "Mandame uno ahora",
     sending: "Mandando…",
     sent: (email) => `Enviado a ${email}.`,
@@ -932,9 +931,9 @@ const es: Messages = {
     alertsHint: (email) =>
       `Por mail a ${email}, por Telegram si lo conectaste, y en este navegador.`,
     chooseAlerts: "Elegir cuáles y por dónde",
-    allowBrowser: "Permitir avisos en este navegador",
+    allowBrowser: "Permitir alertas en este navegador",
     browserBlocked:
-      "Este navegador bloquea los avisos de Field Watch; permitilos en la configuración del sitio.",
+      "Este navegador bloquea las alertas de Field Watch; permitilas en la configuración del sitio.",
     visible: "Mostrar en el mapa",
     priority: "Prioridad",
     priorities: { HIGH: "Alta", NORMAL: "Normal", LOW: "Baja" },
@@ -947,7 +946,7 @@ const es: Messages = {
     searching: "Buscando lugares…",
   },
   freshness: {
-    apiDown: "Sin conexión con la API",
+    apiDown: "Sin conexión",
     noData: "Todavía no hay datos satelitales",
     lastPass: (sensor, age) => `Última pasada ${sensor} · ${age}`,
     checked: (age) => `revisado ${age}`,
@@ -1027,6 +1026,7 @@ const es: Messages = {
     fitAgain: "Ajustar a las líneas",
     adjust: "Arrastrá los puntos en el mapa para ajustar el borde.",
     namePlaceholder: "Nombre, por ejemplo La Esperanza",
+    tagsPlaceholder: "cliente:Juan Pérez, cultivo:soja",
     name: "Nombre",
     save: "Guardar",
     saving: "Guardando…",

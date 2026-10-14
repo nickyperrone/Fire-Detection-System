@@ -159,14 +159,17 @@ def alert_email(
         footer = (
             "Field Watch avisa lo que detectan los satélites: un foco puede ser una quema "
             "controlada, y las nubes pueden ocultar otros.\n"
-            'Para dejar de recibir avisos de un campo, apagá "Avisarme si hay peligro cerca" '
-            "en su tarjeta."
+            'Para dejar de recibir alertas de un campo, apagá "Avisarme si hay peligro cerca" '
+            "en sus Ajustes. Para elegir qué alertas te llegan y por dónde, abrí Notificaciones "
+            f"(la campana): {app_url}/?view=notifications"
         )
     else:
         footer = (
             "Field Watch reports what satellites detect: a hotspot can be a controlled burn, "
             "and clouds can hide others.\n"
-            'To stop alerts for a field, turn off "Alert me of danger nearby" on its card.'
+            'To stop alerts for a field, turn off "Alert me of danger nearby" in its Settings. '
+            "To choose which alerts you get and where, open Notifications (the bell): "
+            f"{app_url}/?view=notifications"
         )
     return subject, "\n\n".join(lines) + "\n\n" + footer + "\n"
 
@@ -206,7 +209,7 @@ def alert_caption(
     `wind` is (km/h, degrees it blows from) now at the field; `bearing_deg` is toward the closest
     fire. The link to the field is a button, not part of the text."""
     es = locale == "es"
-    lines = ["🔴 <b>ALERTA!</b>"]
+    lines = ["🔴 <b>ALERTA!</b>" if es else "🔴 <b>ALERT!</b>"]
     for i, danger in enumerate(dangers):
         what, *details = _line(danger, locale, window_minutes, now).split(" · ")
         lines.append(
@@ -347,7 +350,7 @@ def summary_email(
         same = [lot.name for lot in lots if lines[lot.id] == lines[t.id]]
         if same:
             block.append(
-                ("  Lotes igual que el campo: " if es else "  Lots as the field: ")
+                ("  Lotes igual que el campo: " if es else "  Lots same as the field: ")
                 + ", ".join(same)
                 + "."
             )
@@ -360,10 +363,10 @@ def summary_email(
                 block.append(f"      {app_url}/?f={lot.id}")
         blocks.append("\n".join(block))
     footer = (
-        "Cambiá la frecuencia de este resumen (diario, semanal o ninguno) desde el menú de tu "
-        f"cuenta: {app_url}"
+        "Cambiá cada cuánto llega este resumen (diario, semanal o nunca) y por dónde en "
+        f"Notificaciones (la campana): {app_url}/?view=notifications"
         if es
-        else f"Change how often this summary comes (daily, weekly or never) in your account menu: "
-        f"{app_url}"
+        else "Change how often this summary comes (daily, weekly or never) and where in "
+        f"Notifications (the bell): {app_url}/?view=notifications"
     )
     return f"{period}: {news}", "\n\n".join(blocks) + "\n\n" + footer + "\n"

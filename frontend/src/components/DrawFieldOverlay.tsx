@@ -293,7 +293,7 @@ function SaveFieldForm({
             <input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="client:Juan Perez, crop:soy"
+              placeholder={t.draw.tagsPlaceholder}
               className={inputClass}
             />
           </label>

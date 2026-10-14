@@ -153,7 +153,7 @@ def test_a_weekly_summary_lists_the_week_per_field_once(session, thresholds, out
     assert "Fuego: 2 días con fuego a menos de 10 km; el más cercano a 1,9 km" in body
     assert "Rayos: 1 rayo a menos de 10 km." in body
     assert "Lluvia en la zona: 15,5 mm." in body
-    assert "menú de tu cuenta" in body
+    assert "/?view=notifications" in body
     # Its lot says the same, so it is named once instead of repeated.
     assert "Lotes igual que el campo: Lote 1." in body
 
