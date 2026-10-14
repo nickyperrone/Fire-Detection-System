@@ -153,6 +153,7 @@ class Territory(Base):
     visible: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     priority: Mapped[Priority] = mapped_column(_enum(Priority), server_default=Priority.NORMAL)
     lightning_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    weather_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     tags: Mapped[list[Tag]] = relationship(secondary="territory_tag", lazy="selectin")
@@ -445,6 +446,12 @@ class User(Base):
         _enum(SummaryFrequency), server_default=SummaryFrequency.WEEKLY
     )
     summary_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # docs/13-notifications.md: kinds and channels; None means the defaults.
+    notifications: Mapped[dict | None] = mapped_column(JSONB)
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
+    # The one-time code that links a Telegram chat, hashed like sign-in tokens.
+    telegram_code_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    telegram_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class LoginLink(Base):
@@ -475,13 +482,14 @@ class UserSession(Base):
     user: Mapped[User] = relationship(lazy="joined")
 
 
-class AlertEmail(Base):
-    """An alert email accepted by the mail server, with what it announced."""
+class AlertDelivery(Base):
+    """An alert accepted by a channel (email or Telegram), with what it announced."""
 
-    __tablename__ = "alert_email"
+    __tablename__ = "alert_delivery"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(20))
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     dangers: Mapped[list] = mapped_column(JSONB)
     processing_version: Mapped[str] = mapped_column(String(40))

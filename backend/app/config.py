@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_starttls: bool = False
     smtp_from: str = "Field Watch <alerts@fieldwatch.local>"
+    # docs/13-notifications.md#telegram: empty turns Telegram off.
+    telegram_bot_token: str = ""
 
 
 @lru_cache
