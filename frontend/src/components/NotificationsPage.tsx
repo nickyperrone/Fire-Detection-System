@@ -49,6 +49,12 @@ export function NotificationsPage({
   const changeSummary = useChangeSummary();
   const summaryNow = useSummaryNow();
   const connected = me.telegram.connected;
+  const client = useQueryClient();
+
+  // Fresh on opening: whether Telegram is set up or linked can change while the app is open.
+  useEffect(() => {
+    void client.invalidateQueries({ queryKey: ["me"] });
+  }, [client]);
 
   const set = (kind: Kind, channels: Notifications[Kind]) =>
     change.mutate({ ...me.notifications, [kind]: channels });
