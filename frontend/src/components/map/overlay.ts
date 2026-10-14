@@ -169,8 +169,64 @@ export type OverlayOptions = {
   showParcels: boolean;
 };
 
+// Places the basemap names in English that Argentina names otherwise, in every language.
+const ARGENTINE_NAMES: [string, string][] = [
+  ["Falkland", "Islas Malvinas"],
+  ["South Georgia", "Islas Georgias del Sur y Sandwich del Sur"],
+];
+
+/** A basemap label as an expression, with the places Argentina names otherwise renamed.
+ * "{name_en}" becomes ["get", "name_en"]; a label that changes with zoom keeps its "step" at the
+ * top, as MapLibre requires, with the renaming inside each step. */
+function argentineLabel(field: unknown): unknown {
+  const names = [
+    "concat",
+    ["coalesce", ["get", "name"], ""],
+    ["coalesce", ["get", "name_en"], ""],
+  ];
+  const renamed = (label: unknown) => [
+    "case",
+    ...ARGENTINE_NAMES.flatMap(([english, spanish]) => [
+      ["in", english, names],
+      spanish,
+    ]),
+    label,
+  ];
+  const token = (value: string) => {
+    const match = /^\{([^}]+)\}$/.exec(value);
+    return renamed(match ? ["coalesce", ["get", match[1]], ""] : value);
+  };
+  if (typeof field === "string") return token(field);
+  const stops = (field as { stops?: [number, string][] } | null)?.stops;
+  if (stops)
+    return [
+      "step",
+      ["zoom"],
+      token(stops[0][1]),
+      ...stops.slice(1).flatMap(([zoom, value]) => [zoom, token(value)]),
+    ];
+  // Already an expression: renamed only when it does not depend on zoom.
+  return JSON.stringify(field).includes('"zoom"') ? field : renamed(field);
+}
+
+/** Islas Malvinas, always (docs/04-frontend.md#basemaps). */
+export function applyArgentineNames(map: MapLibreMap): void {
+  for (const layer of map.getStyle().layers) {
+    if (layer.type !== "symbol") continue;
+    const field = map.getLayoutProperty(layer.id, "text-field");
+    if (field === undefined || JSON.stringify(field).includes("housenumber"))
+      continue;
+    map.setLayoutProperty(
+      layer.id,
+      "text-field",
+      argentineLabel(field) as never,
+    );
+  }
+}
+
 /** Adds our sources and layers on top of the current basemap. Called again after every style change. */
 export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
+  applyArgentineNames(map);
   const { territoriesVersion, lightningVersion, riskVersion, showRisk } =
     options;
   // Below everything else: the risk shading is background, fields and fires sit on top.

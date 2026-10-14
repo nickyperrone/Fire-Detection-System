@@ -10,6 +10,16 @@
     <line x1="150" y1="410" x2="410" y2="150" opacity=".75"/>
     <line x1="210" y1="450" x2="450" y2="210" opacity=".95"/>
   </g>
-  <circle cx="256" cy="256" r="168" fill="none" stroke="#22d3ee" stroke-width="30"/>
-  <circle cx="375" cy="137" r="40" fill="#ef4444" stroke="#11151c" stroke-width="16"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#22d3ee" stroke-width="22"/>
+  <g transform="translate(375 137) rotate(-45)">
+    <g stroke="#11151c" stroke-width="22" stroke-linejoin="round">
+      <rect x="-82" y="-26" width="48" height="52" rx="7"/>
+      <rect x="34" y="-26" width="48" height="52" rx="7"/>
+      <circle r="32"/>
+    </g>
+    <rect x="-82" y="-26" width="48" height="52" rx="7" fill="#f8fafc"/>
+    <rect x="34" y="-26" width="48" height="52" rx="7" fill="#f8fafc"/>
+    <rect x="-36" y="-5" width="72" height="10" fill="#f8fafc"/>
+    <circle r="32" fill="#f8fafc"/>
+  </g>
 </svg>

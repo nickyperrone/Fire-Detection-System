@@ -331,6 +331,46 @@ const en = {
     signedOutBody:
       "Your fields, watched by satellite: fires nearby, when to spray, lightning, adverse weather and changes in the crop, with alerts by email or Telegram. Sign in with your email to start.",
   },
+  welcome: {
+    title: "Your fields, watched",
+    titleAccent: "from space.",
+    lead: "Field Watch looks at your fields all day with satellites and weather data, and alerts you when something changes.",
+    features: {
+      fire: {
+        title: "Fires nearby",
+        body: "Every fire seen by satellite, with its distance and direction to your field.",
+      },
+      spray: {
+        title: "When to spray",
+        body: "Wind, gusts, Delta T and rain, hour by hour for the next 48 h.",
+      },
+      storm: {
+        title: "Lightning and adverse weather",
+        body: "Storms nearby, strong gusts and heavy rain before they arrive.",
+      },
+      photos: {
+        title: "Photos of the crop",
+        body: "A satellite image every 2 to 5 days, and an alert when something looks unusual.",
+      },
+    } as Record<
+      "fire" | "spray" | "storm" | "photos",
+      { title: string; body: string }
+    >,
+    previewLabel: "This is how an alert arrives",
+    preview: {
+      badge: "ALERT!",
+      headline: "Possible fire 3.7 km NE of Example field",
+      details:
+        "Wind of 18 km/h from the fire toward the field · seen 40 min ago",
+      directions: "Directions",
+      seen: "Seen it",
+    },
+    cta: "Sign in with my email",
+    ctaNote: "No password: we email you a link.",
+    sources:
+      "Data from NASA FIRMS, NOAA GOES-19, ESA Sentinel-2 and Open-Meteo. The map shows an example field.",
+    exampleField: "Example field",
+  },
   notifications: {
     title: "Notifications",
     open: "Notifications",
@@ -860,6 +900,43 @@ const es: Messages = {
     signOut: "Salir",
     signedOutBody:
       "Tus campos, vigilados por satélite: fuegos cerca, cuándo pulverizar, rayos, clima adverso y cambios en el cultivo, con avisos por mail o Telegram. Entrá con tu mail para empezar.",
+  },
+  welcome: {
+    title: "Tus campos, vigilados",
+    titleAccent: "desde el espacio.",
+    lead: "Field Watch mira tus campos todo el día con satélites y datos del clima, y te avisa cuando algo cambia.",
+    features: {
+      fire: {
+        title: "Fuegos cerca",
+        body: "Cada foco que ve un satélite, con la distancia y la dirección a tu campo.",
+      },
+      spray: {
+        title: "Cuándo pulverizar",
+        body: "Viento, ráfagas, Delta T y lluvia, hora por hora para las próximas 48 h.",
+      },
+      storm: {
+        title: "Rayos y clima adverso",
+        body: "Tormentas cerca, ráfagas fuertes y lluvias intensas antes de que lleguen.",
+      },
+      photos: {
+        title: "Fotos del cultivo",
+        body: "Una imagen satelital cada 2 a 5 días, y un aviso si algo se ve raro.",
+      },
+    },
+    previewLabel: "Así te llega una alerta",
+    preview: {
+      badge: "ALERTA!",
+      headline: "Posible fuego a 3,7 km al NE de Campo de ejemplo",
+      details:
+        "Viento de 18 km/h desde el fuego hacia el campo · visto hace 40 min",
+      directions: "Cómo llegar",
+      seen: "Ya lo vi",
+    },
+    cta: "Entrar con mi mail",
+    ctaNote: "Sin contraseña: te mandamos un link.",
+    sources:
+      "Datos de NASA FIRMS, NOAA GOES-19, ESA Sentinel-2 y Open-Meteo. El mapa muestra un campo de ejemplo.",
+    exampleField: "Campo de ejemplo",
   },
   notifications: {
     title: "Notificaciones",

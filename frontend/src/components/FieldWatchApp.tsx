@@ -29,6 +29,8 @@ import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldPage } from "./FieldPage";
 import { NotificationsPage } from "./NotificationsPage";
+import { Welcome } from "./Welcome";
+import { useIntroTour } from "./map/useIntroTour";
 import { MapButtons } from "./MapButtons";
 import { MapLegend } from "./MapLegend";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
@@ -86,6 +88,13 @@ export function FieldWatchApp() {
 
   const me = useMe();
   const signedIn = Boolean(me.data);
+  // Signed out on a plain visit: the map plays what Field Watch does, over the satellite photo.
+  const intro =
+    me.isSuccess && !signedIn && !url.linkHasCamera && url.selectedId === null;
+  useIntroTour(map, intro, {
+    field: t.welcome.exampleField,
+    distance: "3,7 km",
+  });
   // "expired" when the email link the user came back with no longer works.
   const [signIn, setSignIn] = useState<"open" | "expired" | null>(() =>
     url.signinExpired ? "expired" : null,
@@ -356,7 +365,7 @@ export function FieldWatchApp() {
   return (
     <main className="fixed inset-0">
       <MapView
-        basemap={url.basemap}
+        basemap={intro ? "satellite" : url.basemap}
         initialCamera={url.initialCamera}
         territoryStates={territoryStates}
         hiddenIds={hiddenIds}
@@ -369,7 +378,8 @@ export function FieldWatchApp() {
         onReady={setMap}
         messages={t}
         showRisk={url.showRisk}
-        showParcels={url.showParcels || drawingOn}
+        // The first visit's film reads better without every property line.
+        showParcels={(url.showParcels && !intro) || drawingOn}
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
@@ -476,18 +486,7 @@ export function FieldWatchApp() {
             scrollKey={url.tab}
           >
             {me.isSuccess && !signedIn ? (
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold">{t.app.exploreTitle}</h2>
-                <p className="text-sm text-slate-300">
-                  {t.signIn.signedOutBody}
-                </p>
-                <button
-                  onClick={() => setSignIn("open")}
-                  className="h-11 rounded-xl bg-accent px-5 font-semibold text-slate-950"
-                >
-                  {t.signIn.button}
-                </button>
-              </div>
+              <Welcome onSignIn={() => setSignIn("open")} />
             ) : everything.isError ? (
               <p className="text-sm text-bad">{t.app.apiDown}</p>
             ) : url.view === "notifications" && me.data ? (

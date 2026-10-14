@@ -177,3 +177,48 @@ button:active:not(:disabled) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The first visit's film on the map (components/map/useIntroTour.ts). */
+.intro-label {
+  border-radius: 9999px;
+  background: rgb(11 14 19 / 0.82);
+  padding: 4px 10px;
+  color: #4ade80;
+  font:
+    600 12px/1.2 var(--font-sans, system-ui),
+    sans-serif;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.5s ease-out both;
+}
+.intro-label-white {
+  color: #fff;
+}
+.intro-fire {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 9999px;
+  background: #ef4444;
+  box-shadow: 0 0 18px 4px rgb(239 68 68 / 0.7);
+  animation: pop-up 0.4s ease-out both;
+}
+.intro-fire::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 9999px;
+  border: 2px solid rgb(239 68 68 / 0.8);
+  animation: intro-ping 1.6s ease-out infinite;
+}
+@keyframes intro-ping {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}

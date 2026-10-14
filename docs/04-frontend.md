@@ -132,6 +132,29 @@ The map loads what is on screen, at the detail the zoom needs, like Google Maps.
   ([09-accounts-and-alerts](09-accounts-and-alerts.md)). Signed out, the bottom sheet invites to
   sign in where the field list would be, and "+" opens the sign-in card.
 
+### First visit
+
+Signed out, the panel introduces Field Watch: the logo, what it watches (fires, spraying, lightning
+and weather, crop photos), how an alert arrives, the sign-in button and the data sources. Behind
+it, over the satellite photo, the map plays a loop like a short film
+(`components/map/useIntroTour.ts`): a flight from the country to Larroque, an example field traced
+line by line, a fire with the dashed line and its distance, a slow push in, then out and again.
+Property lines are hidden while it plays. It is an example and the panel says so. The first touch
+of the map stops it where it is; with reduced motion it shows the finished scene, still. A link
+with a camera or a field skips it.
+
+## Basemaps
+
+The basemap's place names are in English. Places that Argentina names otherwise are renamed in
+every language and at every zoom: **Islas Malvinas**, and **Islas Georgias del Sur y Sandwich del
+Sur** (`applyArgentineNames` in `components/map/overlay.ts`).
+
+## Logo
+
+`docs/brand/field-watch.svg` (also the web's icon, `frontend/src/app/icon.svg`): a satellite on
+its orbit, the cyan ring, over a field's green rows. `docs/brand/field-watch-bot.png` is the
+square version, the Telegram bot's photo.
+
 ## Stack
 
 | Piece | Choice | Why |
