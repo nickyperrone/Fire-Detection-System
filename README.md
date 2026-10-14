@@ -16,7 +16,8 @@ outline** from a tap, by segmenting a year of images
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
   fire history per field, fields drawn on the official property lines and edited with two pencils,
-  alerts by email and in the browser, accounts opened with a link by email, visibility and
+  alerts by email, by Telegram with a photo of the area and in the browser, each account choosing
+  which kinds and where, accounts opened with a link by email, visibility and
   priority per field, colored tags, field outlines detected by computer vision, the weather now
   and for 48 hours per field, daily or weekly summaries by email, unusual patches in each
   field found in Sentinel-2 images, a page per field with its satellite photos over time, and
@@ -342,25 +343,33 @@ floods an inbox nor reveals who uses the app.
 ### Per-field settings and alerts
 
 Each field and lot can have alerts on or off, be shown or hidden, and have high, normal or low
-priority ([01-product](docs/01-product.md#settings-per-field)). Alerts go by email and, while the
-app is open, as browser notifications.
+priority ([01-product](docs/01-product.md#settings-per-field)). Alerts go by email, by Telegram and,
+while the app is open, as browser notifications. In **Notificaciones**, from the account menu, each
+account chooses which kinds it hears about (fuego alto, medio o lejano, rayos, clima adverso, the
+summary) and by which channel ([13-notifications](docs/13-notifications.md)).
 
 ```mermaid
 flowchart LR
-    W["Worker<br/>fire or lightning run"] --> DB[("PostGIS")]
-    DB --> G{"Danger grew?<br/>fire appeared or closer,<br/>lightning started"}
+    W["Worker<br/>fire, lightning<br/>or forecast run"] --> DB[("PostGIS")]
+    DB --> G{"Danger grew?<br/>fire appeared or closer,<br/>lightning started,<br/>adverse weather coming"}
     G -- no --> X["nothing"]
     G -- yes --> A{"Alerts on<br/>for this field?"}
     A -- no --> X
-    A -- yes --> E["One email per account and run,<br/>worst first, recorded"]
+    A -- yes --> K{"Kind wanted,<br/>and by which channel?"}
+    K -- email --> E["One email per account and run,<br/>worst first, recorded"]
+    K -- telegram --> T["🔴 ALERTA! per field:<br/>photo of the area,<br/>Abrir en el mapa · Ya lo vi"]
     A -- yes --> N["Browser notification<br/>while the app is open"]
     DB --> V{"Visible?"}
     V -- yes --> M["Map + list,<br/>high priority first"]
     V -- no --> H["Left off the map,<br/>listed under Hidden"]
 ```
 
-- Each email is marked as sent only after the mail server accepts it, so a failed send is retried
-  on the next run instead of being lost.
+- A danger is marked as announced only after a channel accepts it, so a failed send is retried on
+  the next run instead of being lost. Every message is recorded in `alert_delivery`.
+- The Telegram photo is drawn by the worker: the field, the fires with the distance to the closest,
+  the lightning, the wind, a scale and north, over satellite tiles. "Ya lo vi" marks the fire as
+  seen. The bot is connected from the notifications page, with a one-time code; it needs
+  `TELEGRAM_BOT_TOKEN` in `.env` (from @BotFather).
 - A fire near a field and its lots is one line, not one per lot; lightning is emailed at most
   once an hour per field.
 - Danger already present is not announced again; only a change is news.

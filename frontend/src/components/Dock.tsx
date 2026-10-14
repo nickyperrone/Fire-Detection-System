@@ -19,6 +19,7 @@ type Props = {
   /** On a phone, the sheet is open above the dock's place. */
   covered: boolean;
   onSignIn: () => void;
+  onNotifications: () => void;
 };
 
 type Panel = "data" | "account";
@@ -79,7 +80,13 @@ const SEGMENT =
 
 /** A floating glass bar at the bottom: data freshness, the portfolio, language and account
  * (docs/04-frontend.md#visual-style). */
-export function Dock({ me, entries, covered, onSignIn }: Props) {
+export function Dock({
+  me,
+  entries,
+  covered,
+  onSignIn,
+  onNotifications,
+}: Props) {
   const { t, locale, setLocale } = useLocale();
   const freshness = useFreshness(t);
   const [panel, setPanel] = useState<Panel | null>(null);
@@ -117,7 +124,13 @@ export function Dock({ me, entries, covered, onSignIn }: Props) {
         ))}
       </div>
     ) : panel === "account" && me ? (
-      <AccountMenu me={me} />
+      <AccountMenu
+        me={me}
+        onNotifications={() => {
+          setPanel(null);
+          onNotifications();
+        }}
+      />
     ) : null;
 
   return (

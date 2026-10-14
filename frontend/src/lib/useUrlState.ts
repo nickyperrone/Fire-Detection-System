@@ -22,6 +22,7 @@ type Changes = Partial<{
   c: string | null;
   signin: string | null;
   tab: string | null;
+  view: string | null;
 }>;
 
 function parseCamera(value: string | null): MapCamera {
@@ -45,7 +46,8 @@ export type ColorBy = "status" | "tags";
 /**
  * App state that belongs in a shareable link: the open field (f) and its tab (tab), tag filters
  * (tag), the fields picked to compare (s) and whether only those are shown (only), basemap (b),
- * field colors (c), the fire risk (r) and clouds and rain (w) layers, and camera (v).
+ * field colors (c), the fire risk (r) and clouds and rain (w) layers, camera (v), and a page that
+ * is not a field's (view: notifications).
  */
 export function useUrlState() {
   const params = useSearchParams();
@@ -65,6 +67,7 @@ export function useUrlState() {
     [pickedKey],
   );
   const onlyPicked = params.get("only") === "1" && picked.length > 0;
+  const view = params.get("view") === "notifications" ? "notifications" : null;
   const showRisk = params.get("r") === "1";
   const showWeather = params.get("w") === "1";
   // Set by the API when an email link was used or expired (docs/09-accounts-and-alerts.md).
@@ -94,6 +97,7 @@ export function useUrlState() {
 
   return {
     selectedId,
+    view,
     tab,
     tags,
     picked,

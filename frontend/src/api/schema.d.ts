@@ -99,6 +99,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/me/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Connect Telegram
+         * @description A link that opens the bot with a one-time code (docs/13-notifications.md#telegram).
+         */
+        post: operations["connect_telegram_auth_me_telegram_post"];
+        /** Disconnect Telegram */
+        delete: operations["disconnect_telegram_auth_me_telegram_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/boundary": {
         parameters: {
             query?: never;
@@ -588,6 +609,16 @@ export interface components {
             where: string;
         };
         /**
+         * Channels
+         * @description Where one kind of alert goes (docs/13-notifications.md#channels).
+         */
+        Channels: {
+            /** Email */
+            email: boolean;
+            /** Telegram */
+            telegram: boolean;
+        };
+        /**
          * DataQuality
          * @enum {string}
          */
@@ -808,9 +839,13 @@ export interface components {
              */
             locale: "es" | "en";
         };
-        /** MeIn */
+        /**
+         * MeIn
+         * @description Only what is given changes.
+         */
         MeIn: {
-            summary: components["schemas"]["SummaryFrequency"];
+            notifications?: components["schemas"]["Notifications"] | null;
+            summary?: components["schemas"]["SummaryFrequency"] | null;
         };
         /** MeOut */
         MeOut: {
@@ -818,7 +853,18 @@ export interface components {
             email: string;
             /** Locale */
             locale: string;
+            notifications: components["schemas"]["Notifications"];
             summary: components["schemas"]["SummaryFrequency"];
+            telegram: components["schemas"]["TelegramOut"];
+        };
+        /** Notifications */
+        Notifications: {
+            fire_far: components["schemas"]["Channels"];
+            fire_high: components["schemas"]["Channels"];
+            fire_medium: components["schemas"]["Channels"];
+            lightning: components["schemas"]["Channels"];
+            summary: components["schemas"]["Channels"];
+            weather: components["schemas"]["Channels"];
         };
         /** OutlineIn */
         OutlineIn: {
@@ -1132,6 +1178,18 @@ export interface components {
             /** Tags */
             tags: components["schemas"]["TagOut"][];
         };
+        /** TelegramLinkOut */
+        TelegramLinkOut: {
+            /** Url */
+            url: string;
+        };
+        /** TelegramOut */
+        TelegramOut: {
+            /** Available */
+            available: boolean;
+            /** Connected */
+            connected: boolean;
+        };
         /** TerritoryIn */
         TerritoryIn: {
             /**
@@ -1437,6 +1495,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_telegram_auth_me_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramLinkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_telegram_auth_me_telegram_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
                 };
             };
             /** @description Validation Error */

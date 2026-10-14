@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   api,
   ApiError,
+  type Me,
   type OutlineIn,
   type SettingsIn,
   type TerritoryIn,
@@ -38,6 +39,32 @@ export function useChangeSummary() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.changeSummary,
+    onSuccess: (me) => client.setQueryData(["me"], me),
+  });
+}
+
+export function useChangeNotifications() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.changeNotifications,
+    // At once, so a chip answers the tap without waiting for the server.
+    onMutate: (notifications) => {
+      const me = client.getQueryData<Me>(["me"]);
+      if (me) client.setQueryData(["me"], { ...me, notifications });
+    },
+    onSuccess: (me) => client.setQueryData(["me"], me),
+    onError: () => client.invalidateQueries({ queryKey: ["me"] }),
+  });
+}
+
+export function useConnectTelegram() {
+  return useMutation({ mutationFn: api.connectTelegram });
+}
+
+export function useDisconnectTelegram() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.disconnectTelegram,
     onSuccess: (me) => client.setQueryData(["me"], me),
   });
 }

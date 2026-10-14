@@ -331,6 +331,63 @@ const en = {
     signedOutBody:
       "Sign in with your email to mark your fields, see how far fires are from them and get alerts by email.",
   },
+  notifications: {
+    title: "Notifications",
+    open: "Notifications",
+    intro: "Which dangers near your fields you hear about, and where.",
+    kinds: {
+      fire_high: "High fire",
+      fire_medium: "Medium fire",
+      fire_far: "Distant fire",
+      lightning: "Lightning",
+      weather: "Adverse weather",
+      summary: "Summary",
+    } as Record<
+      | "fire_high"
+      | "fire_medium"
+      | "fire_far"
+      | "lightning"
+      | "weather"
+      | "summary",
+      string
+    >,
+    hints: {
+      fire_high: "Inside the field or within 2 km.",
+      fire_medium: "2 to 5 km away.",
+      fire_far: "5 to 10 km away. Often stubble burns.",
+      lightning: "Within 10 km in the last hour.",
+      weather:
+        "In the next 24 h: gusts of 60 km/h or more, or heavy rain (30 mm in a day, or 10 mm in an hour).",
+      summary: "What happened at each field, with the next spraying window.",
+    } as Record<
+      | "fire_high"
+      | "fire_medium"
+      | "fire_far"
+      | "lightning"
+      | "weather"
+      | "summary",
+      string
+    >,
+    channels: { email: "Email", telegram: "Telegram", whatsapp: "WhatsApp" },
+    soon: "soon",
+    by: "By",
+    alertsTitle: "Alerts",
+    fieldsNote:
+      'For each field whose "Alert me of danger nearby" is on, in its settings.',
+    frequency: "How often",
+    telegram: "Telegram",
+    telegramBody:
+      "Alerts arrive as a message with a photo of the area, the moment they happen.",
+    connect: "Connect Telegram",
+    connecting: "Opening…",
+    openTelegram: "Open Telegram",
+    waiting: "Tap Start in the bot's chat. This page updates on its own.",
+    connected: "Connected",
+    disconnect: "Disconnect",
+    unavailable: "Telegram is not set up on this server yet.",
+    failed: "It could not be saved. Try again.",
+    needsTelegram: "Connect Telegram first",
+  },
   summary: {
     title: "Summary by email",
     frequency: { WEEKLY: "Weekly", DAILY: "Daily", OFF: "None" } as Record<
@@ -360,7 +417,8 @@ const en = {
   settings: {
     title: "Settings",
     alerts: "Alert me of danger nearby",
-    alertsHint: (email: string) => `By email to ${email}, and in this browser.`,
+    alertsHint: (email: string) =>
+      `By email to ${email}, by Telegram if connected, and in this browser.`,
     allowBrowser: "Allow alerts in this browser",
     browserBlocked:
       "This browser blocks alerts from Field Watch; allow them in its site settings.",
@@ -802,6 +860,48 @@ const es: Messages = {
     signedOutBody:
       "Entrá con tu mail para marcar tus campos, ver a qué distancia están los fuegos y recibir avisos por mail.",
   },
+  notifications: {
+    title: "Notificaciones",
+    open: "Notificaciones",
+    intro: "De qué peligros cerca de tus campos te enterás, y por dónde.",
+    kinds: {
+      fire_high: "Fuego alto",
+      fire_medium: "Fuego medio",
+      fire_far: "Fuego lejano",
+      lightning: "Rayos",
+      weather: "Clima adverso",
+      summary: "Resumen",
+    },
+    hints: {
+      fire_high: "Dentro del campo o a menos de 2 km.",
+      fire_medium: "Entre 2 y 5 km.",
+      fire_far: "Entre 5 y 10 km. Suelen ser quemas de rastrojo.",
+      lightning: "A menos de 10 km en la última hora.",
+      weather:
+        "En las próximas 24 h: ráfagas de 60 km/h o más, o lluvia fuerte (30 mm en un día, o 10 mm en una hora).",
+      summary:
+        "Qué pasó en cada campo, con la próxima ventana para pulverizar.",
+    },
+    channels: { email: "Mail", telegram: "Telegram", whatsapp: "WhatsApp" },
+    soon: "pronto",
+    by: "Por",
+    alertsTitle: "Alertas",
+    fieldsNote:
+      "De cada campo con «Avisarme si hay peligro cerca» prendido, en su configuración.",
+    frequency: "Cada cuánto",
+    telegram: "Telegram",
+    telegramBody:
+      "Las alertas llegan como mensaje con una foto del área, en el momento.",
+    connect: "Conectar Telegram",
+    connecting: "Abriendo…",
+    openTelegram: "Abrir Telegram",
+    waiting: "Tocá Iniciar en el chat del bot. Esta página se actualiza sola.",
+    connected: "Conectado",
+    disconnect: "Desconectar",
+    unavailable: "Telegram todavía no está configurado en este servidor.",
+    failed: "No se pudo guardar. Probá de nuevo.",
+    needsTelegram: "Primero conectá Telegram",
+  },
   summary: {
     title: "Resumen por mail",
     frequency: { WEEKLY: "Semanal", DAILY: "Diario", OFF: "No" },
@@ -828,7 +928,8 @@ const es: Messages = {
   settings: {
     title: "Ajustes",
     alerts: "Avisarme si hay peligro cerca",
-    alertsHint: (email) => `Por mail a ${email} y en este navegador.`,
+    alertsHint: (email) =>
+      `Por mail a ${email}, por Telegram si lo conectaste, y en este navegador.`,
     allowBrowser: "Permitir avisos en este navegador",
     browserBlocked:
       "Este navegador bloquea los avisos de Field Watch; permitilos en la configuración del sitio.",

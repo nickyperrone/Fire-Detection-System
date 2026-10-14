@@ -28,6 +28,7 @@ import { BottomSheet, type Snap } from "./BottomSheet";
 import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldPage } from "./FieldPage";
+import { NotificationsPage } from "./NotificationsPage";
 import { MapButtons } from "./MapButtons";
 import { MapLegend } from "./MapLegend";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
@@ -238,7 +239,10 @@ export function FieldWatchApp() {
   // A step the back button undoes; another field opens on its first tab.
   const open = useCallback(
     (id: number | null) => {
-      url.update({ f: id === null ? null : String(id), tab: null }, true);
+      url.update(
+        { f: id === null ? null : String(id), tab: null, view: null },
+        true,
+      );
       setAddingTag(false);
       setSnap(id === null ? "peek" : "half");
       const territory = id === null ? undefined : territoryById.get(id);
@@ -468,7 +472,7 @@ export function FieldWatchApp() {
           <BottomSheet
             snap={snap}
             onSnapChange={setSnap}
-            contentKey={String(url.selectedId ?? "portfolio")}
+            contentKey={url.view ?? String(url.selectedId ?? "portfolio")}
             scrollKey={url.tab}
           >
             {me.isSuccess && !signedIn ? (
@@ -486,6 +490,8 @@ export function FieldWatchApp() {
               </div>
             ) : everything.isError ? (
               <p className="text-sm text-bad">{t.app.apiDown}</p>
+            ) : url.view === "notifications" && me.data ? (
+              <NotificationsPage me={me.data} onClose={() => open(null)} />
             ) : selected ? (
               <FieldPage
                 entry={selected}
@@ -536,6 +542,10 @@ export function FieldWatchApp() {
             entries={everything.data ?? []}
             covered={snap !== "peek"}
             onSignIn={() => setSignIn("open")}
+            onNotifications={() => {
+              url.update({ view: "notifications", f: null, tab: null }, true);
+              setSnap("half");
+            }}
           />
           {signIn && (
             <SignInCard

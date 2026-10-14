@@ -85,6 +85,25 @@
         "title": "AnomalyPatchOut",
         "type": "object"
       },
+      "Channels": {
+        "description": "Where one kind of alert goes (docs/13-notifications.md#channels).",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "boolean"
+          },
+          "telegram": {
+            "title": "Telegram",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "telegram"
+        ],
+        "title": "Channels",
+        "type": "object"
+      },
       "DataQuality": {
         "enum": [
           "GOOD",
@@ -718,14 +737,29 @@
         "type": "object"
       },
       "MeIn": {
+        "description": "Only what is given changes.",
         "properties": {
+          "notifications": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Notifications"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "summary": {
-            "$ref": "#/components/schemas/SummaryFrequency"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SummaryFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "required": [
-          "summary"
-        ],
         "title": "MeIn",
         "type": "object"
       },
@@ -739,16 +773,56 @@
             "title": "Locale",
             "type": "string"
           },
+          "notifications": {
+            "$ref": "#/components/schemas/Notifications"
+          },
           "summary": {
             "$ref": "#/components/schemas/SummaryFrequency"
+          },
+          "telegram": {
+            "$ref": "#/components/schemas/TelegramOut"
           }
         },
         "required": [
           "email",
           "locale",
-          "summary"
+          "summary",
+          "notifications",
+          "telegram"
         ],
         "title": "MeOut",
+        "type": "object"
+      },
+      "Notifications": {
+        "properties": {
+          "fire_far": {
+            "$ref": "#/components/schemas/Channels"
+          },
+          "fire_high": {
+            "$ref": "#/components/schemas/Channels"
+          },
+          "fire_medium": {
+            "$ref": "#/components/schemas/Channels"
+          },
+          "lightning": {
+            "$ref": "#/components/schemas/Channels"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/Channels"
+          },
+          "weather": {
+            "$ref": "#/components/schemas/Channels"
+          }
+        },
+        "required": [
+          "fire_high",
+          "fire_medium",
+          "fire_far",
+          "lightning",
+          "weather",
+          "summary"
+        ],
+        "title": "Notifications",
         "type": "object"
       },
       "OutlineIn": {
@@ -1581,6 +1655,37 @@
         "title": "TagsOut",
         "type": "object"
       },
+      "TelegramLinkOut": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "TelegramLinkOut",
+        "type": "object"
+      },
+      "TelegramOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "available",
+          "connected"
+        ],
+        "title": "TelegramOut",
+        "type": "object"
+      },
       "TerritoryIn": {
         "properties": {
           "cadastre": {
@@ -2199,6 +2304,103 @@
           }
         },
         "summary": "Summary Now",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me/telegram": {
+      "delete": {
+        "operationId": "disconnect_telegram_auth_me_telegram_delete",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disconnect Telegram",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "description": "A link that opens the bot with a one-time code (docs/13-notifications.md#telegram).",
+        "operationId": "connect_telegram_auth_me_telegram_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Connect Telegram",
         "tags": [
           "auth"
         ]

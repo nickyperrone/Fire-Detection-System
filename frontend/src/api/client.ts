@@ -23,6 +23,7 @@ export type SettingsIn = Schemas["SettingsIn"];
 export type Tags = Schemas["TagsOut"];
 export type Me = Schemas["MeOut"];
 export type SummaryFrequency = Schemas["SummaryFrequency"];
+export type Notifications = Schemas["Notifications"];
 export type Detected = Schemas["DetectOut"];
 export type Snapshots = Schemas["SnapshotsOut"];
 export type Snapshot = Schemas["SnapshotOut"];
@@ -131,6 +132,15 @@ export const api = {
       body: JSON.stringify({ summary }),
     }),
   summaryNow: () => request<void>("/auth/me/summary", { method: "POST" }),
+  changeNotifications: (notifications: Notifications) =>
+    request<Me>("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify({ notifications }),
+    }),
+  connectTelegram: () =>
+    request<{ url: string }>("/auth/me/telegram", { method: "POST" }),
+  disconnectTelegram: () =>
+    request<Me>("/auth/me/telegram", { method: "DELETE" }),
   detectField: (lat: number, lon: number) =>
     request<Detected>("/fields/detect", {
       method: "POST",
