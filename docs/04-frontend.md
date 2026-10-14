@@ -98,7 +98,9 @@ more than two taps.
 ## Opening and scope
 
 - First visit (no camera in the link): the map shows Argentina for a moment and then flies to the
-  fields around Larroque (about 3 s). A shared link opens straight at its own position.
+  fields around Larroque (about 3 s). A link to a field (from an alert, say) flies straight to it
+  in about a second, without the pause. A shared link with a camera opens straight at its own
+  position.
 - The map is not limited: it can be panned and zoomed over the whole world.
 - Draw mode adds a gray layer over everything outside Argentina; drawing there is refused by the
   API (`outside_country`) with a translated message.

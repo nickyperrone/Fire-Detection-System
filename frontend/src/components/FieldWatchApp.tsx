@@ -42,6 +42,7 @@ type Bounds = [[number, number], [number, number]];
 const LARROQUE: [number, number] = [-59.01, -33.04];
 const OPENING_FLIGHT_MS = 3000;
 const OPENING_PAUSE_MS = 700;
+const LINK_FLIGHT_MS = 1200;
 // The closest the map flies to a field or a place: a whole field still fits.
 const FRAME_MAX_ZOOM = 15;
 
@@ -221,15 +222,17 @@ export function FieldWatchApp() {
     const fields = open
       ? [open]
       : territories.data.filter((t) => t.kind === "FIELD");
+    // Someone opening a field from an alert wants the field, not the tour: a quick flight.
+    const duration = open ? LINK_FLIGHT_MS : OPENING_FLIGHT_MS;
+    const pause = open ? 0 : OPENING_PAUSE_MS;
     const flyIn = () => {
-      if (fields.length) frame(fields, OPENING_FLIGHT_MS);
-      else
-        map.flyTo({ center: LARROQUE, zoom: 11, duration: OPENING_FLIGHT_MS });
+      if (fields.length) frame(fields, duration);
+      else map.flyTo({ center: LARROQUE, zoom: 11, duration });
     };
     // A short look at the whole country first. "load" has usually fired by the time the fields
     // arrive, and a missed event would leave the map over Argentina.
-    if (map.loaded()) window.setTimeout(flyIn, OPENING_PAUSE_MS);
-    else map.once("load", () => window.setTimeout(flyIn, OPENING_PAUSE_MS));
+    if (map.loaded()) window.setTimeout(flyIn, pause);
+    else map.once("load", () => window.setTimeout(flyIn, pause));
   }, [map, territories.data, url.linkHasCamera, url.selectedId, frame]);
 
   // A step the back button undoes; another field opens on its first tab.
