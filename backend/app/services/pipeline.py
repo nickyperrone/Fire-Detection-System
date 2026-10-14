@@ -14,8 +14,10 @@ from app.forecast.recent_fires import PROVIDER as RECENT_PROVIDER
 from app.forecast.recent_fires import top_up
 from app.forecast.serve import cells_of, forecast_grid, forecast_territories, issue_forecast
 from app.models import IngestionRun, RunStatus
+from app.providers.telegram import Telegram
 from app.services.alerts import send_alerts
 from app.services.anomalies import check_fields
+from app.services.area_picture import area_picture
 from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
@@ -25,6 +27,7 @@ from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
 from app.services.summary import send_due_summaries
+from app.services.telegram_bot import answer_updates
 from app.services.weather_layer import WEATHER_ROOT, refresh_weather_layer
 from app.versioning import processing_version
 
@@ -123,16 +126,38 @@ def run_spray_pipeline(session: Session, client: httpx.Client, thresholds: dict)
     return {"status": run.status.value, "assessments": run.inserted, "error": run.error}
 
 
-def run_alert_pipeline(session: Session, settings: Settings, thresholds: dict) -> dict:
-    """Emails new danger near fields, after each fire or lightning run (docs/09)."""
+def telegram_bot(client: httpx.Client, settings: Settings) -> Telegram | None:
+    """None when the server has no bot (docs/13-notifications.md#telegram)."""
+    return Telegram(client, settings.telegram_bot_token) if settings.telegram_bot_token else None
+
+
+def run_alert_pipeline(
+    session: Session, client: httpx.Client, settings: Settings, thresholds: dict
+) -> dict:
+    """Alerts of new danger near fields, after each fire, lightning or forecast run (docs/13)."""
+    now = datetime.now(UTC)
+
+    def picture(territory, dangers, wind, locale):
+        return area_picture(session, client, territory, dangers, wind, thresholds, locale, now)
+
     return send_alerts(
         session,
         smtp_sender(settings),
         settings,
         thresholds,
         processing_version(thresholds),
-        datetime.now(UTC),
+        now,
+        telegram_bot(client, settings),
+        picture,
     )
+
+
+def run_telegram_pipeline(
+    session: Session, client: httpx.Client, settings: Settings, thresholds: dict
+) -> dict:
+    """Messages and button taps sent to the bot (docs/13-notifications.md#telegram)."""
+    bot = telegram_bot(client, settings)
+    return {"updates": answer_updates(session, bot, datetime.now(UTC)) if bot else 0}
 
 
 def answer_territories(
@@ -158,7 +183,12 @@ def run_summary_pipeline(
 ) -> dict:
     """Daily and weekly summaries of the accounts that are due (docs/09)."""
     return send_due_summaries(
-        session, smtp_sender(settings), settings, thresholds, datetime.now(UTC)
+        session,
+        smtp_sender(settings),
+        settings,
+        thresholds,
+        datetime.now(UTC),
+        telegram_bot(client, settings),
     )
 
 

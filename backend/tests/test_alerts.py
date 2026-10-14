@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from app.config import Settings
 from app.models import (
-    AlertEmail,
+    AlertDelivery,
     Confidence,
     FieldRiskEvent,
     FireEvent,
@@ -68,7 +68,7 @@ def alert(session, thresholds, outbox, send=None):
 
 def test_a_new_fire_is_emailed_once_and_again_when_closer(session, thresholds, outbox, field):
     event = fire(session, thresholds, -59.07)  # about 1.9 km east
-    assert alert(session, thresholds, outbox) == {"emails_sent": 1, "emails_failed": 0}
+    assert alert(session, thresholds, outbox)["emails_sent"] == 1
     email = outbox[0]
     assert email["To"] == EMAIL
     assert email["Subject"] == "La Esperanza: posible fuego a 1,9 km al E"
@@ -85,7 +85,7 @@ def test_a_new_fire_is_emailed_once_and_again_when_closer(session, thresholds, o
     assess_active_fire_events(session, thresholds["field_risk"], "test", NOW)
     alert(session, thresholds, outbox)
     assert outbox[1]["Subject"] == "La Esperanza: posible fuego dentro del campo"
-    assert len(session.scalars(select(AlertEmail)).all()) == 2
+    assert len(session.scalars(select(AlertDelivery)).all()) == 2
 
 
 def test_nothing_is_emailed_with_alerts_off_or_without_an_account(
@@ -152,5 +152,6 @@ def test_a_failed_send_is_retried_on_the_next_run(session, thresholds, outbox, f
     def down(_):
         raise ConnectionRefusedError("mail server down")
 
-    assert alert(session, thresholds, outbox, send=down) == {"emails_sent": 0, "emails_failed": 1}
+    result = alert(session, thresholds, outbox, send=down)
+    assert (result["emails_sent"], result["emails_failed"]) == (0, 1)
     assert alert(session, thresholds, outbox)["emails_sent"] == 1

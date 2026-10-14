@@ -20,6 +20,7 @@ from app.services.pipeline import (
     run_snapshot_pipeline,
     run_spray_pipeline,
     run_summary_pipeline,
+    run_telegram_pipeline,
     run_weather_layer_pipeline,
 )
 
@@ -40,9 +41,17 @@ def job(
             args = (settings,) if with_settings else ()
             log.info("%s: %s", name, pipeline(session, client, *args, thresholds))
             if then_alert:
-                log.info("alerts: %s", run_alert_pipeline(session, settings, thresholds))
+                log.info("alerts: %s", run_alert_pipeline(session, client, settings, thresholds))
 
     return run
+
+
+def telegram_job() -> None:
+    settings, thresholds = get_settings(), get_thresholds()
+    with session_factory()() as session, httpx.Client() as client:
+        result = run_telegram_pipeline(session, client, settings, thresholds)
+        if result["updates"]:
+            log.info("telegram: %s", result)
 
 
 def main() -> None:
@@ -93,7 +102,12 @@ def main() -> None:
             intervals["weather_layer_interval_minutes"],
             "default",
         ),
-        (job("spray", run_spray_pipeline), intervals["weather_interval_minutes"], "default"),
+        # A new forecast may bring adverse weather (docs/13-notifications.md#kinds).
+        (
+            job("spray", run_spray_pipeline, then_alert=True),
+            intervals["weather_interval_minutes"],
+            "default",
+        ),
         (
             job("forecast", run_forecast_pipeline, with_settings=True),
             intervals["forecast_interval_minutes"],
@@ -108,6 +122,15 @@ def main() -> None:
     for run, minutes, executor in jobs:
         # next_run_time=now runs each job once at startup instead of waiting a full interval.
         scheduler.add_job(run, "interval", minutes=minutes, next_run_time=start, executor=executor)
+    if get_settings().telegram_bot_token:
+        # Quiet: it runs every few seconds and logs only when the bot got something.
+        scheduler.add_job(
+            telegram_job,
+            "interval",
+            seconds=intervals["telegram_interval_seconds"],
+            next_run_time=start,
+            executor="default",
+        )
     scheduler.start()
 
 

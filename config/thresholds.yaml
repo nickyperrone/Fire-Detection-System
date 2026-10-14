@@ -218,6 +218,8 @@ worker:
   anomaly_interval_minutes: 360
   snapshot_interval_minutes: 360
   weather_layer_interval_minutes: 10
+  # How often the bot looks for messages and button taps (docs/13-notifications.md#telegram).
+  telegram_interval_seconds: 5
 
 # Sign-in by email link and email alerts (docs/09-accounts-and-alerts.md).
 auth:
@@ -228,6 +230,22 @@ auth:
 alerts:
   # A field gets at most one lightning email in this time, however long the storm lasts.
   lightning_quiet_minutes: 60
+  # Adverse weather in the next hours at a field (docs/13-notifications.md#kinds).
+  weather:
+    hours_ahead: 24
+    gusts_kmh: 60
+    rain_day_mm: 30
+    rain_hour_mm: 10
+  # Once announced, adverse weather at a field is not announced again for this long.
+  weather_quiet_hours: 12
+  # The affected-area photo sent with Telegram alerts.
+  area_map:
+    width_px: 800
+    height_px: 600
+    tiles: https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}
+    max_zoom: 16
+    # Around the field and the dangers, as a share of the box on each side.
+    margin: 0.25
 
 # Field outlines by computer vision (docs/10-field-detection.md).
 field_detection:

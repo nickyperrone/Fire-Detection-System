@@ -1,10 +1,13 @@
-"""Daily and weekly summaries by email (docs/09-accounts-and-alerts.md#summaries)."""
+"""Daily and weekly summaries by email and Telegram (docs/09-accounts-and-alerts.md#summaries,
+docs/13-notifications.md)."""
 
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from html import escape
 from zoneinfo import ZoneInfo
 
+import httpx
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -12,8 +15,10 @@ from app.config import Settings
 from app.forecast.dataset import weather_point
 from app.forecast.live_weather import LOCAL_TZ
 from app.models import SummaryFrequency, Territory, User
+from app.providers.telegram import Telegram, TelegramError
 from app.services.email_text import summary_email
 from app.services.mail import SEND_ERRORS, SendEmail, message
+from app.services.notification_prefs import wants
 from app.services.portfolio import PortfolioEntry, build_portfolio
 
 log = logging.getLogger(__name__)
@@ -144,22 +149,38 @@ def send_summary(
     thresholds: dict,
     user: User,
     now: datetime,
+    telegram: Telegram | None = None,
+    by_preference: bool = False,
 ) -> bool:
-    """Builds and sends one account's summary; False when it has no fields."""
+    """Builds and sends one account's summary; False when it has no fields. `by_preference`: by
+    the channels the account chose, as scheduled summaries go; otherwise by email."""
     frequency = user.summary if user.summary != SummaryFrequency.OFF else SummaryFrequency.WEEKLY
     since = now - PERIOD[frequency]
     fields = build_summary(session, user.email, thresholds, since, now)
     if not fields:
         return False
     subject, body = summary_email(user.locale, frequency, fields, settings.app_url)
-    send(message(settings, user.email, subject, body))
+    if not by_preference or wants(user, "summary", "email"):
+        send(message(settings, user.email, subject, body))
+    if by_preference and telegram and wants(user, "summary", "telegram"):
+        # The same words as the email; Telegram takes up to 4,096 characters.
+        text = f"<b>{escape(subject)}</b>\n\n{escape(body)}"
+        try:
+            telegram.send_text(user.telegram_chat_id, text[:4096])
+        except (TelegramError, httpx.HTTPError) as exc:
+            log.warning("summary to user %s not sent by telegram: %s", user.id, exc)
     user.summary_sent_at = now
     session.commit()
     return True
 
 
 def send_due_summaries(
-    session: Session, send: SendEmail, settings: Settings, thresholds: dict, now: datetime
+    session: Session,
+    send: SendEmail,
+    settings: Settings,
+    thresholds: dict,
+    now: datetime,
+    telegram: Telegram | None = None,
 ) -> dict:
     sent = failed = 0
     users = session.scalars(select(User).where(User.summary != SummaryFrequency.OFF)).all()
@@ -171,7 +192,9 @@ def send_due_summaries(
         if has_fields is None:
             continue
         try:
-            sent += send_summary(session, send, settings, thresholds, user, now)
+            sent += send_summary(
+                session, send, settings, thresholds, user, now, telegram, by_preference=True
+            )
         except SEND_ERRORS as exc:
             # Not marked as sent, so the next check tries again.
             log.warning("summary to user %s not sent: %s", user.id, exc)

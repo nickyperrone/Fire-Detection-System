@@ -1,8 +1,10 @@
-"""The words of the emails, in Spanish and English. The API returns codes and the frontend writes
-sentences; emails are read outside the app, so they are written here."""
+"""The words of the emails and Telegram messages, in Spanish and English. The API returns codes and
+the frontend writes sentences; emails and messages are read outside the app, so they are written
+here."""
 
 from dataclasses import dataclass
 from datetime import datetime
+from html import escape
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
@@ -29,16 +31,25 @@ BANDS = {
 
 @dataclass
 class Danger:
-    """New danger near one field, as announced in an alert email."""
+    """New danger near one field, as announced in an alert."""
 
     territory_id: int
     name: str
-    kind: str  # "fire" or "lightning"
+    kind: str  # "fire", "lightning" or "weather"
     distance_m: float
     direction: str | None
     severity: Severity | None
     sensors: list[str]
     seen_at: datetime | None
+    # Adverse weather: the worst of what is coming, each with when, as ISO times.
+    gusts_kmh: float | None = None
+    gusts_at: str | None = None
+    rain_day_mm: float | None = None
+    rain_day: str | None = None
+    rain_hour_mm: float | None = None
+    rain_hour_at: str | None = None
+    fire_event_id: int | None = None
+    bearing_deg: float | None = None
 
 
 DIRECTIONS = {
@@ -74,7 +85,34 @@ def login_email(locale: str, link: str, minutes: int) -> tuple[str, str]:
     )
 
 
+def _weather_line(danger: Danger, locale: str) -> str:
+    es = locale == "es"
+    parts = []
+    if danger.gusts_kmh is not None:
+        when = _when(datetime.fromisoformat(danger.gusts_at), locale)
+        parts.append(
+            f"ráfagas de {danger.gusts_kmh:.0f} km/h el {when}"
+            if es
+            else f"gusts of {danger.gusts_kmh:.0f} km/h on {when}"
+        )
+    if danger.rain_day_mm is not None:
+        day = _when(datetime.fromisoformat(danger.rain_day), locale, hour=False)
+        mm = f"{danger.rain_day_mm:.0f}"
+        parts.append(f"{mm} mm de lluvia el {day}" if es else f"{mm} mm of rain on {day}")
+    if danger.rain_hour_mm is not None:
+        when = _when(datetime.fromisoformat(danger.rain_hour_at), locale)
+        mm = f"{danger.rain_hour_mm:.0f}"
+        parts.append(
+            f"lluvia fuerte ({mm} mm en una hora) el {when}"
+            if es
+            else f"heavy rain ({mm} mm in an hour) on {when}"
+        )
+    return ("clima adverso: " if es else "adverse weather: ") + ", ".join(parts)
+
+
 def _line(danger: Danger, locale: str, window_minutes: int, now: datetime) -> str:
+    if danger.kind == "weather":
+        return _weather_line(danger, locale)
     km = _km(danger.distance_m, locale)
     where = DIRECTIONS[locale].get(danger.direction or "", "")
     if danger.kind == "lightning":
@@ -131,6 +169,64 @@ def alert_email(
             'To stop alerts for a field, turn off "Alert me of danger nearby" on its card.'
         )
     return subject, "\n\n".join(lines) + "\n\n" + footer + "\n"
+
+
+def wind_toward(bearing_deg: float, wind_from_deg: float) -> bool:
+    """Whether the wind blows from the fire's side toward the field: the bearing from the field to
+    the fire within 45° of where the wind comes from."""
+    return abs((bearing_deg - wind_from_deg + 180) % 360 - 180) <= 45
+
+
+def _headline(danger: Danger, what: str, locale: str) -> str:
+    """The line of an alert with the field's name in it: "Posible fuego a 1,9 km al E de …"."""
+    es = locale == "es"
+    place = escape(danger.name)
+    if danger.kind == "weather":
+        kind, rest = what.split(": ", 1)
+        sentence = f"{kind} {'en' if es else 'at'} {place}: {rest}"
+    elif danger.kind == "lightning":
+        km = _km(danger.distance_m, locale)
+        sentence = f"rayos a {km} km de {place}" if es else f"lightning {km} km from {place}"
+    elif danger.severity == Severity.CRITICAL:
+        sentence = f"posible fuego dentro de {place}" if es else f"possible fire inside {place}"
+    else:
+        sentence = f"{what} {'de' if es else 'from'} {place}"
+    return sentence[0].upper() + sentence[1:]
+
+
+def alert_caption(
+    locale: str,
+    dangers: list[Danger],
+    wind: tuple[float, float] | None,
+    bearing_deg: float | None,
+    link: str | None,
+    window_minutes: int,
+    now: datetime,
+) -> str:
+    """The Telegram message of one field's new dangers, worst first, in Telegram's HTML.
+    `wind` is (km/h, degrees it blows from) now at the field; `bearing_deg` is toward the closest
+    fire; `link` goes in the text when it cannot go in a button."""
+    es = locale == "es"
+    lines = ["🔴 <b>ALERTA!</b>"]
+    for i, danger in enumerate(dangers):
+        what, *details = _line(danger, locale, window_minutes, now).split(" · ")
+        lines.append(
+            f"<b>{_headline(danger, what, locale)}</b>"
+            if i == 0
+            else _headline(danger, what, locale)
+        )
+        if details:
+            lines.append(escape(" · ".join(details)))
+    if wind and bearing_deg is not None and wind_toward(bearing_deg, wind[1]):
+        speed = f"{wind[0]:.0f} km/h"
+        lines.append(
+            f"💨 Viento de {speed} desde el fuego hacia el campo."
+            if es
+            else f"💨 Wind of {speed} blowing from the fire toward the field."
+        )
+    if link:
+        lines.append(link)
+    return "\n".join(lines)[:1024]
 
 
 def _count(n: int, one: str, many: str) -> str:
