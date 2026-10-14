@@ -588,6 +588,7 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [10-field-detection](docs/10-field-detection.md) | Field outlines by computer vision from a year of Sentinel-2 images, and its benchmark |
 | [11-field-anomalies](docs/11-field-anomalies.md) | Something unusual in a field: patches that change unlike the rest of their lot |
 | [12-field-page](docs/12-field-page.md) | A page per field and lot: breadcrumbs, tabs, satellite photos and greenness over time |
+| [13-notifications](docs/13-notifications.md) | Which dangers to hear about (fire by distance, lightning, adverse weather, summaries) and where: email or Telegram, with a photo of the area |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
