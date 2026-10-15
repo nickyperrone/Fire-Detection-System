@@ -149,15 +149,16 @@ RISK_SQL = text("""
 PARCELS_SQL = text("""
     WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
     SELECT ST_AsMVT(mvt, 'parcels', :extent, 'geom') FROM (
-        SELECT p.partida, p.plano,
-               ST_AsMVTGeom(ST_Transform(p.geom, 3857), bounds.env, :extent, :buffer, true) AS geom
+        -- Only the lines: tax account numbers stay out of public tiles (docs/08-cadastre.md).
+        SELECT ST_AsMVTGeom(ST_Transform(p.geom, 3857), bounds.env, :extent, :buffer, true) AS geom
         FROM cadastral_parcel p, bounds
         WHERE ST_Intersects(p.geom, ST_Transform(bounds.env, 4326))
     ) AS mvt
     WHERE geom IS NOT NULL
 """)
-# Property lines below this zoom would be a solid mesh (docs/08-cadastre.md).
-PARCELS_FROM_ZOOM = 13
+# Property lines below this zoom would be a solid mesh (docs/08-cadastre.md); at 12, about
+# 10 km across here, fields still read well, which is the distance to start drawing one.
+PARCELS_FROM_ZOOM = 12
 
 
 def build_tile(

@@ -38,9 +38,12 @@ them all would download hundreds of megabytes nobody looks at. Instead:
 - Parcels are fetched per web-map tile at zoom 13 (about 5 × 5 km here) the first time that tile is
   needed, stored in `cadastral_parcel`, and the tile is recorded in `cadastral_tile`.
 - After that the area is served from PostGIS as vector tiles (`/tiles/parcels/{z}/{x}/{y}.pbf`,
-  zoom 13 and up) and does not depend on the province's server.
+  zoom 12 and up) and does not depend on the province's server. A zoom-12 tile covers four cache
+  tiles. The tiles carry only the lines: the tax account number (`partida`) and `plano` are given
+  only to a signed-in account drawing a field, through `/cadastre/parcel`.
 - A cached tile is refreshed after `cadastre.refresh_days` (90): parcels change slowly.
-- Below zoom 13 there are no property lines: they would be a solid mesh.
+- Below zoom 12 there are no property lines: they would be a solid mesh. At 12, about 10 km across
+  here, fields still read well, and it is the distance to start drawing one.
 - Only a signed-in account makes the server fetch a new area: the map shows signed-out visitors
   the parcels already cached, and `/cadastre/parcel` and `/cadastre/snap`, used to draw a field,
   need an account like drawing does. Nobody anonymous can make the server call the province in a

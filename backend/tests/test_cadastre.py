@@ -97,8 +97,12 @@ def test_parcel_at_point_and_property_line_tiles(session, wfs):
 
     x, y = tile_of(-32.946, -59.103, 14)
     tile = mapbox_vector_tile.decode(build_tile(session, Layer.PARCELS, 14, x, y, "default", None))
-    assert {f["properties"]["partida"] for f in tile["parcels"]["features"]} >= {1}
-    assert build_tile(session, Layer.PARCELS, 12, x // 4, y // 4, "default", None) == b""
+    lines = tile["parcels"]["features"]
+    # Only the lines: no tax account numbers in public tiles.
+    assert lines and all(f["properties"] == {} for f in lines)
+    # From zoom 12, the distance to start drawing a field; above it, a solid mesh.
+    assert build_tile(session, Layer.PARCELS, 12, x // 4, y // 4, "default", None) != b""
+    assert build_tile(session, Layer.PARCELS, 11, x // 8, y // 8, "default", None) == b""
 
 
 def test_each_province_is_read_from_its_own_fields():
@@ -121,3 +125,13 @@ def test_each_province_is_read_from_its_own_fields():
     # Without a tax account a parcel cannot be told apart from its neighbors: it is skipped.
     assert READERS["arba"]({"properties": {"pda": None}, "geometry": geometry}) is None
     assert READERS["idecor"]({"properties": {"Nro_Cuenta": None}, "geometry": geometry}) is None
+
+
+def test_zoom_12_fetches_its_four_cache_tiles_once(session, wfs):
+    fake, client = wfs
+    x, y = tile_of(-32.9452, -59.1036, 12)
+    ensure_tile(session, client, CONFIG, 12, x, y)
+    asked = fake.requests
+    assert session.query(CadastralTile).count() == 4
+    ensure_tile(session, client, CONFIG, 12, x, y)
+    assert fake.requests == asked

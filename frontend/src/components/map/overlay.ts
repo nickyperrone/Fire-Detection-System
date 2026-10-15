@@ -251,7 +251,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
   map.addSource("parcels", {
     type: "vector",
     tiles: [tileUrl("parcels")],
-    minzoom: 13,
+    minzoom: 12,
     maxzoom: 16,
     // IDECOR publishes under CC BY-SA 4.0, which asks for credit where the data is shown.
     attribution:
@@ -269,7 +269,15 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
         ? {
             "line-color": "#ffffff",
             "line-opacity": 0.9,
-            "line-width": ["interpolate", ["linear"], ["zoom"], 13, 1, 17, 2.4],
+            "line-width": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              12,
+              0.8,
+              17,
+              2.4,
+            ],
           }
         : {
             "line-color": options.basemap === "light" ? "#475569" : "#e5e7eb",
@@ -278,8 +286,8 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
               "interpolate",
               ["linear"],
               ["zoom"],
-              13,
-              0.5,
+              12,
+              0.4,
               17,
               1.4,
             ],

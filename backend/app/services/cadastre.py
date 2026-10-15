@@ -83,6 +83,13 @@ def ensure_tile(
 ) -> int:
     """Makes sure the parcels under a map tile are cached. Returns how many were fetched now."""
     zoom = config["tile_zoom"]
+    if z == zoom - 1:
+        # One level up (zoom 12) shows four cache tiles.
+        return sum(
+            ensure_tile(session, client, config, zoom, 2 * x + dx, 2 * y + dy)
+            for dx in (0, 1)
+            for dy in (0, 1)
+        )
     if z < zoom:
         return 0
     # Requests deeper than the cache zoom share their ancestor's cache entry.
