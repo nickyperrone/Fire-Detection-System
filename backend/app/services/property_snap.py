@@ -69,7 +69,10 @@ def _ensure_area(session: Session, client: httpx.Client, cadastre: dict, drawing
     west, south, east, north = drawing.bounds
     x0, y0 = tile_of(north, west, zoom)
     x1, y1 = tile_of(south, east, zoom)
-    tiles = [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)][:MAX_TILES]
+    # Counted before listing: a continent-sized drawing would otherwise list millions of tiles.
+    if (x1 - x0 + 1) * (y1 - y0 + 1) > MAX_TILES:
+        return
+    tiles = [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
     for x, y in tiles:
         ensure_tile(session, client, cadastre, zoom, x, y)
 

@@ -12,12 +12,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Callback
-         * @description The link in the email: signs in and goes back to the map.
+         * Confirm Sign In
+         * @description The link in the email: a page with a button. Opening it uses nothing up, so an email
+         *     scanner that opens every link does not spend it (docs/09).
          */
-        get: operations["callback_auth_callback_get"];
+        get: operations["confirm_sign_in_auth_callback_get"];
         put?: never;
-        post?: never;
+        /**
+         * Callback
+         * @description The page's button: signs in and goes back to the map.
+         */
+        post: operations["callback_auth_callback_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -170,7 +175,8 @@ export interface paths {
         };
         /**
          * Parcel
-         * @description The official parcel at a point, to draw a field from it (docs/08-cadastre.md).
+         * @description The official parcel at a point, to draw a field from it (docs/08-cadastre.md). Signed in
+         *     only, like drawing: each new area is fetched from the province.
          */
         get: operations["parcel_cadastre_parcel_get"];
         put?: never;
@@ -264,7 +270,8 @@ export interface paths {
         };
         /**
          * Places
-         * @description Addresses, streets, towns and areas in Argentina for the search box (docs/04).
+         * @description Addresses, streets, towns and areas in Argentina for the search box (docs/04). Limited
+         *     per network address: the search service behind it is shared and free.
          */
         get: operations["places_places_get"];
         put?: never;
@@ -1088,8 +1095,6 @@ export interface components {
         };
         /** SourceStatusOut */
         SourceStatusOut: {
-            /** Last Error */
-            last_error: string | null;
             /** Last Run At */
             last_run_at: string | null;
             /** Last Run Status */
@@ -1346,7 +1351,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    callback_auth_callback_get: {
+    confirm_sign_in_auth_callback_get: {
         parameters: {
             query: {
                 token: string;
@@ -1363,7 +1368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
@@ -1373,6 +1378,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    callback_auth_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -1648,7 +1673,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1679,7 +1706,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
         };
         requestBody: {
             content: {

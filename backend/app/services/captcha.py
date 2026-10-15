@@ -1,5 +1,6 @@
 """Keeping bots off the sign-in form (docs/09-accounts-and-alerts.md#bots)."""
 
+import ipaddress
 import threading
 import time
 from collections import defaultdict, deque
@@ -35,6 +36,10 @@ class RateLimit:
     def allow(self, key: str, limit: int, now: float | None = None) -> bool:
         now = time.monotonic() if now is None else now
         with self._lock:
+            # Keys idle for an hour are dropped now and then, so memory stays small.
+            if len(self._hits) > 10_000:
+                for stale in [k for k, h in self._hits.items() if not h or h[-1] <= now - 3600]:
+                    del self._hits[stale]
             hits = self._hits[key]
             while hits and hits[0] <= now - 3600:
                 hits.popleft()
@@ -45,6 +50,19 @@ class RateLimit:
 
 
 login_requests = RateLimit()
+
+
+def limit_key(ip: str | None) -> str:
+    """IPv6 by its /64: one connection gets a whole /64, and could rotate through it."""
+    if not ip:
+        return "unknown"
+    try:
+        address = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip
+    if address.version == 6:
+        return str(ipaddress.ip_network(f"{address}/64", strict=False))
+    return str(address)
 
 
 def client_ip(headers, fallback: str | None) -> str | None:

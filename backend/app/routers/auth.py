@@ -1,9 +1,13 @@
+import logging
+import smtplib
 from datetime import UTC, datetime
+from html import escape
 from typing import Annotated
+from urllib.parse import parse_qs
 
 import httpx
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from app.config import Settings, get_thresholds
 from app.models import User
@@ -17,13 +21,21 @@ from app.routers.dependencies import (
     UserDep,
 )
 from app.schemas import AuthConfigOut, LoginIn, MeIn, MeOut, TelegramLinkOut, TelegramOut
-from app.services.auth import create_login_link, end_session, normalize_email, use_login_link
-from app.services.captcha import client_ip, login_requests, turnstile_passed
+from app.services.auth import (
+    create_login_link,
+    end_session,
+    normalize_email,
+    usable_login_link,
+    use_login_link,
+)
+from app.services.captcha import client_ip, limit_key, login_requests, turnstile_passed
 from app.services.email_text import login_email
 from app.services.mail import SEND_ERRORS, message
 from app.services.notification_prefs import preferences
 from app.services.summary import send_summary
 from app.services.telegram_bot import bot_username, link_code
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -47,7 +59,7 @@ def login(
     out by Cloudflare's check and a limit per network address (docs/09#bots)."""
     config = get_thresholds()["auth"]
     ip = client_ip(request.headers, request.client.host if request.client else None)
-    if not login_requests.allow(ip or "unknown", config["login_requests_per_ip_hour"]):
+    if not login_requests.allow(limit_key(ip), config["login_requests_per_ip_hour"]):
         return JSONResponse(
             status_code=429, content={"detail": "too many sign-in requests", "code": "too_many"}
         )
@@ -65,14 +77,74 @@ def login(
         subject, text = login_email(body.locale, link, config["link_minutes"])
         try:
             send(message(settings, email, subject, text))
+        except smtplib.SMTPRecipientsRefused:
+            # The same answer as for any address: a refusal must not tell which ones exist.
+            log.info("sign-in link refused by the mail server")
         except SEND_ERRORS as exc:
             raise HTTPException(503, "the sign-in email could not be sent") from exc
     return Response(status_code=202)
 
 
-@router.get("/callback")
-def callback(session: SessionDep, settings: SettingsDep, token: str):
-    """The link in the email: signs in and goes back to the map."""
+CONFIRM_PAGE = """<!doctype html>
+<html lang="{lang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="same-origin"><meta name="robots" content="noindex">
+<title>Field Watch</title>
+<style>
+body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0e13;color:#e2e8f0;
+font:16px/1.5 system-ui,-apple-system,sans-serif}}
+main{{width:min(360px,calc(100vw - 32px));padding:28px;border-radius:24px;background:#11151c;
+border:1px solid rgb(255 255 255/.08);text-align:center}}
+img{{width:56px;height:56px;border-radius:14px}}
+h1{{margin:16px 0 6px;font-size:22px;letter-spacing:-.01em}}
+p{{margin:0 0 22px;color:#94a3b8;font-size:14px}}
+button{{width:100%;height:48px;border:0;border-radius:16px;background:#22d3ee;color:#020617;
+font:600 16px system-ui,sans-serif;cursor:pointer}}
+</style></head>
+<body><main>
+<img src="/icon.svg" alt="">
+<h1>{title}</h1><p>{body}</p>
+<form method="post" action="callback"><input type="hidden" name="token" value="{token}">
+<button type="submit">{button}</button></form>
+</main></body></html>"""
+
+CONFIRM_TEXT = {
+    "es": {
+        "title": "Entrar a Field Watch",
+        "body": "Tocá el botón para entrar con {email}.",
+        "button": "Entrar",
+    },
+    "en": {
+        "title": "Sign in to Field Watch",
+        "body": "Tap the button to sign in as {email}.",
+        "button": "Sign in",
+    },
+}
+
+
+@router.get("/callback", response_class=HTMLResponse)
+def confirm_sign_in(session: SessionDep, settings: SettingsDep, token: str):
+    """The link in the email: a page with a button. Opening it uses nothing up, so an email
+    scanner that opens every link does not spend it (docs/09)."""
+    link = usable_login_link(session, token, datetime.now(UTC))
+    if link is None:
+        return RedirectResponse(f"{settings.app_url}/?signin=expired", status_code=303)
+    text = CONFIRM_TEXT[link.locale if link.locale in CONFIRM_TEXT else "es"]
+    page = CONFIRM_PAGE.format(
+        lang=link.locale,
+        title=text["title"],
+        body=escape(text["body"].format(email=link.email)),
+        button=text["button"],
+        token=escape(token, quote=True),
+    )
+    return HTMLResponse(page, headers={"Cache-Control": "no-store"})
+
+
+@router.post("/callback")
+async def callback(request: Request, session: SessionDep, settings: SettingsDep):
+    """The page's button: signs in and goes back to the map."""
+    form = parse_qs((await request.body()).decode(errors="replace"))
+    token = (form.get("token") or [""])[0]
     config = get_thresholds()["auth"]
     session_token = use_login_link(session, token, config, datetime.now(UTC))
     session.commit()

@@ -11,11 +11,19 @@ than a password, and the click proves the address the alerts will go to.
 1. `POST /auth/login {email, locale}` emails a one-time link, valid for 15 minutes. The answer is
    the same whether or not the address has an account, so the endpoint does not reveal who uses
    the app.
-2. The link opens `GET /auth/callback?token=…`. The token is used up, the account is created on the
-   first sign-in, and a session starts: a cookie `fw_session` (HttpOnly, SameSite=Lax, Secure
-   outside localhost) valid for 30 days. The browser lands back on the map.
+2. The link opens `GET /auth/callback?token=…`, a small page with an **Entrar** button; opening it
+   uses nothing up. Email security scanners open every link in a message, and a link used up on
+   opening would be spent before the person clicks. The button posts the token to
+   `POST /auth/callback`: the token is used up, the account is created on the first sign-in, and a
+   session starts: a cookie `fw_session` (HttpOnly, SameSite=Lax, Secure outside localhost) valid
+   for 30 days. The browser lands back on the map. A link already used or expired shows that on the
+   page, with the way to ask for another.
 3. `GET /auth/me` answers who is signed in (401 otherwise); `POST /auth/logout` ends the session.
 
+- Requests that change something (POST, PUT, PATCH, DELETE) from a page of another site are
+  refused (403) by their `Origin` header, so another site cannot sign someone in to its own
+  account or act for them.
+- The API does not write an access log: links carry their token in the address.
 - Link tokens and session ids are 32 random bytes; the database keeps only their SHA-256 hashes, so
   a copy of the database cannot be used to sign in.
 - At most 5 links per address per hour (`auth.login_links_per_hour`), so the form cannot be used to
@@ -36,7 +44,11 @@ quota. Three limits stand in the way:
 - **Per address:** at most 5 links an hour (above).
 - **Per network address:** at most 20 sign-in requests an hour from one IP
   (`auth.login_requests_per_ip_hour`); after that, 429 `{"code": "too_many"}`. Behind Cloudflare
-  the IP is `CF-Connecting-IP`.
+  the IP is `CF-Connecting-IP`. An IPv6 address counts by its /64, the block one connection gets,
+  so rotating addresses inside it does not help.
+- **For the whole app:** at most 200 sign-in emails an hour (`auth.login_emails_per_hour`), however
+  many addresses they go to; past it the answer is still 202, so it says nothing.
+- A mail server that refuses an address gets the same 202 as one that accepts it.
 
 ## What needs an account
 

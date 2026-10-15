@@ -228,6 +228,8 @@ auth:
   login_links_per_hour: 5
   # Sign-in requests from one network address in an hour, whatever the addresses (docs/09#bots).
   login_requests_per_ip_hour: 20
+  # Sign-in emails for the whole app in an hour, however many addresses (docs/09#bots).
+  login_emails_per_hour: 200
 
 alerts:
   # A field gets at most one lightning email in this time, however long the storm lasts.
@@ -309,6 +311,8 @@ snapshots:
 
 # Places in the search box (docs/04-frontend.md): OpenStreetMap through Photon.
 places:
+  # Searches from one network address in an hour; typing sends one every few letters.
+  per_ip_hour: 600
   url: https://photon.komoot.io/api/
   # Argentina: west, south, east, north.
   bbox: [-73.6, -55.1, -53.6, -21.8]

@@ -14,7 +14,9 @@ def rect(west):
 def sign_in(anonymous, outbox, email, locale="es"):
     assert anonymous.post("/auth/login", json={"email": email, "locale": locale}).status_code == 202
     token = re.search(r"token=(\S+)", outbox[-1].get_content()).group(1)
-    return anonymous.get(f"/auth/callback?token={token}", follow_redirects=False)
+    page = anonymous.get(f"/auth/callback?token={token}", follow_redirects=False)
+    assert page.status_code == 200 and 'name="token"' in page.text
+    return anonymous.post("/auth/callback", data={"token": token}, follow_redirects=False)
 
 
 def test_a_link_by_email_signs_in_once_and_creates_the_account(anonymous, outbox, session):
@@ -81,3 +83,33 @@ def test_signing_out_ends_the_session(anonymous, outbox):
     assert anonymous.post("/auth/logout").status_code == 204
     anonymous.cookies.set("fw_session", session_cookie)
     assert anonymous.get("/auth/me").status_code == 401
+
+
+def test_opening_the_link_uses_nothing_up(anonymous, outbox):
+    anonymous.post("/auth/login", json={"email": "a@b.co"})
+    token = re.search(r"token=(\S+)", outbox[0].get_content()).group(1)
+    # An email scanner opens it first; the person's click still works.
+    for _ in range(3):
+        page = anonymous.get(f"/auth/callback?token={token}", follow_redirects=False)
+        assert page.status_code == 200 and "Entrar a Field Watch" in page.text
+    assert page.headers["cache-control"] == "no-store"
+    used = anonymous.post("/auth/callback", data={"token": token}, follow_redirects=False)
+    assert used.headers["location"] == "http://localhost:3000/"
+    again = anonymous.post("/auth/callback", data={"token": token}, follow_redirects=False)
+    assert again.headers["location"].endswith("?signin=expired")
+
+
+def test_another_site_cannot_sign_someone_in_or_change_anything(anonymous, outbox):
+    anonymous.post("/auth/login", json={"email": "a@b.co"})
+    token = re.search(r"token=(\S+)", outbox[0].get_content()).group(1)
+    evil = {"Origin": "https://evil.example"}
+    forged = anonymous.post("/auth/callback", data={"token": token}, headers=evil)
+    assert (forged.status_code, forged.json()["code"]) == (403, "origin")
+    same = {"Origin": "http://localhost:3000"}
+    assert (
+        anonymous.post(
+            "/auth/callback", data={"token": token}, headers=same, follow_redirects=False
+        ).status_code
+        == 303
+    )
+    assert anonymous.patch("/auth/me", json={"summary": "OFF"}, headers=evil).status_code == 403

@@ -30,6 +30,15 @@ def create_login_link(
     )
     if recent >= config["login_links_per_hour"]:
         return None
+    # A ceiling for the whole app: bots spread over many addresses still cannot spend the
+    # email quota (docs/09-accounts-and-alerts.md#bots).
+    everyone = session.scalar(
+        select(func.count())
+        .select_from(LoginLink)
+        .where(LoginLink.created_at > now - timedelta(hours=1))
+    )
+    if everyone >= config["login_emails_per_hour"]:
+        return None
     token = secrets.token_urlsafe(32)
     session.add(
         LoginLink(
@@ -42,6 +51,14 @@ def create_login_link(
     )
     session.flush()
     return token
+
+
+def usable_login_link(session: Session, token: str, now: datetime) -> LoginLink | None:
+    """The link behind a token if it can still be used, without using it up."""
+    link = session.scalar(select(LoginLink).where(LoginLink.token_hash == _hash(token)))
+    if link is None or link.used_at is not None or link.expires_at <= now:
+        return None
+    return link
 
 
 def use_login_link(session: Session, token: str, config: dict, now: datetime) -> str | None:
@@ -61,6 +78,9 @@ def use_login_link(session: Session, token: str, config: dict, now: datetime) ->
     user.locale = link.locale
     user.last_login_at = now
     session.flush()
+    # Housekeeping on each sign-in: ended sessions and old links are not kept.
+    session.execute(delete(UserSession).where(UserSession.expires_at <= now))
+    session.execute(delete(LoginLink).where(LoginLink.expires_at <= now - timedelta(days=1)))
     session_token = secrets.token_urlsafe(32)
     session.add(
         UserSession(

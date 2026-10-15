@@ -22,7 +22,11 @@ flowchart LR
   inside the container, as in development. If one of the three stops, the container stops and
   Dokploy restarts it.
 - **PostGIS** runs apart, as a Dokploy database: its data outlives every deploy of the app.
-- On start, the container applies the migrations (`alembic upgrade head`).
+- On start, the container applies the migrations (`alembic upgrade head`), hands the data volumes
+  to the user `fieldwatch` and runs everything as that user, never as root.
+- In production (`APP_URL` on https) the API has no `/docs` or `/openapi.json`, writes no access
+  log (sign-in links carry their token in the address), and `/health` says whether each source
+  works but not its error text, which stays in the log.
 - The fire forecast models (`data/models`) are part of the repository, so a new server forecasts
   from the first day.
 

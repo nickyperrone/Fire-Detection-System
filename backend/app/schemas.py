@@ -416,7 +416,7 @@ class SourceStatusOut(BaseModel):
     last_run_at: datetime | None
     last_run_status: str | None
     last_success_at: datetime | None
-    last_error: str | None
+    # The error text stays in the server's log: it can name internal addresses.
 
 
 class LatestPassOut(BaseModel):

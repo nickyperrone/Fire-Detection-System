@@ -143,6 +143,16 @@ Property lines are hidden while it plays. It is an example and the panel says so
 of the map stops it where it is; with reduced motion it shows the finished scene, still. A link
 with a camera or a field skips it.
 
+## Security headers
+
+Every response carries: `Content-Security-Policy: frame-ancestors 'none'; base-uri 'self';
+form-action 'self'; object-src 'none'` and `X-Frame-Options: DENY` (no other site can frame the
+app and trick a tap), `X-Content-Type-Options: nosniff`, `Referrer-Policy:
+strict-origin-when-cross-origin`, `Permissions-Policy` (location only for the app itself, for
+"Ubicarme"), and `Strict-Transport-Security`. Next.js sets them in `next.config.ts`; the API sets
+the first three on its own answers, such as the sign-in confirmation page. The policy does not list
+script or image sources: the map's tiles, fonts and Cloudflare's check come from several hosts.
+
 ## Basemaps
 
 The basemap's place names are in English. Places that Argentina names otherwise are renamed in

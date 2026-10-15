@@ -1331,17 +1331,6 @@
       },
       "SourceStatusOut": {
         "properties": {
-          "last_error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Error"
-          },
           "last_run_at": {
             "anyOf": [
               {
@@ -1391,8 +1380,7 @@
           "product",
           "last_run_at",
           "last_run_status",
-          "last_success_at",
-          "last_error"
+          "last_success_at"
         ],
         "title": "SourceStatusOut",
         "type": "object"
@@ -1650,8 +1638,11 @@
         "properties": {
           "tags": {
             "items": {
+              "maxLength": 80,
+              "minLength": 1,
               "type": "string"
             },
+            "maxItems": 30,
             "title": "Tags",
             "type": "array"
           }
@@ -1760,8 +1751,11 @@
           "tags": {
             "description": "key:value or plain labels",
             "items": {
+              "maxLength": 80,
+              "minLength": 1,
               "type": "string"
             },
+            "maxItems": 30,
             "title": "Tags",
             "type": "array"
           }
@@ -2066,8 +2060,8 @@
   "paths": {
     "/auth/callback": {
       "get": {
-        "description": "The link in the email: signs in and goes back to the map.",
-        "operationId": "callback_auth_callback_get",
+        "description": "The link in the email: a page with a button. Opening it uses nothing up, so an email\nscanner that opens every link does not spend it (docs/09).",
+        "operationId": "confirm_sign_in_auth_callback_get",
         "parameters": [
           {
             "in": "query",
@@ -2082,8 +2076,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"
@@ -2097,6 +2093,24 @@
               }
             },
             "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Sign In",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "description": "The page's button: signs in and goes back to the map.",
+        "operationId": "callback_auth_callback_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
           }
         },
         "summary": "Callback",
@@ -2486,7 +2500,7 @@
     },
     "/cadastre/parcel": {
       "get": {
-        "description": "The official parcel at a point, to draw a field from it (docs/08-cadastre.md).",
+        "description": "The official parcel at a point, to draw a field from it (docs/08-cadastre.md). Signed in\nonly, like drawing: each new area is fetched from the province.",
         "operationId": "parcel_cadastre_parcel_get",
         "parameters": [
           {
@@ -2509,6 +2523,22 @@
               "minimum": -180,
               "title": "Lon",
               "type": "number"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
             }
           }
         ],
@@ -2546,6 +2576,24 @@
       "post": {
         "description": "A hand-drawn outline fitted to the property lines, or unchanged (docs/08-cadastre.md).",
         "operationId": "snap_cadastre_snap_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2721,7 +2769,7 @@
     },
     "/places": {
       "get": {
-        "description": "Addresses, streets, towns and areas in Argentina for the search box (docs/04).",
+        "description": "Addresses, streets, towns and areas in Argentina for the search box (docs/04). Limited\nper network address: the search service behind it is shared and free.",
         "operationId": "places_places_get",
         "parameters": [
           {

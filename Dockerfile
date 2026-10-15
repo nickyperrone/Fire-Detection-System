@@ -35,6 +35,10 @@ COPY data/boundaries/ /app/data/boundaries/
 COPY data/models/ /app/data/models/
 COPY --from=web /web/.next/standalone/ /app/web/
 COPY docker/start.sh /app/start.sh
+# The app runs as this user; start.sh starts as root only to hand it the data volumes.
+RUN useradd --system --create-home --uid 10001 fieldwatch \
+    && mkdir -p /app/data/snapshots /app/data/weather /app/data/cache /app/web/.next/cache \
+    && chown -R fieldwatch:fieldwatch /app/data /app/web/.next/cache
 
 # Field photos, the clouds and rain frames and the Sentinel-2 cache; mount a volume here to keep
 # them across deploys.

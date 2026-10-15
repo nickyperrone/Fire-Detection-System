@@ -76,3 +76,24 @@ def test_the_visitor_address_comes_from_cloudflare_first():
     )
     assert client_ip({"x-forwarded-for": "2.2.2.2, 9.9.9.9"}, "3") == "2.2.2.2"
     assert client_ip({}, "3") == "3"
+
+
+def test_an_ipv6_connection_counts_as_one_whatever_address_it_rotates_to():
+    from app.services.captcha import limit_key
+
+    assert limit_key("2001:db8:1:2::1") == limit_key("2001:db8:1:2:ffff::9") == "2001:db8:1:2::/64"
+    assert limit_key("2001:db8:1:3::1") != limit_key("2001:db8:1:2::1")
+    assert limit_key("203.0.113.9") == "203.0.113.9"
+
+
+def test_the_whole_app_sends_a_limited_number_of_sign_in_emails(anonymous, outbox, session):
+    from datetime import UTC, datetime
+
+    from app.models import LoginLink
+    from app.services.auth import create_login_link
+
+    config = {"login_links_per_hour": 5, "login_emails_per_hour": 3, "link_minutes": 15}
+    now = datetime.now(UTC)
+    tokens = [create_login_link(session, f"u{i}@example.com", "es", config, now) for i in range(4)]
+    assert [t is not None for t in tokens] == [True, True, True, False]
+    assert session.query(LoginLink).count() == 3
