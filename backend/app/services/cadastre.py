@@ -64,7 +64,14 @@ def _store(session: Session, province: str, parcels: list[Parcel], now: datetime
             "partida": p.partida,
             "plano": p.plano,
             "status": p.status,
-            "geom": func.ST_SetSRID(func.ST_GeomFromText(geometry.wkt), 4326),
+            # Provinces publish some parcels that cross themselves; PostGIS then fails on every
+            # intersection with them, so they are stored made valid (polygons only).
+            "geom": func.ST_Multi(
+                func.ST_CollectionExtract(
+                    func.ST_MakeValid(func.ST_SetSRID(func.ST_GeomFromText(geometry.wkt), 4326)),
+                    3,
+                )
+            ),
             "fetched_at": now,
         }
         for p, geometry in merged.values()

@@ -364,6 +364,8 @@ export function FieldWatchApp() {
     setTilesVersion((v) => v + 1);
     url.update({ f: String(created.id) });
     setSnap("half");
+    // In view beside the panel: the new or edited outline is what the person looks for next.
+    frame([created]);
   };
 
   const hasFields = (everything.data?.length ?? 0) > 0;

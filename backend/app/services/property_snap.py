@@ -1,6 +1,7 @@
 """Fit a hand-drawn field to the property lines (docs/08-cadastre.md#in-the-map)."""
 
 import json
+import logging
 import math
 from dataclasses import dataclass, field
 
@@ -17,9 +18,12 @@ from shapely.geometry import (
 )
 from shapely.ops import nearest_points
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from app.services.cadastre import ensure_tile, tile_of
+
+log = logging.getLogger(__name__)
 
 METERS_PER_DEGREE = 111_320
 # Never fetch more than a 3 x 3 block of cache tiles (about 15 x 15 km) for one drawing.
@@ -162,8 +166,14 @@ def snap_to_property_lines(
         return SnapResult(method="none", geometry=geometry)
     _ensure_area(session, client, cadastre, drawing)
     config = cadastre["snap"]
-    return (
-        _by_parcels(session, drawing, config)
-        or _by_edges(session, drawing, config)
-        or SnapResult(method="none", geometry=geometry)
-    )
+    try:
+        return (
+            _by_parcels(session, drawing, config)
+            or _by_edges(session, drawing, config)
+            or SnapResult(method="none", geometry=geometry)
+        )
+    except DBAPIError:
+        # A parcel PostGIS cannot intersect must not lose the drawing: it stays as drawn.
+        log.exception("fitting a drawing to the property lines failed")
+        session.rollback()
+        return SnapResult(method="none", geometry=geometry)

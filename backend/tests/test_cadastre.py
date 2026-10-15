@@ -135,3 +135,24 @@ def test_zoom_12_fetches_its_four_cache_tiles_once(session, wfs):
     assert session.query(CadastralTile).count() == 4
     ensure_tile(session, client, CONFIG, 12, x, y)
     assert fake.requests == asked
+
+
+def test_a_parcel_that_crosses_itself_is_stored_valid(session):
+    from datetime import UTC, datetime
+
+    from app.providers.cadastre_wfs import Parcel
+    from app.services.cadastre import _store
+
+    # A bow tie: its two halves touch at the middle, which PostGIS cannot intersect with.
+    bow_tie = {
+        "type": "Polygon",
+        "coordinates": [
+            [[-59.0, -33.0], [-58.99, -32.99], [-58.99, -33.0], [-59.0, -32.99], [-59.0, -33.0]]
+        ],
+    }
+    _store(session, "Entre Ríos", [Parcel(1, 7, None, None, bow_tie)], datetime.now(UTC))
+    session.commit()
+    valid, area = session.execute(
+        select(func.ST_IsValid(CadastralParcel.geom), func.ST_Area(CadastralParcel.geom))
+    ).one()
+    assert valid and area > 0
