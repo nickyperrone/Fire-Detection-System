@@ -72,5 +72,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the backend image
-        run: docker build -t field-watch-backend backend
+      # The image Dokploy deploys: web, API and worker (docs/14-deploy.md).
+      - name: Build the app image
+        run: docker build -t field-watch .
