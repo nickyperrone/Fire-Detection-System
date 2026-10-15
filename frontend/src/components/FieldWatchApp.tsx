@@ -455,7 +455,12 @@ export function FieldWatchApp() {
             )}
           </div>
 
-          <div className="absolute right-3 top-[72px] z-[22] md:top-3">
+          {/* The landing is for reading and signing in: the map tools come with an account. */}
+          <div
+            className={`absolute right-3 top-[72px] z-[22] md:top-3 ${
+              me.isSuccess && !signedIn ? "hidden" : ""
+            }`}
+          >
             <MapButtons
               basemap={url.basemap}
               onBasemap={(b) => url.update({ b })}
