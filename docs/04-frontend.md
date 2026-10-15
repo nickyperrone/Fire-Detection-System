@@ -138,9 +138,9 @@ Signed out, the panel introduces Field Watch: the logo, what it watches (fires, 
 and weather, crop photos), how an alert arrives, the sign-in button and the data sources. Behind
 it, over the satellite photo, the map plays a loop like a short film
 (`components/map/useIntroTour.ts`) that does what the app does: a flight from the country to
-Larroque; close on a real parcel from the province's cadastre (541 ha, public data), its property
-line appears; a hand traces the field over it; the outline fits to the line, turns green and shows
-its hectares; the view backs off, a fire appears with the dashed line and its distance (3.7 km);
+Larroque; close on a real parcel from the province's cadastre (541 ha, public data), a dotted line
+traced by hand around it; the outline fits to the property line, turns green and shows its
+hectares; the view backs off, a fire appears with the dashed line and its distance (3.7 km);
 a slow push in, then out and again. It is an example and the panel says so. The first touch of
 the map stops it where it is; with reduced motion it shows the finished scene, still. A link
 with a camera or a field skips it.

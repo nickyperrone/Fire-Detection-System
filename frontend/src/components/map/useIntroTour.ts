@@ -54,7 +54,6 @@ function sceneCamera(map: MapLibreMap, bounds: [Point, Point] = SCENE_BOUNDS) {
 
 const SOURCE = "intro";
 const LAYERS = [
-  "intro-parcel",
   "intro-fill",
   "intro-outline",
   "intro-sketch",
@@ -62,27 +61,14 @@ const LAYERS = [
 ];
 
 type Scene = {
-  // The parcel's property line, as the cadastre draws it, before the field is fitted to it.
-  parcel: boolean;
   sketch: Point[];
   outline: Point[];
   distance: Point[];
 };
-const EMPTY: Scene = { parcel: false, sketch: [], outline: [], distance: [] };
+const EMPTY: Scene = { sketch: [], outline: [], distance: [] };
 
-function data({
-  parcel,
-  sketch,
-  outline,
-  distance,
-}: Scene): GeoJSON.FeatureCollection {
+function data({ sketch, outline, distance }: Scene): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
-  if (parcel)
-    features.push({
-      type: "Feature",
-      properties: { kind: "parcel" },
-      geometry: { type: "LineString", coordinates: FIELD },
-    });
   if (sketch.length > 1)
     features.push({
       type: "Feature",
@@ -134,13 +120,6 @@ function addLayers(map: MapLibreMap, scene: Scene) {
     filter: ["==", ["get", "kind"], "outline"],
     layout: { "line-join": "round", "line-cap": "round" },
     paint: { "line-color": "#4ade80", "line-width": 3.5, "line-blur": 0.4 },
-  });
-  map.addLayer({
-    id: "intro-parcel",
-    type: "line",
-    source: SOURCE,
-    filter: ["==", ["get", "kind"], "parcel"],
-    paint: { "line-color": "#ffffff", "line-width": 1.6, "line-opacity": 0.85 },
   });
   map.addLayer({
     id: "intro-sketch",
@@ -328,16 +307,14 @@ export function useIntroTour(
         map.flyTo({ ...close, duration: 6500, curve: 1.5 });
         await moved();
         if (stopped) return;
-        // The property line shows; a hand traces the field over it; the outline fits to the line;
-        // then its hectares.
-        draw({ parcel: true });
-        await wait(700);
+        // A dotted line traced by hand; it fits to the property line and turns green; then its
+        // hectares.
         await animate(2800, (t) => draw({ sketch: along(SKETCHED, t) }));
         if (stopped) return;
         await wait(300);
         await animate(900, (t) => draw({ sketch: blend(SKETCHED, FITTED, t) }));
         if (stopped) return;
-        draw({ parcel: false, sketch: [], outline: FITTED });
+        draw({ sketch: [], outline: FITTED });
         await wait(400);
         markers.push(
           new Marker({ element: label(fieldLabel, "intro-label") })
