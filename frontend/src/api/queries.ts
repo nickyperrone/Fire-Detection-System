@@ -170,15 +170,41 @@ export function useBoundary() {
 // Places are searched from this many letters, as the API does.
 const PLACE_MIN_LETTERS = 3;
 
-/** Addresses, streets and towns in Argentina for the search box (docs/04-frontend.md). */
+/** "Gualeguaychú" and "gualeguaychu" are the same place. */
+const plain = (name: string) =>
+  name.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+/** Towns, streets and addresses in Argentina for the search box (docs/04-frontend.md). Towns
+ * come fast and show at once; streets, from a slower service, join when they arrive. */
 export function usePlaces(query: string) {
   const q = query.trim();
-  return useQuery({
-    queryKey: ["places", q.toLowerCase()],
-    queryFn: () => api.places(q),
-    enabled: q.length >= PLACE_MIN_LETTERS,
+  const enabled = q.length >= PLACE_MIN_LETTERS;
+  const towns = useQuery({
+    queryKey: ["places", "towns", q.toLowerCase()],
+    queryFn: () => api.places(q, "towns"),
+    enabled,
     staleTime: Infinity,
   });
+  const streets = useQuery({
+    queryKey: ["places", "streets", q.toLowerCase()],
+    queryFn: () => api.places(q, "streets"),
+    enabled,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const known = new Set((towns.data ?? []).map((p) => plain(p.name)));
+  const data = [
+    ...(towns.data ?? []),
+    // A town the street search also found is shown once.
+    ...(streets.data ?? []).filter(
+      (p) => !(p.bbox && known.has(plain(p.name))),
+    ),
+  ];
+  return {
+    data: towns.data || streets.data ? data : undefined,
+    // "Searching" only until there is something to show.
+    isFetching: data.length === 0 && (towns.isFetching || streets.isFetching),
+  };
 }
 
 /** The clouds and rain layer's scan, checked every few minutes while it is on. */

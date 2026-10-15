@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Literal
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -16,7 +17,12 @@ router = APIRouter(tags=["places"])
 
 
 @router.get("/places", response_model=list[PlaceOut])
-def places(request: Request, http: HttpDep, q: str = Query(max_length=120)):
+def places(
+    request: Request,
+    http: HttpDep,
+    q: str = Query(max_length=120),
+    source: Literal["towns", "streets"] | None = None,
+):
     """Addresses, streets, towns and areas in Argentina for the search box (docs/04). Limited
     per network address: the search service behind it is shared and free."""
     ip = client_ip(request.headers, request.client.host if request.client else None)
@@ -25,6 +31,7 @@ def places(request: Request, http: HttpDep, q: str = Query(max_length=120)):
             status_code=429, content={"detail": "too many searches", "code": "too_many"}
         )
     try:
-        return [asdict(p) for p in find_places(http, get_thresholds()["places"], q)]
+        found = find_places(http, get_thresholds()["places"], q, source)
+        return [asdict(p) for p in found]
     except httpx.HTTPError as exc:
         raise HTTPException(503, "place search unavailable") from exc

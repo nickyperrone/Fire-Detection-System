@@ -44,7 +44,7 @@ def search_places(client: httpx.Client, config: dict, query: str) -> list[Place]
             "bbox": ",".join(str(v) for v in config["bbox"]),
         },
         headers={"User-Agent": "FieldWatch (github.com/nickyperrone/Fire-Detection-System)"},
-        timeout=10,
+        timeout=config["photon_timeout_s"],
     )
     response.raise_for_status()
     places = []

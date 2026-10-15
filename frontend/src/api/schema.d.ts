@@ -1826,6 +1826,7 @@ export interface operations {
         parameters: {
             query: {
                 q: string;
+                source?: ("towns" | "streets") | null;
             };
             header?: never;
             path?: never;

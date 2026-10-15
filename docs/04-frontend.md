@@ -38,10 +38,13 @@ more than two taps.
 - **Spray timeline**: a horizontal strip of 48 hourly cells colored by status; tapping a cell shows
   the rule that failed. The next favorable window is labeled on the strip.
 - **Search** finds the user's fields, lots and tags first, then places in Argentina: addresses,
-  streets, towns and areas ("Ruta 14 km 120", "Larroque", "Gualeguaychú"). Places come from
-  OpenStreetMap through Photon (komoot), which is made for search as you type; the API proxies
-  it (`GET /places?q=`, from 3 letters, results kept in memory for an hour) so the browser never
-  calls it directly and repeated searches cost nothing. Picking a place frames its area, or flies
+  streets, towns and areas ("Ruta 14 km 120", "Larroque", "Gualeguaychú"). Two sources are
+  asked at once: **towns** from Georef, the Argentine government's official place API
+  (datos.gob.ar, free, under a second), framed about 3 km around their center; and **streets and
+  addresses** from OpenStreetMap through Photon (komoot). Photon's free server can take 20 s or
+  more, so it gets 4 s: when it is late, the towns show alone. The API proxies both
+  (`GET /places?q=`, from 3 letters, results kept in memory for an hour) so the browser never
+  calls them directly and repeated searches cost nothing. Picking a place frames its area, or flies
   to a street or address close enough to draw a field there.
 - **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update
   live, then name and tags. A drawn field can be split into sections the same way.

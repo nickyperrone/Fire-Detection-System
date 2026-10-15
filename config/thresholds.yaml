@@ -318,9 +318,17 @@ snapshots:
 
 # Places in the search box (docs/04-frontend.md): OpenStreetMap through Photon.
 places:
-  # Searches from one network address in an hour; typing sends one every few letters.
-  per_ip_hour: 600
+  # Searches from one network address in an hour; typing sends two (towns, streets) every few
+  # letters.
+  per_ip_hour: 1200
   url: https://photon.komoot.io/api/
+  # Photon's free server can take 20 s; past this, the towns from Georef show alone.
+  photon_timeout_s: 4
+  # Towns, from the Argentine government's official place API (docs/04-frontend.md).
+  georef_url: https://apis.datos.gob.ar/georef/api/localidades
+  georef_timeout_s: 4
+  # A town is framed this far around its center, in degrees (about 3 km).
+  town_half_degrees: 0.03
   # Argentina: west, south, east, north.
   bbox: [-73.6, -55.1, -53.6, -21.8]
   limit: 5

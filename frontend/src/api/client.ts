@@ -164,8 +164,8 @@ export const api = {
   anomalies: (id: number) =>
     request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
   weatherLayer: () => request<WeatherLayer>("/weather-layer"),
-  places: (query: string) =>
-    request<Place[]>(`/places?q=${encodeURIComponent(query)}`),
+  places: (query: string, source: "towns" | "streets") =>
+    request<Place[]>(`/places?q=${encodeURIComponent(query)}&source=${source}`),
   snapshots: (id: number) => request<Snapshots>(`/territories/${id}/snapshots`),
   fireHistory: (id: number) =>
     request<FireHistory>(`/territories/${id}/fire-history`),
