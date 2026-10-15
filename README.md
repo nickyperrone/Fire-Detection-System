@@ -13,16 +13,18 @@ outline** from a tap, by segmenting a year of images
 **something unusual in a field**, patches that changed unlike the rest of their lot
 ([how](#computer-vision-something-unusual-in-the-field)).
 
+- **Live** at https://fire-detection.nicoleperrone.com, one Docker image on Dokploy behind
+  Cloudflare ([deploy](#deploy)).
 - **Status:** Phase 1 in progress. In the map, the API and the CLI today: fires from FIRMS and
   GOES-19 (every 10 minutes), lightning, spraying conditions, a 1–3 day fire forecast, ten years of
-  fire history per field, fields drawn on the official property lines and edited with two pencils,
+  fire history per field, fields drawn on the official property lines and split into lots,
   alerts by email, by Telegram with a photo of the area and in the browser, each account choosing
-  which kinds and where, accounts opened with a link by email, visibility and
-  priority per field, colored tags, field outlines detected by computer vision, the weather now
-  and for 48 hours per field, daily or weekly summaries by email, unusual patches in each
-  field found in Sentinel-2 images, a page per field with its satellite photos over time, and
-  GOES-19's clouds and rain on the map every 10 minutes. See the
-  [roadmap](docs/01-product.md#roadmap).
+  which kinds and where, a Telegram bot driven by buttons, accounts opened with a link by email
+  and kept free of bots by Cloudflare Turnstile, visibility and priority per field, colored tags,
+  field outlines detected by computer vision, the weather now and for 48 hours per field, daily
+  or weekly summaries, areas to check in each field found in Sentinel-2 images, a page per field
+  with its satellite photos over time, and GOES-19's clouds and rain over all of Argentina every
+  10 minutes. See the [roadmap](docs/01-product.md#roadmap).
 - Built by [Nicole Perrone](https://www.linkedin.com/in/perronenicole/).
 
 ## Run it locally
@@ -54,8 +56,12 @@ make web                  # in a second terminal: the map on http://localhost:30
 - `make portfolio` prints every field and section with its answers in the terminal;
   `make portfolio TAG=crop:soy` filters by tag.
 - Next.js forwards `/api` to the API, so there is nothing else to configure.
-- API docs are at http://localhost:8000/docs. `make worker` runs the scheduled worker (FIRMS
-  every 5 min, weather every 60 min).
+- API docs are at http://localhost:8000/docs (only in development). `make worker` runs the
+  scheduled worker (FIRMS every 5 min, weather every 60 min, the Telegram bot every 5 s).
+- Optional in `.env`: `TELEGRAM_BOT_TOKEN` for Telegram alerts and the bot
+  ([13](docs/13-notifications.md#telegram)), and `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` for
+  Cloudflare's check on the sign-in form ([09](docs/09-accounts-and-alerts.md#bots)). Without them
+  both are off. Only one worker may run per bot: Telegram refuses a second one.
 - `docker compose up --build` runs the database, API and worker together.
 - The `postgis/postgis` image is amd64 only. On Apple Silicon Docker runs it under emulation, which
   works but makes the first start take about a minute.
@@ -65,7 +71,19 @@ make web                  # in a second terminal: the map on http://localhost:30
 
 One `Dockerfile` at the root builds the whole app (web, API and worker) for
 [Dokploy](https://dokploy.com); PostGIS runs as a Dokploy database. Publish **container port 3000**
-([14-deploy](docs/14-deploy.md)).
+([14-deploy](docs/14-deploy.md)). Every push to `main` deploys.
+
+```mermaid
+flowchart LR
+    U["Browser · Telegram"] -->|https| CF["Cloudflare<br/>DNS + proxy"]
+    CF --> W
+    subgraph C["App container · user fieldwatch, not root"]
+        W["Next.js :3000<br/>security headers"] -->|"/api"| A["FastAPI :8000<br/>no access log"]
+        K["Worker<br/>satellites, alerts, bot"]
+    end
+    A & K --> DB[("PostGIS<br/>Dokploy database")]
+    K --> T["Telegram · Resend"]
+```
 
 Other commands: `make test` (backend tests), `make web-check` (frontend types, lint and tests),
 `make codegen` (regenerate the frontend API types), `make lint`, `make migration m="..."`.
@@ -111,6 +129,7 @@ flowchart LR
         J6["unusual patches · 6 h"]
         J7["field photos · 6 h"]
         J8["clouds and rain loop · 10 min"]
+        J9["alerts + Telegram bot"]
     end
     DB[("PostgreSQL + PostGIS")]
     subgraph READ["Read side"]
@@ -128,6 +147,8 @@ flowchart LR
     J7 -- "PNG per pass" --> FILES[("data/snapshots,<br/>data/weather")]
     J8 -- "PNG per scan" --> FILES
     FILES --> API
+    DB --> J9
+    J9 -- "email · Telegram<br/>with a photo" --> OUT["Contractor's phone"]
     ATER -- "on demand,<br/>per map tile" --> API
     DB --> API & TILES & CLI
     API & TILES --> WEB
@@ -330,21 +351,59 @@ link by email: no passwords ([09-accounts-and-alerts](docs/09-accounts-and-alert
 sequenceDiagram
     participant U as User
     participant App as Map
+    participant CF as Cloudflare Turnstile
     participant API as API
     participant M as Mail server
     U->>App: Sign in · primo@example.com
-    App->>API: POST /auth/login
-    API->>API: one-time token, 15 min,<br/>only its hash stored
+    App->>CF: invisible check
+    CF-->>App: token
+    App->>API: POST /auth/login + token
+    API->>CF: is the token valid?
+    API->>API: limits per address, network and app;<br/>one-time token, 15 min, only its hash stored
     API->>M: "Your sign-in link"
     M-->>U: email with the link
     U->>API: GET /auth/callback?token=…
+    API-->>U: a page with "Entrar" (opening uses nothing up)
+    U->>API: POST /auth/callback (same site only)
     API->>API: token used up,<br/>account created on first sign-in
     API-->>App: cookie fw_session (HttpOnly, 30 days),<br/>back to the map
     App->>API: fields, tiles, alerts of this account
 ```
 
-At most 5 links per address per hour, and the same answer for every address, so the form neither
-floods an inbox nor reveals who uses the app.
+- The link in the email opens a page with a button instead of signing in at once: email
+  scanners open every link, and would otherwise spend it before the person clicks.
+- The same answer for every address, so the form does not reveal who uses the app. At most 5
+  links per address and 20 requests per network address an hour, 200 emails an hour for the whole
+  app, and Cloudflare Turnstile in front ([09](docs/09-accounts-and-alerts.md#bots)).
+
+### Security
+
+Two reviewers (one per front: who can see what, and what the sign-in and the answers expose)
+went through every route; the findings were fixed and turned into tests.
+
+```mermaid
+flowchart LR
+    R["Request"] --> O{"Changes something,<br/>from another site?"}
+    O -- yes --> X1["403"]
+    O -- no --> S{"Session cookie<br/>for this account?"}
+    S -- "no, private data" --> X2["401"]
+    S -- yes --> OW{"The row belongs<br/>to this account?"}
+    OW -- no --> X3["404, as if<br/>it did not exist"]
+    OW -- yes --> V{"Within the limits?<br/>names, shapes, rates"}
+    V -- no --> X4["422 · 429"]
+    V -- yes --> OK["Answer: only the<br/>fields the page uses"]
+```
+
+- **Each account sees only its own** fields, lots, tags, fires near them, photos and alerts,
+  checked on every route and in the Telegram bot's buttons; `tests/test_access.py` tries every
+  write and read on another account's field.
+- **Nothing extra in answers:** no owner emails, chat ids or tax account numbers in public map
+  tiles; `/health` says whether each source works, not its error text.
+- **Limits:** names and tags are one line (a line break once stopped every account's alerts),
+  shapes up to 10,000 vertices, field detection 30 an hour per account, place search per network
+  address; nobody signed out can make the server call the province's cadastre.
+- **Web:** headers that stop another site from framing the app, `nosniff`, a strict referrer
+  policy and HSTS; API docs only in development; the container runs as a user without privileges.
 
 ### Per-field settings and alerts
 
@@ -363,7 +422,7 @@ flowchart LR
     A -- no --> X
     A -- yes --> K{"Kind wanted,<br/>and by which channel?"}
     K -- email --> E["One email per account and run,<br/>worst first, recorded"]
-    K -- telegram --> T["🔴 ALERTA! per field:<br/>photo of the area,<br/>Abrir en el mapa · Ya lo vi"]
+    K -- telegram --> T["🔴 ALERTA! per field:<br/>photo of the area,<br/>Abrir en el mapa · Cómo llegar<br/>Ya lo vi · Ver el campo"]
     A -- yes --> N["Browser notification<br/>while the app is open"]
     DB --> V{"Visible?"}
     V -- yes --> M["Map + list,<br/>high priority first"]
@@ -373,9 +432,14 @@ flowchart LR
 - A danger is marked as announced only after a channel accepts it, so a failed send is retried on
   the next run instead of being lost. Every message is recorded in `alert_delivery`.
 - The Telegram photo is drawn by the worker: the field, the fires with the distance to the closest,
-  the lightning, the wind, a scale and north, over satellite tiles. "Ya lo vi" marks the fire as
-  seen. The bot is connected from the notifications page, with a one-time code; it needs
-  `TELEGRAM_BOT_TOKEN` in `.env` (from @BotFather).
+  the lightning, the wind, a scale and north, over satellite tiles. "Cómo llegar" opens the fire in
+  Google Maps, "Ya lo vi" marks it as seen, "Ver el campo" answers with the field in detail.
+  Distant fires and summaries arrive without sound.
+- The bot is connected from the notifications page with a one-time code, and works with buttons
+  under its messages: **Mis campos** (each field now, then one in detail: the closest fire,
+  spraying now and the next window) and **Mis alertas** (each kind on or off for the chat). Views
+  change the message in place. Its commands, descriptions and photo come from the repository
+  ([13](docs/13-notifications.md#the-bot)).
 - A fire near a field and its lots is one line, not one per lot; lightning is emailed at most
   once an hour per field.
 - Danger already present is not announced again; only a change is news.
@@ -484,8 +548,11 @@ flowchart LR
     C --> I["NDVI, NDWI, NBR<br/>per pixel and date"]
     I --> R["Minus the lot's median<br/>that day: a harvest of the<br/>whole lot cancels out"]
     R --> B["Against the pixel's usual<br/>difference (mean, spread)<br/>over earlier dates"]
-    B --> P["Patches of 1 ha or more:<br/>less green, water,<br/>burnt"]
-    P --> F{"Burnt?"}
+    B --> P["Patches of 3 ha or more:<br/>less green, water,<br/>burnt"]
+    P --> W{"Covers most of a<br/>property parcel or lot?"}
+    W -- "yes: harvest,<br/>tillage" --> D["Field work,<br/>not reported"]
+    W -- no --> F
+    F{"Burnt?"}
     F -- "fire detected<br/>near it" --> K["Burnt"]
     F -- "no fire seen" --> L["Tilled or sprayed-off ground:<br/>reported only if it<br/>lost green too"]
 ```
@@ -493,6 +560,10 @@ flowchart LR
 - **Per lot, not per field.** Lots are sown and harvested apart: in the first version, a 1,225 ha
   field of 16 lots showed 10 "patches" that were just one lot harvested before the others. Checked
   lot by lot, the same imagery shows none there.
+- **Field work is not news.** A field of 5,666 ha drawn over dozens of parcels showed 26 "patches"
+  in October that were harvests and tillage. A drop covering most of a property parcel (or of the
+  lot) is that work and is left out; a drop in part of one is what someone should look at. The
+  page calls them "zonas para revisar", and the chip opens the list.
 - **Burns are confirmed with the fire detections the app already has.** Freshly tilled ground
   darkens the burn index the same way; seen on La Esperanza between 16 and 24 September, where
   the soil turned dark brown with no fire anywhere near. Without a satellite fire detection near
@@ -555,16 +626,17 @@ The status dock shows when a satellite last looked, which is GOES-19's newest sc
 20 minutes), not the newest fire detection: no detection means nothing burned, not that nobody
 looked.
 
-"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over the center and east of
-the country, like a weather radar loop: clouds as a light veil, so a cloudy day never turns the
-map gray, and rain in blues and violet, which is what stands out.
+"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over all of Argentina, Islas
+Malvinas and the sea around them, like a weather radar loop: clouds as a light veil, so a cloudy
+day never turns the map gray, and rain in blues and violet, which is what stands out. It follows
+the country's shape and fades out at its edge, with no box and neighbors left clear.
 
 ```mermaid
 flowchart LR
     S3["noaa-goes19 on AWS<br/>every 10 min"] --> H["Cloud top height<br/>ABI-L2-ACHAF, 10 km"]
     S3 --> R["Rainfall rate<br/>ABI-L2-RRQPEF, 2 km"]
     H & R --> W["Only the box's window<br/>of each full-disk file"]
-    W --> G["Reprojected to a grid<br/>even in Web Mercator;<br/>cloud edges interpolated"]
+    W --> G["Reprojected to a 3 km grid<br/>even in Web Mercator;<br/>cloud edges interpolated;<br/>Argentina and its sea only"]
     G --> P["One transparent PNG<br/>per scan, last 12 kept"]
     P --> M["A loop on the map:<br/>frames fade one into<br/>the next, under the fields"]
 ```
@@ -573,11 +645,10 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    Z0["Zoom 0–8<br/>country"] -->|zoom in| Z9["Zoom 9–11<br/>region"] -->|zoom in| Z12["Zoom 12<br/>a town"] -->|zoom in| Z13["Zoom 13+<br/>a few fields"]
+    Z0["Zoom 0–8<br/>country"] -->|zoom in| Z9["Zoom 9–11<br/>region"] -->|zoom in| Z12["Zoom 12+<br/>a town, a few fields"]
     Z0 --- A0["fires clustered:<br/>count + worst"]
     Z9 --- A9["each fire event,<br/>simplified outlines"]
-    Z12 --- A12["each observation,<br/>exact outlines"]
-    Z13 --- A13["property lines"]
+    Z12 --- A12["each observation,<br/>exact outlines,<br/>property lines"]
 ```
 
 The map asks only for the vector tiles on screen, shows lower-zoom tiles while closer ones arrive,
@@ -585,7 +656,14 @@ and caches them, like Google Maps. Each field has a dark edge under its outline 
 crops of any color on the satellite photo, and the selected one glows; motion (the glow fading in,
 the card rising, the list cascading) is short and stops for anyone who asks their system for less
 motion. Colors are red when something is wrong and green when all is
-fine, everywhere. The decision log and the stack are in [02-architecture](docs/02-architecture.md).
+fine, everywhere.
+
+Signed out, the panel introduces Field Watch and the map plays a short film over the satellite
+photo: a flight to Larroque, a real parcel traced by hand with a dotted line that fits to the
+property line and turns green with its hectares, then a fire 3.7 km away with the distance. Signed
+in without fields, the panel shows three steps and **Agregar mi primer campo**
+([04-frontend](docs/04-frontend.md#first-visit)). Islas Malvinas is named so on every basemap.
+The logo is a satellite on its orbit over a field's rows (`docs/brand/`). The decision log and the stack are in [02-architecture](docs/02-architecture.md).
 
 ## How it is built: spec first
 
@@ -595,20 +673,21 @@ fine, everywhere. The decision log and the stack are in [02-architecture](docs/0
 | [01-product](docs/01-product.md) | User, the three questions, fields, lots, settings, colored tags, roadmap |
 | [02-architecture](docs/02-architecture.md) | Pipeline, data model, processing version, stack, decisions |
 | [03-rules](docs/03-rules.md) | FIRMS normalization, correlation, severity, spray rules, data quality |
-| [04-frontend](docs/04-frontend.md) | Map-first UI, bottom sheet, vector tiles by zoom, explore mode |
+| [04-frontend](docs/04-frontend.md) | Map-first UI, bottom sheet, vector tiles by zoom, first visit, security headers, basemap names, logo |
 | [05-fire-forecast](docs/05-fire-forecast.md) | Fire probability per field for 24–72 h: data, model, evaluation |
 | [06-goes](docs/06-goes.md) | GOES-19 fire every 10 minutes, lightning, colors |
 | [07-fire-history](docs/07-fire-history.md) | 10 years of fire near each field, from the FIRMS archive |
 | [08-cadastre](docs/08-cadastre.md) | Official property lines (Entre Ríos, Buenos Aires, Córdoba), loaded on demand; drawings fitted to them |
 | [10-field-detection](docs/10-field-detection.md) | Field outlines by computer vision from a year of Sentinel-2 images, and its benchmark |
-| [11-field-anomalies](docs/11-field-anomalies.md) | Something unusual in a field: patches that change unlike the rest of their lot |
+| [11-field-anomalies](docs/11-field-anomalies.md) | Areas to check in a field: patches that change unlike the rest of their lot, field work left out |
 | [12-field-page](docs/12-field-page.md) | A page per field and lot: breadcrumbs, tabs, satellite photos and greenness over time |
-| [13-notifications](docs/13-notifications.md) | Which dangers to hear about (fire by distance, lightning, adverse weather, summaries) and where: email or Telegram, with a photo of the area |
+| [13-notifications](docs/13-notifications.md) | Which dangers to hear about (fire by distance, lightning, adverse weather, summaries) and where: email or Telegram, with a photo of the area; the bot and its buttons |
 | [14-deploy](docs/14-deploy.md) | One image on Dokploy: what runs where, the settings, and moving the data from the laptop |
-| [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link, fields per account, email alerts, SMTP |
+| [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link and its confirmation page, bots (Turnstile and limits), fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
-the tests against a PostGIS service container, and a Docker image build.
+the tests against a PostGIS service container, the frontend's types, lint, tests and build, and
+the build of the image Dokploy deploys.
 
 ## Data sources
 
@@ -643,7 +722,8 @@ repositories. Using it for a business changes two things:
   alternative is a satellite layer with an open license.
 
 Email goes out through Resend's free plan (100 a day, 3,000 a month); more needs a paid plan.
-Running it for others also needs a server (database, API, worker), which is not set up yet.
+Telegram's Bot API and Cloudflare Turnstile are free. The app runs on a server through Dokploy
+(the server's cost is the only fixed one).
 
 ## Folders
 
@@ -664,3 +744,5 @@ Running it for others also needs a server (database, API, worker), which is not 
 | `docs/reports/` | Forecast evaluation, regenerated with each retrain |
 | `frontend/src/api/` | API client, TanStack Query hooks, generated types |
 | `.github/workflows/` | CI |
+| `docker/`, `Dockerfile` | The one image for Dokploy and its start script |
+| `docs/brand/` | The logo (SVG) and the bot's photo |
