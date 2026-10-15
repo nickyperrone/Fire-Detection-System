@@ -95,10 +95,14 @@ goes:
   weather_layer:
     cloud_product: ABI-L2-ACHAF
     rain_product: ABI-L2-RRQPEF
-    # Wider than the fire region, so weather coming from the west or south shows before it
-    # arrives: west, south, east, north.
-    bbox: [-66.0, -39.0, -53.0, -26.0]
-    cell_degrees: 0.02
+    # All of Argentina, Islas Malvinas and the sea around them: west, south, east, north.
+    bbox: [-76.0, -56.5, -50.0, -20.5]
+    # About 3 km: finer than the cloud product, and twelve frames stay light enough for a phone.
+    cell_degrees: 0.03
+    # Painted only over the country and this much around it (sea included), fading out over
+    # `coverage_feather_cells`, so there is no box edge and neighbors stay clear.
+    coverage_buffer_degrees: 1.4
+    coverage_feather_cells: 6
     # Clouds are a faint veil, a little stronger the higher their tops, up to this height. Rain
     # is what stands out: a high top alone is often a thin anvil, not a storm.
     cloud_full_height_m: 12000
@@ -106,7 +110,7 @@ goes:
     # clear pixel is still low.
     cloud_edge_height_m: 4000
     # A light softening on top, in grid cells.
-    cloud_blur_cells: 3.0
+    cloud_blur_cells: 2.0
     # The loop: one frame per scan, this many (two hours at one scan every 10 minutes).
     frames_kept: 12
     # Rain from this rate up, in mm/h; then the next band from each value.

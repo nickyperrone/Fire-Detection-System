@@ -61,6 +61,7 @@ def test_the_loop_keeps_the_newest_scans_and_drops_older_ones(thresholds, tmp_pa
     monkeypatch.setattr(weather_layer, "download", lambda *_: b"")
     blank = Grid(np.zeros((2, 2), "float32"), times[0])
     monkeypatch.setattr(weather_layer, "read_grid", lambda *_, **__: blank)
+    monkeypatch.setattr(weather_layer, "coverage", lambda *_: 1.0)
 
     stale = weather_layer.frame_path(tmp_path, datetime(2026, 10, 6, 19, tzinfo=UTC))
     stale.parent.mkdir(parents=True)
@@ -86,8 +87,35 @@ def test_the_api_lists_and_serves_the_frames(client, tmp_path):
     meta = {"bbox": [-66.0, -39.0, -53.0, -26.0], "frames": [scan.isoformat()]}
     (tmp_path / META).write_text(json.dumps(meta))
     body = client.get("/weather-layer").json()
-    assert body["frames"] == [{"scanned_at": "2026-10-06T21:40:21Z", "id": "20261006T214021"}]
-    image = client.get("/weather-layer/20261006T214021.png")
+    (frame,) = body["frames"]
+    stamp, version = frame["id"].split("-")
+    assert (frame["scanned_at"], stamp) == ("2026-10-06T21:40:21Z", "20261006T214021")
+    image = client.get(f"/weather-layer/{frame['id']}.png")
     assert image.headers["content-type"] == "image/png"
-    assert client.get("/weather-layer/20261006T214022.png").status_code == 404
+    assert client.get(f"/weather-layer/20261006T214022-{version}.png").status_code == 404
+    # A frame drawn for another box is not served under the current one.
+    assert client.get("/weather-layer/20261006T214021-000000.png").status_code == 404
     assert client.get("/weather-layer/latest.png").status_code == 404
+
+
+def test_the_layer_covers_argentina_and_its_sea_not_a_box(thresholds):
+    config = thresholds["goes"]["weather_layer"]
+    mask = weather_layer.coverage(
+        thresholds["territories"]["allowed_area"],
+        tuple(config["bbox"]),
+        config["cell_degrees"],
+        config["coverage_buffer_degrees"],
+        config["coverage_feather_cells"],
+    )
+    west, south, _, north = config["bbox"]
+    lats = weather_layer.grid_latitudes(config["bbox"], config["cell_degrees"])
+
+    def at(lat, lon):
+        row = int(np.abs(lats - lat).argmin())
+        return mask[row, round((lon - west) / config["cell_degrees"])]
+
+    assert at(-33.04, -59.01) == pytest.approx(1)  # Larroque
+    assert at(-51.7, -59.5) > 0.9  # Islas Malvinas
+    assert at(-38.5, -57.0) > 0.9  # the sea off Mar del Plata
+    assert at(-23.0, -51.0) == pytest.approx(0, abs=0.01)  # inland Brazil
+    assert at(-30.0, -75.0) == pytest.approx(0, abs=0.01)  # the Pacific off Chile

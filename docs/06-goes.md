@@ -77,7 +77,7 @@ burned, not that nobody looked.
 
 ## Clouds and rain on the map
 
-"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over the region, like a
+"Nubes y lluvia" in the layers menu plays GOES-19's last two hours over Argentina, like a
 weather radar loop, so the contractor sees where it is cloudy, where it rains and where it is
 heading:
 
@@ -87,6 +87,11 @@ heading:
   product's pixels are 10 km wide.
 - **Rain** from `ABI-L2-RRQPEF` (rainfall rate), on top: light blue from 0.5 mm/h, blue from
   2.5 mm/h and violet from 10 mm/h. Less than 0.5 mm/h is not drawn.
+- **Where.** All of Argentina, Islas Malvinas and the sea around them: the box
+  `[-76, -56.5, -50, -20.5]` at 0.03° (about 3 km, finer than the cloud product), painted only
+  over the country buffered by 1.4° (`coverage_buffer_degrees`) and fading out over a few cells,
+  so there is no box edge and neighboring countries stay clear. Natural Earth draws the islands
+  apart from the country; the layer adds them. Each frame is about 200 KB, the loop about 2.4 MB.
 - **The loop.** The worker keeps one frame per scan for the last two hours (12 frames, one every
   10 minutes): on each run it paints every scan of that window it does not have yet and deletes
   older ones. Only the region's window of each file is read; it is reprojected to a grid even
@@ -95,8 +100,10 @@ heading:
   (about 0.6 s each, a short pause on the newest). The legend shows the scale, play and pause,
   and the time of the frame on screen ("hace 40 min" … "hace 10 min"). Paused, it shows the
   newest scan. People who ask their system for less motion get it paused.
-- `GET /weather-layer` lists the frames (scan times) and the box;
-  `GET /weather-layer/{scan}.png` serves one.
+- `GET /weather-layer` lists the frames and the box; each frame's id is its scan time and a
+  version of the box and cell size, and `GET /weather-layer/{id}.png` serves it, cached for a day.
+  A change of box or cell size draws every frame again under new ids, so no browser shows a frame
+  cached for the old box.
 - It is GOES's estimate from space: rain rate comes from cloud temperatures, not from a rain gauge
   or a radar.
 
