@@ -244,9 +244,9 @@ def test_the_bot_links_a_chat_with_a_code_once(session, bot, field):
     bot.queue = [{"update_id": 1, "message": start}]
     assert answer_updates(session, bot, NOW) == 1
     assert user.telegram_chat_id == CHAT and user.telegram_code_hash is None
-    assert bot.sent[-1]["text"].startswith("<b>Listo, Telegram quedó conectado</b>")
-    # The menu stays below the chat, so nothing has to be typed.
-    assert bot.sent[-1]["keyboard"]["keyboard"][0][0] == {"text": "📋 Mis campos"}
+    assert bot.sent[-1]["text"].startswith("✅ <b>Telegram conectado</b>")
+    # The menu is buttons under the message, which every Telegram app shows.
+    assert texts(bot.sent[-1]["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"]]
     assert bot.queue == []
 
     # The code works once; another chat using it is told so.
@@ -317,12 +317,12 @@ def test_mis_campos_lists_each_field_and_opens_one_in_place(session, thresholds,
     linked(session)
     fire(session, thresholds, -59.07)
     adverse_hours(session, field.id, gusts=40)
-    bot.queue = [say("📋 Mis campos")]
+    bot.queue = [say("/campos")]
     answer_updates(session, bot, NOW)
     listing = bot.sent[-1]
     assert listing["text"].startswith("📋 <b>Tus campos</b>\n\n<b>La Esperanza</b> · ")
     assert "🔥 Posible fuego a 1,9 km al E" in listing["text"]
-    assert texts(listing["buttons"]) == [["La Esperanza ›"]]
+    assert texts(listing["buttons"]) == [["La Esperanza ›"], ["‹ Menú"]]
 
     # The field opens in the same message, with the way back.
     bot.queue = [tap(f"f:{field.id}")]
@@ -347,7 +347,7 @@ def test_ver_el_campo_under_an_alert_answers_with_a_new_message(session, thresho
 
 def test_mis_alertas_turns_kinds_on_and_off_from_the_chat(session, bot, field):
     user = linked(session)
-    bot.queue = [say("🔔 Mis alertas")]
+    bot.queue = [say("/alertas")]
     answer_updates(session, bot, NOW)
     assert texts(bot.sent[-1]["buttons"])[2] == ["▫️ Fuego lejano"]
     bot.queue = [tap("t:fire_far")]
@@ -361,8 +361,13 @@ def test_anything_else_typed_gets_the_help_and_the_menu(session, bot, field):
     linked(session)
     bot.queue = [say("hola")]
     answer_updates(session, bot, NOW)
-    assert bot.sent[-1]["text"].startswith("<b>Field Watch</b> te avisa acá")
-    assert bot.sent[-1]["keyboard"] is not None
+    menu = bot.sent[-1]
+    assert menu["text"].startswith("<b>Field Watch</b>\n\nVigilamos tus campos")
+    assert texts(menu["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"]]
+    # From any view, "‹ Menú" brings the menu back in the same message.
+    bot.queue = [tap("menu")]
+    answer_updates(session, bot, NOW)
+    assert bot.edits[-1]["text"] == menu["text"]
 
 
 def test_a_blocked_bot_disconnects_the_account(session, thresholds, outbox, bot, field):

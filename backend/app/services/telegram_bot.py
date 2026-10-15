@@ -25,27 +25,28 @@ SEEN = "seen:"
 FIELDS = "fields"
 FIELD = "f:"
 ALERTS = "alerts"
+MENU = "menu"
 TOGGLE = "t:"
 SPRAY_PROFILE = "default"
 WINDOW_HOURS = 48
 
 TEXTS = {
     "es": {
-        "linked": "<b>Listo, Telegram quedó conectado</b>\n\n"
-        "Las alertas de Field Watch van a llegar a este chat, con una foto del área.\n\n"
-        "Usá los botones de abajo para ver tus campos o elegir qué alertas te llegan.",
+        "linked": "✅ <b>Telegram conectado</b>\n\n"
+        "Te vamos a avisar acá cuando haya fuego, rayos o clima adverso cerca de tus campos, "
+        "con una foto del área.\n\n¿Qué querés ver?",
         "expired": "Ese código venció o ya se usó. En Field Watch, abrí Notificaciones (la "
         "campana) y tocá «Conectar Telegram» de nuevo.",
         "hello": "Para recibir alertas acá, entrá a Field Watch, abrí Notificaciones (la "
         "campana) y tocá «Conectar Telegram».",
         "stopped": "Listo: este chat ya no recibe alertas de Field Watch. Para volver a "
         "recibirlas, conectalo de nuevo desde Notificaciones.",
-        "help": "<b>Field Watch</b> te avisa acá cuando hay peligro cerca de tus campos: "
-        "fuego, rayos o clima adverso, con una foto del área.\n\n"
-        "📋 <b>Mis campos</b>: cómo está cada campo ahora\n"
-        "🔔 <b>Mis alertas</b>: qué alertas te llegan a este chat\n\n"
-        "Para dejar de recibir alertas acá, mandá /stop.",
-        "menu": {FIELDS: "📋 Mis campos", ALERTS: "🔔 Mis alertas", "help": "❓ Ayuda"},
+        "menu_text": "<b>Field Watch</b>\n\n"
+        "Vigilamos tus campos y te avisamos acá si hay fuego, rayos o clima adverso cerca.\n\n"
+        "<b>Mis campos</b>: cómo está cada uno ahora.\n"
+        "<b>Mis alertas</b>: cuáles te llegan a este chat.",
+        "menu": {FIELDS: "📋 Mis campos", ALERTS: "🔔 Mis alertas"},
+        "to_menu": "‹ Menú",
         "seen": "Marcado como visto",
         "seen_button": "✓ Visto",
         "already": "Ya estaba marcado como visto",
@@ -84,21 +85,22 @@ TEXTS = {
         "off": "Apagada",
     },
     "en": {
-        "linked": "<b>Done, Telegram is connected</b>\n\n"
-        "Field Watch alerts will arrive in this chat, with a photo of the area.\n\n"
-        "Use the buttons below to see your fields or choose which alerts you get.",
+        "linked": "✅ <b>Telegram connected</b>\n\n"
+        "We will alert you here when there is fire, lightning or adverse weather near your "
+        "fields, with a photo of the area.\n\nWhat do you want to see?",
         "expired": "That code expired or was already used. In Field Watch, open Notifications "
         "(the bell) and tap “Connect Telegram” again.",
         "hello": "To get alerts here, open Field Watch, go to Notifications (the bell) and tap "
         "“Connect Telegram”.",
         "stopped": "Done: this chat no longer gets Field Watch alerts. To get them again, "
         "connect it from Notifications.",
-        "help": "<b>Field Watch</b> alerts you here when there is danger near your fields: "
-        "fire, lightning or adverse weather, with a photo of the area.\n\n"
-        "📋 <b>My fields</b>: how each field is now\n"
-        "🔔 <b>My alerts</b>: which alerts come to this chat\n\n"
-        "To stop alerts here, send /stop.",
-        "menu": {FIELDS: "📋 My fields", ALERTS: "🔔 My alerts", "help": "❓ Help"},
+        "menu_text": "<b>Field Watch</b>\n\n"
+        "We watch your fields and alert you here when there is fire, lightning or adverse "
+        "weather nearby.\n\n"
+        "<b>My fields</b>: how each one is now.\n"
+        "<b>My alerts</b>: which ones come to this chat.",
+        "menu": {FIELDS: "📋 My fields", ALERTS: "🔔 My alerts"},
+        "to_menu": "‹ Menu",
         "seen": "Marked as seen",
         "seen_button": "✓ Seen",
         "already": "Already marked as seen",
@@ -172,9 +174,9 @@ COMMANDS = {
     "/estado": FIELDS,
     "/status": FIELDS,
     "/alertas": ALERTS,
-    "/ayuda": "help",
-    "/help": "help",
-    **{label: action for t in TEXTS.values() for action, label in t["menu"].items()},
+    "/ayuda": MENU,
+    "/help": MENU,
+    "/menu": MENU,
 }
 
 STATUS_SQL = text("""
@@ -239,14 +241,19 @@ def _locale(user: User | None, sender: dict) -> str:
     return "en" if (sender.get("language_code") or "es")[:2] == "en" else "es"
 
 
-def menu_keyboard(locale: str) -> dict:
-    """The buttons that stay below the chat, so nothing has to be typed."""
+def menu_buttons(locale: str) -> Buttons:
+    """Under the message, so they show on every device without opening anything."""
     menu = TEXTS[locale]["menu"]
-    return {
-        "keyboard": [[{"text": menu[FIELDS]}, {"text": menu[ALERTS]}], [{"text": menu["help"]}]],
-        "resize_keyboard": True,
-        "is_persistent": True,
-    }
+    return [
+        [
+            {"text": menu[FIELDS], "callback_data": FIELDS},
+            {"text": menu[ALERTS], "callback_data": ALERTS},
+        ]
+    ]
+
+
+def menu_view(user: User) -> tuple[str, Buttons]:
+    return TEXTS[user.locale]["menu_text"], menu_buttons(user.locale)
 
 
 def _fire_line(row, texts: dict, locale: str) -> str:
@@ -293,6 +300,7 @@ def fields_view(
         STATUS_SQL, {"owner": user.email, "now": now, "profile": SPRAY_PROFILE}
     ).all()
     link = [[{"text": texts["open"], "url": app_url}]] if app_url else []
+    link.append([{"text": texts["to_menu"], "callback_data": MENU}])
     if not rows:
         return texts["no_fields"], link
     blocks = [
@@ -350,7 +358,7 @@ def alerts_view(user: User) -> tuple[str, Buttons]:
         ]
         for kind in KINDS
     ]
-    buttons.append([{"text": texts["back"], "callback_data": FIELDS}])
+    buttons.append([{"text": texts["to_menu"], "callback_data": MENU}])
     return f"{texts['alerts_title']}\n\n{texts['alerts_hint']}", buttons
 
 
@@ -384,7 +392,7 @@ def _on_message(
         user.telegram_code_hash = None
         user.telegram_code_expires_at = None
         session.commit()
-        bot.send_text(chat_id, TEXTS[user.locale]["linked"], keyboard=menu_keyboard(user.locale))
+        bot.send_text(chat_id, TEXTS[user.locale]["linked"], menu_buttons(user.locale))
         return
     user = _linked_user(session, chat_id)
     if command == "/stop":
@@ -396,13 +404,13 @@ def _on_message(
     if user is None:
         bot.send_text(chat_id, TEXTS[_locale(None, sender)]["hello"], remove_keyboard=True)
         return
-    action = COMMANDS.get(typed) or COMMANDS.get(command) or "help"
+    action = COMMANDS.get(command) or MENU
     if action == FIELDS:
         bot.send_text(chat_id, *fields_view(session, user, now, app_url))
     elif action == ALERTS:
         bot.send_text(chat_id, *alerts_view(user))
     else:
-        bot.send_text(chat_id, TEXTS[user.locale]["help"], keyboard=menu_keyboard(user.locale))
+        bot.send_text(chat_id, *menu_view(user))
 
 
 def mark_seen(session: Session, user: User, territory_id: int) -> int:
@@ -441,7 +449,10 @@ def _on_button(
     if user is None:
         bot.answer_button(query["id"], "")
         return
-    if data == FIELDS:
+    if data == MENU:
+        bot.answer_button(query["id"], "")
+        bot.edit_text(chat_id, message_id, *menu_view(user))
+    elif data == FIELDS:
         bot.answer_button(query["id"], "")
         bot.edit_text(chat_id, message_id, *fields_view(session, user, now, app_url))
     elif data.startswith(FIELD) and data[len(FIELD) :].isdigit():

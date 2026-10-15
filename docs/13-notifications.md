@@ -62,9 +62,10 @@ the repository.
   description (shown in its profile) on start, in Spanish and in English, through the API: the
   bot is defined in the repository, not by hand in BotFather. Only the name and photo stay in
   BotFather; the photo is `docs/brand/field-watch-bot.png`, the Field Watch logo.
-- **Driven by buttons.** Nothing has to be typed:
-  - Three buttons stay below the chat once it is linked: **📋 Mis campos**, **🔔 Mis alertas**
-    and **❓ Ayuda**.
+- **Driven by buttons**, under the messages, so they show in every Telegram app without opening a
+  keyboard. Nothing has to be typed:
+  - Linking the chat answers "✅ Telegram conectado" with what will arrive there and two buttons:
+    **📋 Mis campos** and **🔔 Mis alertas**. Anything typed, or `/ayuda`, brings the same menu.
   - **Mis campos** lists each field with its closest active fire (or none within 10 km) and
     whether it is good to spray this hour, and a button per field. A field's button turns the same
     message into the field in detail: hectares and lots, the fire, spraying now and the next window
@@ -72,9 +73,9 @@ the repository.
     moving around does not fill the chat.
   - **Mis alertas** shows each kind as a button, ✅ on or ▫️ off for this chat; a tap turns it
     over and the message updates. Email stays in the notifications page.
-  - Anything else typed gets the help and the buttons again.
+  - **‹ Menú** brings the menu back from the list of fields and from the alerts.
 - **Commands**, in the menu next to the text box, for whoever prefers them: `/campos`,
-  `/alertas`, `/ayuda`, `/stop`. `/start <code>` links the chat; `/start` alone explains how.
+  `/alertas`, `/ayuda` (the menu), `/stop`. `/start <code>` links the chat; `/start` alone explains how.
 - **Sound.** Fuego lejano and summaries arrive without sound; the rest ring.
 - **The alert's buttons**, in two rows: **Abrir en el mapa** (public address only) and
   **📍 Cómo llegar**, which opens the closest fire in Google Maps; then **Ya lo vi** and **Ver el
