@@ -1,34 +1,51 @@
 "use client";
 
+import area from "@turf/area";
 import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 import { Marker } from "maplibre-gl";
 import { useEffect } from "react";
 
-// An example field near Larroque and a fire 3.7 km to its northeast: the map plays what Field
-// Watch does for someone who has not signed in yet (docs/04-frontend.md#first-visit).
-const FIELD: [number, number][] = [
-  [-59.042, -33.0105],
-  [-59.0285, -33.009],
-  [-59.027, -33.0185],
-  [-59.0335, -33.0215],
-  [-59.043, -33.02],
-  [-59.042, -33.0105],
+type Point = [number, number];
+
+// An example: a real parcel from Entre Ríos' cadastre near Larroque (public data, 541 ha) and a
+// fire 3.7 km to its northeast. The map plays what Field Watch does for someone who has not signed
+// in yet: an outline drawn by hand fits to the property lines (docs/04-frontend.md#first-visit).
+const FIELD: Point[] = [
+  [-59.05603, -32.96211],
+  [-59.04573, -32.96386],
+  [-59.03756, -32.96572],
+  [-59.03188, -32.96715],
+  [-59.02125, -32.9677],
+  [-59.02504, -32.98412],
+  [-59.05899, -32.97554],
+  [-59.05603, -32.96211],
 ];
-const FIELD_CORNER: [number, number] = [-59.0285, -33.009];
-const FIRE: [number, number] = [-59.0004, -32.9854];
-const WIDE = { center: [-59.6, -33.4] as [number, number], zoom: 6.2 };
-const SCENE_BOUNDS: [[number, number], [number, number]] = [
-  [-59.043, -33.0215],
-  [-59.0004, -32.9854],
+const FIELD_CORNER: Point = [-59.02125, -32.9677];
+const FIRE: Point = [-58.99324, -32.9442];
+const WIDE = { center: [-59.6, -33.4] as Point, zoom: 6.2 };
+const SCENE_BOUNDS: [Point, Point] = [
+  [-59.059, -32.9842],
+  [-58.9932, -32.9442],
+];
+const LABEL_AT: Point = [-59.04, -32.9815];
+const HECTARES = area({ type: "Polygon", coordinates: [FIELD] }) / 10_000;
+// The outline traced by hand first, then fitted to the field's limits: the same number of points,
+// so one can turn into the other.
+const SAMPLES = 64;
+
+const FIELD_BOUNDS: [Point, Point] = [
+  [-59.05899, -32.98412],
+  [-59.02125, -32.96211],
 ];
 
-/** The field and the fire framed in the part of the map the panel leaves free. */
-function sceneCamera(map: MapLibreMap) {
+/** A box framed in the part of the map the panel leaves free: the field alone, close enough for
+ * the property lines (zoom 13 and up), or the field and the fire. */
+function sceneCamera(map: MapLibreMap, bounds: [Point, Point] = SCENE_BOUNDS) {
   const mobile = window.innerWidth < 768;
   const padding = mobile
     ? { top: 110, bottom: window.innerHeight * 0.55, left: 40, right: 60 }
     : { top: 90, bottom: 90, left: 470, right: 110 };
-  const camera = map.cameraForBounds(SCENE_BOUNDS, { padding });
+  const camera = map.cameraForBounds(bounds, { padding });
   return {
     center: camera?.center ?? ([-59.019, -33.002] as [number, number]),
     zoom: camera?.zoom ?? 13,
@@ -36,19 +53,49 @@ function sceneCamera(map: MapLibreMap) {
 }
 
 const SOURCE = "intro";
-const LAYERS = ["intro-fill", "intro-outline", "intro-distance"];
+const LAYERS = [
+  "intro-parcel",
+  "intro-fill",
+  "intro-outline",
+  "intro-sketch",
+  "intro-distance",
+];
 
-type Scene = { outline: [number, number][]; distance: [number, number][] };
+type Scene = {
+  // The parcel's property line, as the cadastre draws it, before the field is fitted to it.
+  parcel: boolean;
+  sketch: Point[];
+  outline: Point[];
+  distance: Point[];
+};
+const EMPTY: Scene = { parcel: false, sketch: [], outline: [], distance: [] };
 
-function data({ outline, distance }: Scene): GeoJSON.FeatureCollection {
+function data({
+  parcel,
+  sketch,
+  outline,
+  distance,
+}: Scene): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
+  if (parcel)
+    features.push({
+      type: "Feature",
+      properties: { kind: "parcel" },
+      geometry: { type: "LineString", coordinates: FIELD },
+    });
+  if (sketch.length > 1)
+    features.push({
+      type: "Feature",
+      properties: { kind: "sketch" },
+      geometry: { type: "LineString", coordinates: sketch },
+    });
   if (outline.length > 1)
     features.push({
       type: "Feature",
       properties: { kind: "outline" },
       geometry: { type: "LineString", coordinates: outline },
     });
-  if (outline.length === FIELD.length)
+  if (outline.length > 1)
     features.push({
       type: "Feature",
       properties: { kind: "field" },
@@ -87,6 +134,25 @@ function addLayers(map: MapLibreMap, scene: Scene) {
     filter: ["==", ["get", "kind"], "outline"],
     layout: { "line-join": "round", "line-cap": "round" },
     paint: { "line-color": "#4ade80", "line-width": 3.5, "line-blur": 0.4 },
+  });
+  map.addLayer({
+    id: "intro-parcel",
+    type: "line",
+    source: SOURCE,
+    filter: ["==", ["get", "kind"], "parcel"],
+    paint: { "line-color": "#ffffff", "line-width": 1.6, "line-opacity": 0.85 },
+  });
+  map.addLayer({
+    id: "intro-sketch",
+    type: "line",
+    source: SOURCE,
+    filter: ["==", ["get", "kind"], "sketch"],
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: {
+      "line-color": "#ffffff",
+      "line-width": 2.5,
+      "line-dasharray": [1.5, 1.5],
+    },
   });
   map.addLayer({
     id: "intro-distance",
@@ -146,6 +212,29 @@ function along(path: [number, number][], t: number): [number, number][] {
 
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
+/** `n` + 1 points evenly along a closed path, the last one on the first. */
+function resample(path: Point[], n: number): Point[] {
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const part = along(path, i / n);
+    return part[part.length - 1];
+  });
+}
+
+const FITTED = resample(FIELD, SAMPLES);
+// A hand's line: a little off the limits, the same each time.
+const SKETCHED: Point[] = FITTED.map(([lon, lat], i) => {
+  const j = i % SAMPLES;
+  const wobble = Math.sin(j * 1.7) * 0.0009 + Math.sin(j * 0.45 + 1) * 0.0011;
+  return [lon + wobble, lat - wobble * 0.8];
+});
+
+function blend(from: Point[], to: Point[], t: number): Point[] {
+  return from.map(([x, y], i) => [
+    x + (to[i][0] - x) * t,
+    y + (to[i][1] - y) * t,
+  ]);
+}
+
 /**
  * The first visit's film: a flight to Larroque, an example field traced, a fire with its distance,
  * a slow drift, then out and again. It stops for good at the first touch of the map, and stands
@@ -154,16 +243,20 @@ const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 export function useIntroTour(
   map: MapLibreMap | null,
   active: boolean,
-  labels: { field: string; distance: string },
+  labels: { field: string; distance: string; intl: string },
 ) {
-  const { field: fieldLabel, distance: distanceLabel } = labels;
+  const { distance: distanceLabel } = labels;
+  const hectares = new Intl.NumberFormat(labels.intl, {
+    maximumFractionDigits: 0,
+  }).format(HECTARES);
+  const fieldLabel = `${labels.field} · ${hectares} ha`;
   useEffect(() => {
     if (!map || !active) return;
     let stopped = false;
     const timers: number[] = [];
     const frames: number[] = [];
     const markers: Marker[] = [];
-    let scene: Scene = { outline: [], distance: [] };
+    let scene: Scene = EMPTY;
 
     const wait = (ms: number) =>
       new Promise<void>((resolve) =>
@@ -192,7 +285,7 @@ export function useIntroTour(
     };
     const clear = () => {
       markers.splice(0).forEach((m) => m.remove());
-      scene = { outline: [], distance: [] };
+      scene = EMPTY;
       if (map.getStyle()) removeLayers(map);
     };
     // A new basemap drops our layers; they come back with the scene as it was.
@@ -200,10 +293,10 @@ export function useIntroTour(
     map.on("style.load", restore);
 
     const finished = () => {
-      draw({ outline: FIELD, distance: [FIELD_CORNER, FIRE] });
+      draw({ outline: FITTED, distance: [FIELD_CORNER, FIRE] });
       markers.push(
         new Marker({ element: label(fieldLabel, "intro-label") })
-          .setLngLat([-59.035, -33.0215])
+          .setLngLat(LABEL_AT)
           .setOffset([0, 18])
           .addTo(map),
         new Marker({ element: fireDot() }).setLngLat(FIRE).addTo(map),
@@ -230,20 +323,34 @@ export function useIntroTour(
         map.jumpTo(WIDE);
         await wait(900);
         if (stopped) return;
-        const camera = sceneCamera(map);
-        map.flyTo({ ...camera, duration: 6500, curve: 1.5 });
+        // Close on the field to draw it.
+        const close = sceneCamera(map, FIELD_BOUNDS);
+        map.flyTo({ ...close, duration: 6500, curve: 1.5 });
         await moved();
         if (stopped) return;
-        await animate(2600, (t) => draw({ outline: along(FIELD, t) }));
+        // The property line shows; a hand traces the field over it; the outline fits to the line;
+        // then its hectares.
+        draw({ parcel: true });
+        await wait(700);
+        await animate(2800, (t) => draw({ sketch: along(SKETCHED, t) }));
         if (stopped) return;
-        draw({ outline: FIELD });
+        await wait(300);
+        await animate(900, (t) => draw({ sketch: blend(SKETCHED, FITTED, t) }));
+        if (stopped) return;
+        draw({ parcel: false, sketch: [], outline: FITTED });
+        await wait(400);
         markers.push(
           new Marker({ element: label(fieldLabel, "intro-label") })
-            .setLngLat([-59.035, -33.0215])
+            .setLngLat(LABEL_AT)
             .setOffset([0, 18])
             .addTo(map),
         );
         await wait(900);
+        if (stopped) return;
+        // Then back a little: the fire and how far it is.
+        const camera = sceneCamera(map);
+        map.easeTo({ ...camera, duration: 1800 });
+        await moved();
         if (stopped) return;
         markers.push(
           new Marker({ element: fireDot() }).setLngLat(FIRE).addTo(map),

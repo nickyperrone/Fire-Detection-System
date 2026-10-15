@@ -93,6 +93,7 @@ export function FieldWatchApp() {
     me.isSuccess && !signedIn && !url.linkHasCamera && url.selectedId === null;
   useIntroTour(map, intro, {
     field: t.welcome.exampleField,
+    intl: t.intl,
     distance: "3,7 km",
   });
   // "expired" when the email link the user came back with no longer works.
@@ -378,8 +379,7 @@ export function FieldWatchApp() {
         onReady={setMap}
         messages={t}
         showRisk={url.showRisk}
-        // The first visit's film reads better without every property line.
-        showParcels={(url.showParcels && !intro) || drawingOn}
+        showParcels={url.showParcels || drawingOn}
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
