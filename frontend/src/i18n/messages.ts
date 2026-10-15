@@ -10,9 +10,6 @@ const en = {
   intl: "en-GB",
   app: {
     apiDown: "Cannot connect to Field Watch. Try again in a few minutes.",
-    exploreTitle: "Field Watch",
-    exploreBody:
-      "Add your first field with + to watch it: fires nearby, when it is good to spray, and an alert when there is danger.",
   },
   age: {
     unknown: "unknown",
@@ -333,6 +330,31 @@ const en = {
     signedOutBody:
       "Your fields, watched by satellite: fires nearby, when to spray, lightning, adverse weather and changes in the crop, with alerts by email or Telegram. Sign in with your email to start.",
   },
+  firstField: {
+    title: "Let's start with",
+    titleAccent: "your first field.",
+    lead: "Draw it once and Field Watch watches it every day: fires nearby, when to spray, lightning and the weather.",
+    steps: {
+      draw: {
+        title: "Draw your field",
+        body: "Tap its official parcel, mark its corners, or let the satellite find its outline.",
+      },
+      alerts: {
+        title: "Choose your alerts",
+        body: "Fire, lightning and adverse weather, by email or Telegram.",
+      },
+      watch: {
+        title: "We watch it for you",
+        body: "Its state here at a glance, and an alert the moment something changes.",
+      },
+    } as Record<"draw" | "alerts" | "watch", { title: string; body: string }>,
+    cta: "Add my first field",
+    ctaNote: "Takes less than a minute.",
+    telegram: {
+      title: "Get alerts on Telegram",
+      body: "With a photo of the area, the moment they happen.",
+    },
+  },
   welcome: {
     title: "Your fields, watched",
     titleAccent: "from space.",
@@ -599,9 +621,6 @@ const es: Messages = {
   intl: "es-AR",
   app: {
     apiDown: "No hay conexión con Field Watch. Probá de nuevo en unos minutos.",
-    exploreTitle: "Field Watch",
-    exploreBody:
-      "Agregá tu primer campo con + para vigilarlo: fuegos cerca, cuándo conviene pulverizar y un aviso cuando hay peligro.",
   },
   age: {
     unknown: "sin dato",
@@ -905,6 +924,31 @@ const es: Messages = {
     signOut: "Salir",
     signedOutBody:
       "Tus campos, vigilados por satélite: fuegos cerca, cuándo pulverizar, rayos, clima adverso y cambios en el cultivo, con avisos por mail o Telegram. Entrá con tu mail para empezar.",
+  },
+  firstField: {
+    title: "Arranquemos por",
+    titleAccent: "tu primer campo.",
+    lead: "Lo dibujás una vez y Field Watch lo vigila todos los días: fuegos cerca, cuándo pulverizar, rayos y el clima.",
+    steps: {
+      draw: {
+        title: "Dibujá tu campo",
+        body: "Tocá su parcela del catastro, marcá las esquinas o dejá que el satélite encuentre el contorno.",
+      },
+      alerts: {
+        title: "Elegí tus alertas",
+        body: "Fuego, rayos y clima adverso, por mail o Telegram.",
+      },
+      watch: {
+        title: "Lo vigilamos por vos",
+        body: "Su estado acá de un vistazo, y una alerta apenas algo cambia.",
+      },
+    },
+    cta: "Agregar mi primer campo",
+    ctaNote: "Te lleva menos de un minuto.",
+    telegram: {
+      title: "Recibí las alertas en Telegram",
+      body: "Con una foto del área, en el momento.",
+    },
   },
   welcome: {
     title: "Tus campos, vigilados",

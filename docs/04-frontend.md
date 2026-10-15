@@ -145,6 +145,13 @@ a slow push in, then out and again. It is an example and the panel says so. The 
 the map stops it where it is; with reduced motion it shows the finished scene, still. A link
 with a camera or a field skips it.
 
+### First field
+
+Signed in with no fields yet, the panel welcomes in the same style: "Arranquemos por tu primer
+campo", three steps (draw the field, choose alerts, we watch it), the **Agregar mi primer campo**
+button, which opens the drawing tools, and, while Telegram is not connected, a card that opens
+Notificaciones to connect it.
+
 ## Security headers
 
 Every response carries: `Content-Security-Policy: frame-ancestors 'none'; base-uri 'self';

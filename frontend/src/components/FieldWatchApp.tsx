@@ -28,6 +28,7 @@ import { BottomSheet, type Snap } from "./BottomSheet";
 import { Dock } from "./Dock";
 import { DrawFieldOverlay } from "./DrawFieldOverlay";
 import { FieldPage } from "./FieldPage";
+import { FirstField } from "./FirstField";
 import { NotificationsPage } from "./NotificationsPage";
 import { Welcome } from "./Welcome";
 import { useIntroTour } from "./map/useIntroTour";
@@ -245,6 +246,11 @@ export function FieldWatchApp() {
     if (map.loaded()) window.setTimeout(flyIn, pause);
     else map.once("load", () => window.setTimeout(flyIn, pause));
   }, [map, territories.data, url.linkHasCamera, url.selectedId, frame]);
+
+  const openNotifications = () => {
+    url.update({ view: "notifications", f: null, tab: null }, true);
+    setSnap("half");
+  };
 
   // A step the back button undoes; another field opens on its first tab.
   const open = useCallback(
@@ -531,13 +537,13 @@ export function FieldWatchApp() {
                 onSelect={open}
               />
             ) : (
-              everything.data && (
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">
-                    {t.app.exploreTitle}
-                  </h2>
-                  <p className="text-sm text-slate-300">{t.app.exploreBody}</p>
-                </div>
+              everything.data &&
+              me.data && (
+                <FirstField
+                  me={me.data}
+                  onAddField={() => setDrawingActive(true)}
+                  onNotifications={openNotifications}
+                />
               )
             )}
           </BottomSheet>
@@ -546,10 +552,7 @@ export function FieldWatchApp() {
             entries={everything.data ?? []}
             covered={snap !== "peek"}
             onSignIn={() => setSignIn("open")}
-            onNotifications={() => {
-              url.update({ view: "notifications", f: null, tab: null }, true);
-              setSnap("half");
-            }}
+            onNotifications={openNotifications}
           />
           {signIn && (
             <SignInCard
