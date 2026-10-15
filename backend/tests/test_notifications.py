@@ -244,9 +244,9 @@ def test_the_bot_links_a_chat_with_a_code_once(session, bot, field):
     bot.queue = [{"update_id": 1, "message": start}]
     assert answer_updates(session, bot, NOW) == 1
     assert user.telegram_chat_id == CHAT and user.telegram_code_hash is None
-    assert bot.sent[-1]["text"].startswith("✅ <b>Telegram conectado</b>")
+    assert bot.sent[-1]["text"].startswith("✅ <b>¡Listo, estás conectado!</b>")
     # The menu is buttons under the message, which every Telegram app shows.
-    assert texts(bot.sent[-1]["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"]]
+    assert texts(bot.sent[-1]["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"], ["ℹ️ Saber más"]]
     assert bot.queue == []
 
     # The code works once; another chat using it is told so.
@@ -320,50 +320,98 @@ def test_mis_campos_lists_each_field_and_opens_one_in_place(session, thresholds,
     bot.queue = [say("/campos")]
     answer_updates(session, bot, NOW)
     listing = bot.sent[-1]
-    assert listing["text"].startswith("📋 <b>Tus campos</b>\n\n<b>La Esperanza</b> · ")
-    assert "🔥 Posible fuego a 1,9 km al E" in listing["text"]
-    assert texts(listing["buttons"]) == [["La Esperanza ›"], ["‹ Menú"]]
+    assert listing["text"].startswith("📋 <b>Tus campos</b>\n\n🌾 <b>La Esperanza</b> · ")
+    assert "🔥 Fuego a <b>1,9 km</b> al E" in listing["text"]
+    assert "⛔ No conviene pulverizar" in listing["text"]
+    assert texts(listing["buttons"]) == [["🔎 La Esperanza"], ["‹ Menú"]]
 
-    # The field opens in the same message, with the way back.
+    # The field opens in the same message: short, with "Saber más" and the way back.
     bot.queue = [tap(f"f:{field.id}")]
     answer_updates(session, bot, NOW)
     detail = bot.edits[-1]
     assert detail["message"] == 20
-    assert detail["text"].startswith("<b>La Esperanza</b>\n")
-    assert "Pulverizar ahora" in detail["text"]
-    assert texts(detail["buttons"]) == [["‹ Mis campos"]]
+    assert detail["text"].startswith("🌾 <b>La Esperanza</b> · ")
+    assert "🕐" in detail["text"]
+    assert texts(detail["buttons"]) == [["ℹ️ Saber más"], ["‹ Mis campos"]]
 
     bot.queue = [tap("fields")]
     answer_updates(session, bot, NOW)
     assert bot.edits[-1]["text"] == listing["text"]
 
 
+def test_spraying_says_why_and_saber_mas_tells_the_rest(session, bot, field):
+    linked(session)
+    session.add(
+        SprayAssessment(
+            territory_id=field.id,
+            profile="default",
+            valid_at=NOW,
+            status=SprayStatus.CAUTION,
+            rules=[
+                {"rule": "delta_t", "status": "CAUTION", "value": 1.6, "unit": "°C", "limit": 2},
+                {"rule": "wind", "status": "PASS", "value": 9, "unit": "km/h", "limit": None},
+            ],
+            weather={
+                "temperature_c": 15.2,
+                "wind_speed_kmh": 9,
+                "wind_direction_deg": 135,
+                "wind_gusts_kmh": 17,
+                "precipitation_mm": 0.0,
+            },
+            data_quality=DataQuality.GOOD,
+            forecast_fetched_at=NOW,
+            processing_version="test",
+        )
+    )
+    session.commit()
+    bot.queue = [tap(f"f:{field.id}")]
+    answer_updates(session, bot, NOW)
+    assert "🟡 Pulverizar con cuidado\n     💧 Aire muy húmedo" in bot.edits[-1]["text"]
+
+    bot.queue = [tap(f"i:{field.id}")]
+    answer_updates(session, bot, NOW)
+    more = bot.edits[-1]
+    assert more["text"].startswith("ℹ️ <b>La Esperanza</b>, en detalle")
+    assert "💧 Aire muy húmedo: las gotas quedan flotando (Delta T 1,6 °C)" in more["text"]
+    assert "🌡 15 °C · viento del SE a 9 km/h · ráfagas de 17 km/h" in more["text"]
+    assert "Ninguno a menos de 10 km" in more["text"]
+    assert texts(more["buttons"]) == [["‹ Volver"]]
+
+
 def test_ver_el_campo_under_an_alert_answers_with_a_new_message(session, thresholds, bot, field):
     linked(session)
     bot.queue = [tap(f"f:{field.id}", photo=True)]
     answer_updates(session, bot, NOW)
-    assert bot.edits == [] and bot.sent[-1]["text"].startswith("<b>La Esperanza</b>")
+    assert bot.edits == [] and bot.sent[-1]["text"].startswith("🌾 <b>La Esperanza</b>")
 
 
 def test_mis_alertas_turns_kinds_on_and_off_from_the_chat(session, bot, field):
     user = linked(session)
     bot.queue = [say("/alertas")]
     answer_updates(session, bot, NOW)
-    assert texts(bot.sent[-1]["buttons"])[2] == ["▫️ Fuego lejano"]
+    assert texts(bot.sent[-1]["buttons"])[2] == ["▫️  🔥 Fuego lejano"]
     bot.queue = [tap("t:fire_far")]
     answer_updates(session, bot, NOW)
-    assert bot.answers[-1] == "Prendida"
-    assert texts(bot.edits[-1]["buttons"])[2] == ["✅ Fuego lejano"]
+    assert bot.answers[-1] == "✅ Prendida"
+    assert texts(bot.edits[-1]["buttons"])[2] == ["✅  🔥 Fuego lejano"]
     assert user.notifications["fire_far"] == {"email": False, "telegram": True}
+    # "Saber más" explains each kind, with the way back.
+    bot.queue = [tap("i:alerts")]
+    answer_updates(session, bot, NOW)
+    assert "🔥 <b>Fuego lejano</b>: de 5 a 10 km" in bot.edits[-1]["text"]
+    assert texts(bot.edits[-1]["buttons"]) == [["‹ Mis alertas"]]
 
 
-def test_anything_else_typed_gets_the_help_and_the_menu(session, bot, field):
+def test_anything_else_typed_gets_the_menu(session, bot, field):
     linked(session)
     bot.queue = [say("hola")]
     answer_updates(session, bot, NOW)
     menu = bot.sent[-1]
-    assert menu["text"].startswith("<b>Field Watch</b>\n\nVigilamos tus campos")
-    assert texts(menu["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"]]
+    assert menu["text"].startswith("👋 <b>Field Watch</b>")
+    assert texts(menu["buttons"]) == [["📋 Mis campos", "🔔 Mis alertas"], ["ℹ️ Saber más"]]
+    bot.queue = [tap("i:menu")]
+    answer_updates(session, bot, NOW)
+    assert bot.edits[-1]["text"].startswith("ℹ️ <b>Cómo funciona</b>")
     # From any view, "‹ Menú" brings the menu back in the same message.
     bot.queue = [tap("menu")]
     answer_updates(session, bot, NOW)

@@ -63,17 +63,22 @@ the repository.
   bot is defined in the repository, not by hand in BotFather. Only the name and photo stay in
   BotFather; the photo is `docs/brand/field-watch-bot.png`, the Field Watch logo.
 - **Driven by buttons**, under the messages, so they show in every Telegram app without opening a
-  keyboard. Nothing has to be typed:
-  - Linking the chat answers "✅ Telegram conectado" with what will arrive there and two buttons:
-    **📋 Mis campos** and **🔔 Mis alertas**. Anything typed, or `/ayuda`, brings the same menu.
-  - **Mis campos** lists each field with its closest active fire (or none within 10 km) and
-    whether it is good to spray this hour, and a button per field. A field's button turns the same
-    message into the field in detail: hectares and lots, the fire, spraying now and the next window
-    to spray in 48 hours, with **‹ Mis campos** to go back. Views change the message in place, so
+  keyboard. Each message goes straight to the point with an emoji per line, and every view has
+  **ℹ️ Saber más** for the rest, or a link to the page. Nothing has to be typed:
+  - Linking the chat answers "✅ ¡Listo, estás conectado!" with what will arrive there and the
+    menu: **📋 Mis campos**, **🔔 Mis alertas** and **ℹ️ Saber más** (how it works, and the link
+    to the app). Anything typed, or `/ayuda`, brings the same menu.
+  - **Mis campos** lists each field: "🌾 name · 5.666 ha", the fire ("✅ Sin fuego cerca" or
+    "🔥 Fuego a 3,7 km al NE") and spraying this hour ("✅ Se puede pulverizar", "🟡 Pulverizar con
+    cuidado", "⛔ No conviene pulverizar"), with a button per field.
+  - A field, in the same message: the fire, spraying with its main reason in plain words ("💧 Aire
+    muy húmedo: las gotas quedan flotando") and the next window to spray. **Saber más** adds every
+    reason, the weather now (temperature, wind, gusts, rain in the next 24 h) and the areas to
+    check; **Ver en el mapa** opens the field in the app.
+  - **Mis alertas** shows each kind as a button, ✅ on or ▫️ off for this chat; a tap turns it over
+    and the message updates. **Saber más** says what each kind is and links to the page for email.
+  - **‹ Menú**, **‹ Mis campos** and **‹ Volver** go back; views change the message in place, so
     moving around does not fill the chat.
-  - **Mis alertas** shows each kind as a button, ✅ on or ▫️ off for this chat; a tap turns it
-    over and the message updates. Email stays in the notifications page.
-  - **‹ Menú** brings the menu back from the list of fields and from the alerts.
 - **Commands**, in the menu next to the text box, for whoever prefers them: `/campos`,
   `/alertas`, `/ayuda` (the menu), `/stop`. `/start <code>` links the chat; `/start` alone explains how.
 - **Sound.** Fuego lejano and summaries arrive without sound; the rest ring.
