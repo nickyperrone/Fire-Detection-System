@@ -517,6 +517,8 @@ export function FieldWatchApp() {
                 onTab={openTab}
                 onOpen={open}
                 onEditOutline={() => setEditingId(selected.territory_id)}
+                // The drawing starts as a lot of the open field.
+                onAddLot={() => setDrawingActive(true)}
                 addingTag={addingTag}
                 onAddingTagChange={setAddingTag}
               />

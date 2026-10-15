@@ -45,6 +45,7 @@ import {
   HistoryIcon,
   PatchIcon,
   PencilPlusIcon,
+  PlusIcon,
   SprayIcon,
   WindIcon,
 } from "./Icons";
@@ -69,6 +70,8 @@ type Props = {
   /** Opens another field or lot, or the list with null. */
   onOpen: (id: number | null) => void;
   onEditOutline: () => void;
+  /** Starts drawing a lot inside this field. */
+  onAddLot: () => void;
   /** The box to add a tag is open, e.g. from "+ Etiqueta" in the map legend. */
   addingTag: boolean;
   onAddingTagChange: (adding: boolean) => void;
@@ -84,6 +87,7 @@ export function FieldPage({
   onTab,
   onOpen,
   onEditOutline,
+  onAddLot,
   addingTag,
   onAddingTagChange,
 }: Props) {
@@ -151,6 +155,7 @@ export function FieldPage({
             lots={lots}
             onOpen={onOpen}
             onEditOutline={onEditOutline}
+            onAddLot={onAddLot}
           />
         )}
       </div>
@@ -352,11 +357,13 @@ function Settings({
   lots,
   onOpen,
   onEditOutline,
+  onAddLot,
 }: {
   entry: PortfolioEntry;
   lots: PortfolioEntry[];
   onOpen: (id: number | null) => void;
   onEditOutline: () => void;
+  onAddLot: () => void;
 }) {
   const { t } = useLocale();
   const remove = useDeleteTerritory();
@@ -370,9 +377,27 @@ function Settings({
         <section>
           <SectionTitle>{t.page.lots}</SectionTitle>
           {lots.length === 0 ? (
-            <p className="text-sm text-slate-300">{t.page.noLots}</p>
+            <>
+              <p className="text-sm text-slate-300">{t.page.noLots}</p>
+              <button
+                onClick={onAddLot}
+                className="mt-3 flex h-10 items-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-slate-950"
+              >
+                <PlusIcon className="size-4" />
+                {t.page.splitIntoLots}
+              </button>
+            </>
           ) : (
-            <LotList lots={lots} onOpen={onOpen} />
+            <>
+              <LotList lots={lots} onOpen={onOpen} />
+              <button
+                onClick={onAddLot}
+                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-accent"
+              >
+                <PlusIcon className="size-4" />
+                {t.page.addLot}
+              </button>
+            </>
           )}
         </section>
       )}

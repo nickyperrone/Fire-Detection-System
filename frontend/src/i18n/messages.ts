@@ -228,7 +228,10 @@ const en = {
     } as Record<"now" | "photos" | "history" | "settings", string>,
     tabsLabel: "Field sections",
     lots: "Lots",
-    noLots: "No lots yet. Split the field with + on the map.",
+    noLots:
+      "Split the field into lots to follow each crop or client apart: each lot gets its own fire, spraying and photos.",
+    splitIntoLots: "Split into lots",
+    addLot: "Add a lot",
     outline: "Outline",
     danger: "Delete",
   },
@@ -824,7 +827,10 @@ const es: Messages = {
     },
     tabsLabel: "Secciones del campo",
     lots: "Lotes",
-    noLots: "Todavía no tenés lotes. Dividí el campo con + en el mapa.",
+    noLots:
+      "Dividí el campo en lotes para seguir cada cultivo o cliente por separado: cada lote tiene su propio fuego, pulverización y fotos.",
+    splitIntoLots: "Dividir en lotes",
+    addLot: "Agregar lote",
     outline: "Borde",
     danger: "Borrar",
   },
