@@ -6,6 +6,7 @@ import { ApiError } from "@/api/client";
 import { useAuthConfig, useLogin } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 
+import { CloseIcon } from "./Icons";
 import { Turnstile, type TurnstileHandle } from "./Turnstile";
 
 type Props = {
@@ -39,9 +40,18 @@ export function SignInCard({ expired, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         className="rise-in glass w-full max-w-md space-y-3 rounded-t-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:rounded-3xl"
       >
-        <h2 id="sign-in-title" className="text-lg font-semibold">
-          {t.signIn.title}
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="sign-in-title" className="pt-1 text-lg font-semibold">
+            {t.signIn.title}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label={t.signIn.close}
+            className="-mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-full bg-white/[0.07] text-slate-300 hover:bg-white/15 hover:text-white"
+          >
+            <CloseIcon className="size-4" />
+          </button>
+        </div>
         {login.isSuccess ? (
           <p className="text-sm text-slate-200">
             {t.signIn.sent(email.trim())}
@@ -96,9 +106,6 @@ export function SignInCard({ expired, onClose }: Props) {
             )}
           </form>
         )}
-        <button onClick={onClose} className="text-sm text-muted">
-          {t.signIn.close}
-        </button>
       </section>
     </div>
   );
