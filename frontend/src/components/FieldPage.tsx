@@ -53,6 +53,8 @@ import { SprayTimeline } from "./SprayTimeline";
 import { WeatherSection } from "./Weather";
 import { TagEditor } from "./TagEditor";
 
+const ANOMALIES_ID = "field-anomalies";
+
 const TONE_TEXT: Record<Tone, string> = {
   bad: "text-bad",
   good: "text-good",
@@ -125,7 +127,18 @@ export function FieldPage({
           {formatHectares(t, entry.hectares)}
         </p>
         <div className="mt-3">
-          <FieldChips entry={entry} />
+          <FieldChips
+            entry={entry}
+            onAnomalies={() => {
+              onTab("now");
+              // After the tab renders: its section scrolls into view under the header.
+              requestAnimationFrame(() =>
+                document
+                  .getElementById(ANOMALIES_ID)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+              );
+            }}
+          />
         </div>
         <div className="mt-3">
           <TagEditor
@@ -334,7 +347,7 @@ function Now({
         )}
       </section>
 
-      <section>
+      <section id={ANOMALIES_ID} className="scroll-mt-64">
         <SectionTitle icon={<PatchIcon className="size-4" />}>
           {t.sections.unusual}
         </SectionTitle>

@@ -35,8 +35,13 @@ apart, so one lot being harvested is not unusual for its field), from Sentinel-2
      (if the ground also lost green, the less-green patch reports it). A confirmed burn replaces
      the less-green patch over the same ground.
 5. **Patches.** Pixels flagged for the same reason are joined into connected patches; patches
-   under 1 ha (100 pixels) are dropped, so single noisy pixels and field edges never count.
-6. **Answer.** Each patch has its kind, area, where it lies in the field (N, SE, center…), the
+   under 3 ha (300 pixels) are dropped, so noisy pixels, field edges and small strips never count.
+6. **Field work is not unusual.** A harvest, tillage or a sprayed-off fallow turns a whole lot brown
+   at once. A less-green patch covering most (`field_work_share`, 60%) of a property parcel inside
+   the field, or of the lot itself, is that work, not a problem, and is not reported. A drop in
+   part of a parcel still is: that is what someone should look at. Without cached parcels the
+   check uses the lot alone.
+7. **Answer.** Each patch has its kind, area, where it lies in the field (N, SE, center…), the
    date, and a score (how far below the baseline). The field's answer is the patches of the
    latest clear date.
 
@@ -60,7 +65,8 @@ Thresholds are in `config/thresholds.yaml` (`anomalies`).
   on the map while the card is open.
 - A field split into lots shows its lots' patches, each with its lot ("Less green in 12 ha, to
   the N of Lote 3"), and is called fine only when every lot was seen on a recent clear date.
-- A chip in the list when a field has a patch.
+- A chip in the list and on the field's page when a field has a patch: "1 zona para revisar",
+  "3 zonas para revisar".
 - The weekly and daily summaries list the patches.
 - The worker checks every 6 hours for new scenes; each field is analyzed once per new scene.
   Each date's indices are cached per field (`data/cache/sentinel2/fields/`), so a new scene reads

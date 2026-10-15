@@ -182,7 +182,7 @@ const en = {
     history: "Fire history",
     lightning: "Lightning",
     spray: "Spraying, next 48 h",
-    unusual: "Something unusual",
+    unusual: "Areas to check",
   },
   anomaly: {
     kinds: {
@@ -207,7 +207,7 @@ const en = {
     notYet:
       "Not looked at yet: fields are checked against new satellite images every 6 hours.",
     note: "Seen from orbit (Sentinel-2, 10 m), not a diagnosis: worth a look on the ground.",
-    chip: (n: number) => (n === 1 ? "Unusual patch" : `${n} unusual patches`),
+    chip: (n: number) => (n === 1 ? "1 area to check" : `${n} areas to check`),
   },
   detail: {
     close: "Close",
@@ -280,7 +280,7 @@ const en = {
     hidden: (n: number) => `Hidden (${n})`,
     highPriority: "High priority",
     alertsOff: "Alerts off",
-    unusual: (n: number) => `${n} with something unusual`,
+    unusual: (n: number) => `${n} with areas to check`,
     allFine: "All in order",
     lots: (n: number) => `${n} ${n === 1 ? "lot" : "lots"}`,
     lotsNeedLook: (n: number) => `${n} to look at`,
@@ -786,7 +786,7 @@ const es: Messages = {
     history: "Historial de fuegos",
     lightning: "Rayos",
     spray: "Pulverización, próximas 48 h",
-    unusual: "Algo raro en el campo",
+    unusual: "Zonas para revisar",
   },
   anomaly: {
     kinds: { less_green: "Menos verde", water: "Agua", burnt: "Quemado" },
@@ -806,7 +806,7 @@ const es: Messages = {
     notYet:
       "Todavía no se revisó: los campos se comparan con las imágenes satelitales nuevas cada 6 horas.",
     note: "Visto desde el satélite (Sentinel-2, 10 m), no es un diagnóstico: conviene ir a mirar.",
-    chip: (n) => (n === 1 ? "Algo raro" : `${n} cosas raras`),
+    chip: (n) => (n === 1 ? "1 zona para revisar" : `${n} zonas para revisar`),
   },
   detail: {
     close: "Cerrar",
@@ -876,7 +876,7 @@ const es: Messages = {
     hidden: (n) => `Ocultos (${n})`,
     highPriority: "Prioridad alta",
     alertsOff: "Sin alertas",
-    unusual: (n) => `${n} con algo raro`,
+    unusual: (n) => `${n} con zonas para revisar`,
     allFine: "Todo en orden",
     lots: (n) => `${n} ${n === 1 ? "lote" : "lotes"}`,
     lotsNeedLook: (n) => `${n} para mirar`,

@@ -161,6 +161,38 @@ def confirm_burns(session: Session, finding: Finding, radius_m: float) -> Findin
     return replace(finding, patches=burnt + others)
 
 
+# The largest share of a property parcel (inside the field) or of the unit itself that the patch
+# covers.
+FIELD_WORK_SQL = text("""
+    WITH patch AS (SELECT ST_GeomFromGeoJSON(:patch) AS g),
+    unit AS (SELECT geom AS g FROM territory WHERE id = :territory),
+    parts AS (
+        SELECT ST_Intersection(p.geom, unit.g) AS g
+        FROM cadastral_parcel p, unit, patch
+        WHERE ST_Intersects(p.geom, patch.g) AND ST_Intersects(p.geom, unit.g)
+        UNION ALL
+        SELECT unit.g FROM unit
+    )
+    SELECT coalesce(
+        max(ST_Area(ST_Intersection(parts.g, patch.g)) / nullif(ST_Area(parts.g), 0)), 0
+    )
+    FROM parts, patch
+""")
+
+
+def drop_field_work(session: Session, territory_id: int, finding: Finding, share: float) -> Finding:
+    """A less-green patch that covers most of a parcel or of the lot is a harvest, tillage or a
+    sprayed-off fallow: field work, not a problem (docs/11-field-anomalies.md#method)."""
+
+    def is_field_work(patch: Patch) -> bool:
+        if patch.kind != "less_green":
+            return False
+        params = {"patch": json.dumps(patch.geometry), "territory": territory_id}
+        return (session.scalar(FIELD_WORK_SQL, params) or 0) >= share
+
+    return replace(finding, patches=[p for p in finding.patches if not is_field_work(p)])
+
+
 def store_finding(
     session: Session, territory_id: int, finding: Finding, now: datetime, version: str
 ) -> None:
@@ -214,6 +246,7 @@ def check_fields(
                 analyze_field(client, territory, config, now.date(), cache_root),
                 config["burn_fire_radius_m"],
             )
+            finding = drop_field_work(session, territory.id, finding, config["field_work_share"])
         except (httpx.HTTPError, OSError, ValueError) as exc:
             # One field's unreadable scene must not stop the others.
             log.warning("anomaly check of territory %s failed: %s", territory.id, exc)

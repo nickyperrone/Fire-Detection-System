@@ -227,3 +227,41 @@ def test_an_unreadable_scene_leaves_only_its_date_out(tmp_path, monkeypatch, cli
     territory = session.get(Territory, field_id)
     days = [day for day, _ in anomalies.field_boxes(None, territory, CONFIG, TODAY, tmp_path)]
     assert days == [TODAY - timedelta(days=10), TODAY]
+
+
+def test_a_harvested_parcel_is_field_work_and_a_patch_inside_one_is_not(session):
+    from app.models import CadastralParcel
+    from app.services.anomalies import drop_field_work
+    from app.services.territories import create_territory
+    from tests.conftest import ARGENTINA
+
+    # A field over two property parcels, west and east halves.
+    field = create_territory(
+        session,
+        owner="uno@example.com",
+        name="Grande",
+        geometry=rect(-59.10, -33.00, -59.06, -32.98),
+        section_tolerance_m=5,
+        allowed_area=ARGENTINA,
+    )
+    for i, (w, e) in enumerate([(-59.10, -59.08), (-59.08, -59.06)]):
+        poly = f"MULTIPOLYGON((({w} -33.0,{e} -33.0,{e} -32.98,{w} -32.98,{w} -33.0)))"
+        session.add(
+            CadastralParcel(
+                province="Entre Ríos",
+                department=1,
+                partida=i,
+                geom=WKTElement(poly, srid=4326),
+                fetched_at=datetime.now(UTC),
+            )
+        )
+    session.commit()
+
+    def patch(w, s, e, n):
+        return Patch("less_green", 10.0, 1.0, "center", rect(w, s, e, n))
+
+    harvest = patch(-59.0995, -32.9995, -59.0805, -32.9805)  # almost all of the west parcel
+    corner = patch(-59.075, -32.995, -59.070, -32.990)  # a small part of the east one
+    finding = Finding(DataQuality.GOOD, date(2026, 10, 10), [harvest, corner])
+    kept = drop_field_work(session, field.id, finding, 0.6).patches
+    assert kept == [corner]

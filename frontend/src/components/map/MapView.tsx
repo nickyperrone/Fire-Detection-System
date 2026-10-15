@@ -335,7 +335,8 @@ const NO_PATCHES: GeoJSON.FeatureCollection = {
   features: [],
 };
 
-/** Red, with a dashed white edge, so a patch reads apart from the field's own outline. */
+/** A light red veil with a soft red edge: the ground under it stays visible, and it reads apart
+ * from the field's own green outline. */
 function showPatches(
   map: MapLibreMap,
   patches: GeoJSON.FeatureCollection | null,
@@ -353,17 +354,14 @@ function showPatches(
     id: "patch-fill",
     type: "fill",
     source: PATCHES_SOURCE,
-    paint: { "fill-color": TONE_HEX.bad, "fill-opacity": 0.35 },
+    paint: { "fill-color": TONE_HEX.bad, "fill-opacity": 0.12 },
   });
   map.addLayer({
     id: "patch-line",
     type: "line",
     source: PATCHES_SOURCE,
-    paint: {
-      "line-color": "#ffffff",
-      "line-width": 1.5,
-      "line-dasharray": [2, 1.5],
-    },
+    layout: { "line-join": "round" },
+    paint: { "line-color": "#f87171", "line-width": 2, "line-blur": 0.5 },
   });
 }
 

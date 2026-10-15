@@ -295,7 +295,10 @@ anomalies:
   burnt_min_drop: 0.25
   # A burnt-looking patch needs a satellite fire detection this close between the two dates.
   burn_fire_radius_m: 1000
-  min_patch_pixels: 100
+  min_patch_pixels: 300
+  # A less-green patch covering this share of a property parcel (or lot) is field work: harvest,
+  # tillage, a sprayed-off fallow (docs/11-field-anomalies.md#method).
+  field_work_share: 0.6
   simplify_m: 10
   read_threads: 4
 

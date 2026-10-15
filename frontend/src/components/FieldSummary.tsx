@@ -58,9 +58,12 @@ export function lightningSentence(t: Messages, entry: PortfolioEntry): string {
 export function FieldChips({
   entry,
   onlyProblems = false,
+  onAnomalies,
 }: {
   entry: PortfolioEntry;
   onlyProblems?: boolean;
+  /** Given, the areas-to-check chip is a button that shows them. */
+  onAnomalies?: () => void;
 }) {
   const { t } = useLocale();
   const fire = fireTone(entry.fire);
@@ -88,11 +91,18 @@ export function FieldChips({
           {t.lightning.count(entry.lightning.flashes)}
         </StatusChip>
       )}
-      {entry.anomaly.patches.length > 0 && (
-        <StatusChip tone="bad" icon={<PatchIcon className="size-3.5" />}>
-          {t.anomaly.chip(entry.anomaly.patches.length)}
-        </StatusChip>
-      )}
+      {entry.anomaly.patches.length > 0 &&
+        (onAnomalies ? (
+          <button onClick={onAnomalies} className="rounded-full">
+            <StatusChip tone="bad" icon={<PatchIcon className="size-3.5" />}>
+              {t.anomaly.chip(entry.anomaly.patches.length)} ›
+            </StatusChip>
+          </button>
+        ) : (
+          <StatusChip tone="bad" icon={<PatchIcon className="size-3.5" />}>
+            {t.anomaly.chip(entry.anomaly.patches.length)}
+          </StatusChip>
+        ))}
     </div>
   );
 }
