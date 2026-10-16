@@ -30,6 +30,7 @@ export function useMe() {
 
 export function useLogin() {
   return useMutation({
+    meta: { inline: true },
     mutationFn: ({
       email,
       locale,
@@ -54,6 +55,7 @@ export function useAuthConfig() {
 export function useChangeSummary() {
   const client = useQueryClient();
   return useMutation({
+    meta: { inline: true },
     mutationFn: api.changeSummary,
     onSuccess: (me) => client.setQueryData(["me"], me),
   });
@@ -62,6 +64,7 @@ export function useChangeSummary() {
 export function useChangeNotifications() {
   const client = useQueryClient();
   return useMutation({
+    meta: { inline: true },
     mutationFn: api.changeNotifications,
     // At once, so a chip answers the tap without waiting for the server.
     onMutate: (notifications) => {
@@ -74,7 +77,10 @@ export function useChangeNotifications() {
 }
 
 export function useConnectTelegram() {
-  return useMutation({ mutationFn: api.connectTelegram });
+  return useMutation({
+    meta: { inline: true },
+    mutationFn: api.connectTelegram,
+  });
 }
 
 export function useDisconnectTelegram() {
@@ -86,7 +92,10 @@ export function useDisconnectTelegram() {
 }
 
 export function useSummaryNow() {
-  return useMutation({ mutationFn: api.summaryNow });
+  return useMutation({
+    meta: { inline: true },
+    mutationFn: api.summaryNow,
+  });
 }
 
 export function useLogout() {
@@ -237,6 +246,7 @@ function useInvalidateTerritories() {
 export function useCreateTerritory() {
   const invalidate = useInvalidateTerritories();
   return useMutation({
+    meta: { inline: true },
     mutationFn: (body: TerritoryIn) => api.createTerritory(body),
     onSuccess: invalidate,
   });
@@ -265,6 +275,7 @@ export function useEditOutline() {
   const client = useQueryClient();
   const invalidate = useInvalidateTerritories();
   return useMutation({
+    meta: { inline: true },
     mutationFn: ({ id, body }: { id: number; body: OutlineIn }) =>
       api.editOutline(id, body),
     onSuccess: (_, { id }) => {

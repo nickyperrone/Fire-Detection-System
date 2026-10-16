@@ -29,7 +29,7 @@ const PREVIEW_DELAY_MS = 400;
 function errorText(t: Messages, error: Error): string {
   return (
     (error instanceof ApiError && error.code && t.draw.errors[error.code]) ||
-    t.draw.saveFailed(error.message)
+    t.draw.saveFailed
   );
 }
 

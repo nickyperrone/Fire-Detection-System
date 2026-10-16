@@ -10,6 +10,7 @@ const en = {
   intl: "en-GB",
   app: {
     apiDown: "Cannot connect to Field Watch. Try again in a few minutes.",
+    actionFailed: "😕 That did not work. Try again in a moment.",
   },
   age: {
     unknown: "unknown",
@@ -594,7 +595,7 @@ const en = {
     lotOf: "Lot of an existing field",
     ownField: "No, it is a field of its own",
     tags: "Tags, separated by commas",
-    saveFailed: (detail: string) => `Could not save: ${detail}`,
+    saveFailed: "Could not save the field. Try again in a moment.",
     errors: {
       outside_country: "Fields can only be drawn inside Argentina.",
       outside_parent: "The lot must be inside its field.",
@@ -631,6 +632,7 @@ const es: Messages = {
   intl: "es-AR",
   app: {
     apiDown: "No hay conexión con Field Watch. Probá de nuevo en unos minutos.",
+    actionFailed: "😕 No se pudo hacer. Probá de nuevo en un momento.",
   },
   age: {
     unknown: "sin dato",
@@ -1180,7 +1182,7 @@ const es: Messages = {
     lotOf: "Lote de un campo existente",
     ownField: "No, es un campo propio",
     tags: "Etiquetas, separadas por comas",
-    saveFailed: (detail) => `No se pudo guardar: ${detail}`,
+    saveFailed: "No se pudo guardar el campo. Probá de nuevo en un momento.",
     errors: {
       outside_country: "Solo se pueden dibujar campos dentro de Argentina.",
       outside_parent: "El lote tiene que estar dentro de su campo.",

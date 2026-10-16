@@ -165,6 +165,15 @@ strict-origin-when-cross-origin`, `Permissions-Policy` (location only for the ap
 the first three on its own answers, such as the sign-in confirmation page. The policy does not list
 script or image sources: the map's tiles, fonts and Cloudflare's check come from several hosts.
 
+## Errors
+
+The server's own error text never reaches the screen. A failure the page expects (no parcel at a
+point, a field too small, a sign-in limit) has a stable `code` that the page translates into a
+plain sentence where it happened. Any other failed action shows one friendly line at the bottom
+("😕 No se pudo hacer. Probá de nuevo en un momento."), from the query client's mutation cache;
+mutations whose page already says it carry `meta.inline` and skip it. A list that cannot load says
+there is no connection and to try again in a few minutes.
+
 ## Basemaps
 
 The basemap's place names are in English. Places that Argentina names otherwise are renamed in
