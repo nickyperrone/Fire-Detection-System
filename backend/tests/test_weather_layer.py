@@ -48,8 +48,8 @@ def test_clouds_are_a_veil_and_rain_stands_out(config):
     rain[2, 2] = 3.0
     image = paint(heights, rain, config | {"cloud_blur_cells": 0})
     assert image[0, 0, 3] == 0
-    # Even the highest cloud leaves the map readable; rain is far more opaque.
-    assert 0 < image[1, 1, 3] < 80
+    # Even the highest cloud leaves the map readable, under half opaque; rain is far more opaque.
+    assert 0 < image[1, 1, 3] < 128
     assert tuple(image[2, 2, :3]) == RAIN_RGB[1] and image[2, 2, 3] > 200
 
 

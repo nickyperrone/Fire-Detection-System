@@ -22,6 +22,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { hazardTone, TONE_HEX } from "@/lib/status";
 import { leadingTag } from "@/lib/tags";
 import { type FieldTab, formatCamera, useUrlState } from "@/lib/useUrlState";
+import { useWeatherHere } from "@/lib/useWeatherHere";
 import { useWeatherLoop } from "@/lib/useWeatherLoop";
 
 import { BottomSheet, type Snap } from "./BottomSheet";
@@ -111,6 +112,12 @@ export function FieldWatchApp() {
     ? (weatherLayer.data?.frames ?? [])
     : [];
   const weatherLoop = useWeatherLoop(weatherFrames.length);
+  const newestFrame = weatherFrames.at(-1);
+  const skyHere = useWeatherHere(
+    map,
+    newestFrame ? weatherFrameUrl(newestFrame.id) : null,
+    (weatherLayer.data?.bbox as [number, number, number, number]) ?? null,
+  );
 
   const territoryById = useMemo(
     () => new Map((territories.data ?? []).map((t) => [t.id, t])),
@@ -443,6 +450,7 @@ export function FieldWatchApp() {
                           onTogglePlay: weatherLoop.toggle,
                           shown: weatherLoop.shown,
                           count: weatherFrames.length,
+                          here: skyHere,
                         }
                       : null
                   }

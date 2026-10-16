@@ -8,7 +8,7 @@ from scipy import ndimage
 CLOUD_RGB = (240, 244, 248)
 # Opacity of the lowest and of the highest clouds: enough to see where it is cloudy, never a
 # gray sheet over the map.
-VEIL_ALPHA = (0.08, 0.26)
+VEIL_ALPHA = (0.14, 0.4)
 # One color per rain band, lightest first, each with its opacity.
 RAIN_RGB = [(96, 165, 250), (37, 99, 235), (168, 85, 247)]
 RAIN_ALPHA = [0.7, 0.85, 0.9]

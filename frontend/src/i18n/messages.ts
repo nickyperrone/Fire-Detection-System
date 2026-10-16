@@ -176,6 +176,13 @@ const en = {
     light: "Light rain",
     moderate: "Rain",
     heavy: "Heavy rain",
+    here: {
+      clear: "☀️ Clear sky here",
+      clouds: "☁️ Cloudy here",
+      light: "🌦️ Light rain here",
+      moderate: "🌧️ Raining here",
+      heavy: "⛈️ Heavy rain here",
+    },
   },
   sections: {
     fire: "Fire",
@@ -780,6 +787,13 @@ const es: Messages = {
     light: "Lluvia débil",
     moderate: "Lluvia",
     heavy: "Lluvia fuerte",
+    here: {
+      clear: "☀️ Despejado en esta zona",
+      clouds: "☁️ Nublado en esta zona",
+      light: "🌦️ Lluvia débil en esta zona",
+      moderate: "🌧️ Llueve en esta zona",
+      heavy: "⛈️ Lluvia fuerte en esta zona",
+    },
   },
   sections: {
     fire: "Fuego",

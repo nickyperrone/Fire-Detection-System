@@ -7,6 +7,8 @@ import { formatAge } from "@/i18n/text";
 import { type Tone, TONE_HEX } from "@/lib/status";
 import type { ColorBy } from "@/lib/useUrlState";
 
+import type { SkyHere } from "@/lib/weatherHere";
+
 import { RISK_BANDS } from "./map/overlay";
 
 import { ChevronIcon, PauseIcon, PlayIcon, PlusIcon } from "./Icons";
@@ -48,6 +50,8 @@ type WeatherLoop = {
   onTogglePlay: () => void;
   shown: number;
   count: number;
+  /** The sky in the middle of the map on the newest frame, once it has been read. */
+  here: SkyHere | null;
 };
 const WIDE = "(min-width: 768px)";
 
@@ -197,6 +201,12 @@ export function MapLegend({
               </div>
             </div>
           </div>
+          {/* Said in words too: zoomed in on a field, a thin veil of cloud is hard to see. */}
+          {weather.here && (
+            <p className="mt-1.5 text-[12px] font-medium text-slate-100">
+              {t.weatherLayer.here[weather.here]}
+            </p>
+          )}
           {open && (
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-slate-200">
               {WEATHER_SWATCHES.map(({ name, color }) => (

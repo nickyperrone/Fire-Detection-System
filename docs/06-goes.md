@@ -81,8 +81,8 @@ burned, not that nobody looked.
 weather radar loop, so the contractor sees where it is cloudy, where it rains and where it is
 heading:
 
-- **Clouds** from `ABI-L2-ACHAF` (cloud top height): a faint veil, a little stronger the higher
-  the tops, so a cloudy day does not turn the map gray. A high top alone is often a thin anvil
+- **Clouds** from `ABI-L2-ACHAF` (cloud top height): a veil from 14 % to 40 % opaque, stronger
+  the higher the tops, so a cloudy day does not turn the map gray. A high top alone is often a thin anvil
   of cirrus, not a storm, so height never paints a storm: rain does. Edges fade in, since the
   product's pixels are 10 km wide.
 - **Rain** from `ABI-L2-RRQPEF` (rainfall rate), on top: light blue from 0.5 mm/h, blue from
@@ -99,7 +99,12 @@ heading:
 - **On the map** every frame is an image layer over the box; playing fades from one to the next
   (about 0.6 s each, a short pause on the newest). The legend shows the scale, play and pause,
   and the time of the frame on screen ("hace 40 min" … "hace 10 min"). Paused, it shows the
-  newest scan. People who ask their system for less motion get it paused.
+  newest scan. People who ask their system for less motion get it paused. Zoomed in on a field,
+  a 3 km cell covers the whole screen and a veil is hard to tell from the ground, so the legend
+  also says in words what the newest frame shows around the middle of the map ("☁️ Nublado en
+  esta zona", "🌧️ Llueve en esta zona", "☀️ Despejado en esta zona"). The browser reads it from
+  the frame itself (`frontend/src/lib/weatherHere.ts`); the layer stays on wherever the map goes,
+  a field page included, until it is turned off.
 - `GET /weather-layer` lists the frames and the box; each frame's id is its scan time and a
   version of the box and cell size, and `GET /weather-layer/{id}.png` serves it, cached for a day.
   A change of box or cell size draws every frame again under new ids, so no browser shows a frame
