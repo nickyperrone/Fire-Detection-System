@@ -562,6 +562,8 @@ const en = {
     closeField: "Close field",
     cornersCount: (n: number) => `${n} ${n === 1 ? "corner" : "corners"}`,
     zoomHint: "Zoom with two fingers or the wheel.",
+    findFirst:
+      "🔎 First find your field: search a town or road above, or zoom in on the map. Up close the property lines show; then pick how to mark it.",
     searching: "Looking up the parcel…",
     detecting: "Detecting the field in a year of satellite images… it can take up to a minute.",
     detected: (dates: number, first: string, last: string) =>
@@ -1147,6 +1149,8 @@ const es: Messages = {
     closeField: "Cerrar campo",
     cornersCount: (n) => `${n} ${n === 1 ? "esquina" : "esquinas"}`,
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
+    findFirst:
+      "🔎 Primero encontrá tu campo: buscá un pueblo o camino arriba, o acercate en el mapa. De cerca aparecen las líneas de los campos; ahí elegí cómo marcarlo.",
     searching: "Buscando la parcela…",
     detecting: "Detectando el campo en un año de imágenes satelitales… puede tardar hasta un minuto.",
     detected: (dates, first, last) =>

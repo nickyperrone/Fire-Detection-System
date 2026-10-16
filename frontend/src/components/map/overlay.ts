@@ -70,6 +70,8 @@ export const RISK_BANDS = [
   { band: "VERY_HIGH", color: TONE_HEX.bad, opacity: 0.52 },
 ] as const;
 export const PARCELS_LAYER = "parcel-line";
+// Property lines are drawn from this zoom on, about a town across the screen.
+export const PARCELS_MIN_ZOOM = 12;
 // The selected field or lot glows; MapView fades the glow in.
 export const SELECTED_GLOW_LAYERS = ["field-glow", "section-glow"] as const;
 
@@ -251,7 +253,7 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
   map.addSource("parcels", {
     type: "vector",
     tiles: [tileUrl("parcels")],
-    minzoom: 12,
+    minzoom: PARCELS_MIN_ZOOM,
     maxzoom: 16,
     // IDECOR publishes under CC BY-SA 4.0, which asks for credit where the data is shown.
     attribution:

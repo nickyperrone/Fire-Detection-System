@@ -17,6 +17,8 @@ import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 import { api, ApiError } from "@/api/client";
 import { insideRing, simplifyRing } from "@/lib/geometry";
 
+import { PARCELS_MIN_ZOOM } from "./overlay";
+
 export type DrawnPolygon = { type: "Polygon"; coordinates: number[][][] };
 
 /**
@@ -86,6 +88,8 @@ export type FieldDrawing = {
   undoCorner: () => void;
   /** Closes the shape on the corners placed, as tapping the first corner again does. */
   closeCorners: () => void;
+  /** The map is close enough to see property lines and pick a field. */
+  closeEnough: boolean;
 };
 
 export type ParcelInfo = {
@@ -212,6 +216,7 @@ export function useFieldDrawing(
   const [fitting, setFitting] = useState(false);
   const [fit, setFit] = useState<Fit | null>(null);
   const [corners, setCorners] = useState(0);
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 0);
   // Both versions of a fitted shape, so either can be put back.
   const shapesRef = useRef<{
     drawn: DrawnPolygon;
@@ -409,6 +414,16 @@ export function useFieldDrawing(
     };
   }, [map, active]);
 
+  useEffect(() => {
+    if (!map) return;
+    const update = () => setZoom(map.getZoom());
+    update();
+    map.on("zoomend", update);
+    return () => {
+      map.off("zoomend", update);
+    };
+  }, [map]);
+
   const setTool = useCallback(
     (next: DrawTool) => {
       setToolState(next);
@@ -480,5 +495,6 @@ export function useFieldDrawing(
     corners,
     undoCorner,
     closeCorners,
+    closeEnough: zoom >= PARCELS_MIN_ZOOM,
   };
 }

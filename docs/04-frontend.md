@@ -48,6 +48,9 @@ more than two taps.
   to a street or address close enough to draw a field there.
 - **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update
   live, then name and tags. A drawn field can be split into sections the same way.
+- **Finding the field first**: draw mode keeps the search box under the tool switch, for towns,
+  roads and one's own fields. While the map is too far out to see property lines (below zoom 12),
+  the card says to search or zoom in first instead of the tool's hint.
 - **Corners never trap the user**: while placing corners a drag still moves the map (a tap places
   a corner, a drag pans), the card counts the corners and offers **Undo corner** (also Cmd or
   Ctrl+Z) and **Close field** from three corners on, besides tapping the first corner again.

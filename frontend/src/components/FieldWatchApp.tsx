@@ -421,6 +421,13 @@ export function FieldWatchApp() {
             selected?.kind === "FIELD" ? selected.territory_id : null
           }
           onDone={finishDrawing}
+          search={
+            <SearchBar
+              territories={territories.data ?? []}
+              onPick={(t) => frame([t])}
+              onPickPlace={flyToPlace}
+            />
+          }
         />
       ) : (
         <>

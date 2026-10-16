@@ -40,6 +40,8 @@ type Props = {
   fields: Territory[];
   defaultParentId: number | null;
   onDone: (created: Territory | null) => void;
+  /** The place search, so the field can be found without leaving drawing. */
+  search: React.ReactNode;
 };
 
 /** Full-screen drawing mode: the map, a top bar, the tool switch and one card at the bottom. */
@@ -49,6 +51,7 @@ export function DrawFieldOverlay({
   fields,
   defaultParentId,
   onDone,
+  search,
 }: Props) {
   const { t } = useLocale();
   const [parentId, setParentId] = useState<number | null>(defaultParentId);
@@ -131,6 +134,9 @@ export function DrawFieldOverlay({
             ))}
           </div>
         )}
+        {!closed && (
+          <div className="pointer-events-auto w-full max-w-xl">{search}</div>
+        )}
       </div>
 
       <section className="rise-in glass fixed inset-x-3 bottom-3 z-20 mx-auto max-h-[60dvh] max-w-xl overflow-y-auto rounded-3xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -161,6 +167,9 @@ export function DrawFieldOverlay({
           <p className="mt-1 text-sm text-bad">
             {t.draw.notices[drawing.notice]}
           </p>
+        ) : !drawing.closeEnough && !editing ? (
+          // Far out, no field can be told apart: first find it, then pick it.
+          <p className="mt-1 text-sm text-slate-300">{t.draw.findFirst}</p>
         ) : (
           <>
             <p className="mt-1 text-sm text-slate-300">
