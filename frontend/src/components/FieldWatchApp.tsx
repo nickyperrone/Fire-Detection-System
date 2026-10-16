@@ -17,6 +17,7 @@ import {
   useTags,
   useTerritories,
   useWeatherLayer,
+  useWindLayer,
 } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { formatNumber } from "@/i18n/text";
@@ -37,6 +38,7 @@ import { useIntroTour } from "./map/useIntroTour";
 import { MapButtons } from "./MapButtons";
 import { MapLegend } from "./MapLegend";
 import { type MapCamera, MapView, type TerritoryState } from "./map/MapView";
+import { WindCanvas } from "./map/WindCanvas";
 import { useFieldDrawing } from "./map/useFieldDrawing";
 import { useDangerAlerts } from "./useDangerAlerts";
 import { PortfolioPanel } from "./PortfolioPanel";
@@ -111,6 +113,7 @@ export function FieldWatchApp() {
   const tags = useTags(signedIn);
   const boundary = useBoundary();
   const weatherLayer = useWeatherLayer(url.showWeather);
+  const windLayer = useWindLayer(url.showWind);
   const weatherFrames = url.showWeather
     ? (weatherLayer.data?.frames ?? [])
     : [];
@@ -432,6 +435,11 @@ export function FieldWatchApp() {
         }
       />
 
+      {/* Wind particles over the map, under the panels; off while drawing a field. */}
+      {url.showWind && !drawingOn && (
+        <WindCanvas map={map} grid={windLayer.data ?? null} />
+      )}
+
       {drawingOn ? (
         <DrawFieldOverlay
           drawing={drawing}
@@ -509,6 +517,8 @@ export function FieldWatchApp() {
               onBasemap={(b) => url.update({ b })}
               showRisk={url.showRisk}
               onToggleRisk={() => url.update({ r: url.showRisk ? null : "1" })}
+              showWind={url.showWind}
+              onToggleWind={() => url.update({ wd: url.showWind ? null : "1" })}
               showWeather={url.showWeather}
               onToggleWeather={() =>
                 url.update({ w: url.showWeather ? null : "1" })

@@ -18,6 +18,7 @@ type Changes = Partial<{
   only: string | null;
   r: string | null;
   w: string | null;
+  wd: string | null;
   p: string | null;
   c: string | null;
   signin: string | null;
@@ -70,6 +71,7 @@ export function useUrlState() {
   const view = params.get("view") === "notifications" ? "notifications" : null;
   const showRisk = params.get("r") === "1";
   const showWeather = params.get("w") === "1";
+  const showWind = params.get("wd") === "1";
   // Set by the API when an email link was used or expired (docs/09-accounts-and-alerts.md).
   const signinExpired = params.get("signin") === "expired";
   const colorBy: ColorBy = params.get("c") === "tags" ? "tags" : "status";
@@ -104,6 +106,7 @@ export function useUrlState() {
     onlyPicked,
     showRisk,
     showWeather,
+    showWind,
     showParcels,
     colorBy,
     signinExpired,

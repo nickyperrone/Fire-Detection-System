@@ -2103,6 +2103,63 @@
         ],
         "title": "WeatherLayerOut",
         "type": "object"
+      },
+      "WindLayerOut": {
+        "properties": {
+          "bbox": {
+            "description": "west, south, east, north",
+            "items": {
+              "type": "number"
+            },
+            "title": "Bbox",
+            "type": "array"
+          },
+          "dx": {
+            "description": "Degrees between points",
+            "title": "Dx",
+            "type": "number"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "nx": {
+            "title": "Nx",
+            "type": "integer"
+          },
+          "ny": {
+            "title": "Ny",
+            "type": "integer"
+          },
+          "u": {
+            "description": "East component in km/h, rows north to south",
+            "items": {
+              "type": "number"
+            },
+            "title": "U",
+            "type": "array"
+          },
+          "v": {
+            "description": "North component in km/h",
+            "items": {
+              "type": "number"
+            },
+            "title": "V",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bbox",
+          "nx",
+          "ny",
+          "dx",
+          "fetched_at",
+          "u",
+          "v"
+        ],
+        "title": "WindLayerOut",
+        "type": "object"
       }
     }
   },
@@ -4180,6 +4237,28 @@
           }
         },
         "summary": "Weather Frame",
+        "tags": [
+          "weather"
+        ]
+      }
+    },
+    "/wind-layer": {
+      "get": {
+        "description": "The wind now over Argentina as a grid of east and north components in km/h, north row\nfirst: the map animates particles along it.",
+        "operationId": "wind_layer_wind_layer_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindLayerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wind Layer",
         "tags": [
           "weather"
         ]

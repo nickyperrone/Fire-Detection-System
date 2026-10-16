@@ -238,6 +238,7 @@ worker:
   # New and redrawn fields get their land cover within this long.
   land_cover_interval_minutes: 10
   weather_layer_interval_minutes: 10
+  wind_interval_minutes: 60
   # How often the bot looks for messages and button taps (docs/13-notifications.md#telegram).
   telegram_interval_seconds: 5
 
@@ -356,3 +357,9 @@ land_cover:
   ring_m: 300
   # Fields read per worker run; each takes a few seconds of the public WorldCover files.
   per_run: 40
+
+wind_layer:
+  # Argentina and the sea around it, one point every step_degrees (about 165 km): 460 points,
+  # five requests an hour. The map interpolates between them.
+  bbox: [-76.0, -56.5, -50.0, -20.5]
+  step_degrees: 1.5

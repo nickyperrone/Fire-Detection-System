@@ -5,8 +5,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from app.routers.dependencies import WeatherRootDep
-from app.schemas import WeatherLayerOut
+from app.schemas import WeatherLayerOut, WindLayerOut
 from app.services.weather_layer import STAMP, frame_path, layer_meta
+from app.services.wind_layer import read_wind_layer
 
 router = APIRouter(tags=["weather"])
 
@@ -48,3 +49,13 @@ def weather_frame(root: WeatherRootDep, frame: str):
         raise HTTPException(404, "no frame of that scan")
     # A scan never changes once painted.
     return FileResponse(path, headers={"Cache-Control": "public, max-age=86400, immutable"})
+
+
+@router.get("/wind-layer", response_model=WindLayerOut)
+def wind_layer(root: WeatherRootDep):
+    """The wind now over Argentina as a grid of east and north components in km/h, north row
+    first: the map animates particles along it."""
+    grid = read_wind_layer(root)
+    if grid is None:
+        raise HTTPException(404, "no wind grid yet")
+    return grid

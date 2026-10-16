@@ -118,3 +118,24 @@ One rule for the whole product: red when something is wrong (a fire near the fie
 not recommended or only with caution, lightning nearby), green when everything is fine, gray
 when there is no data to say either. How serious it is goes in the text ("Inside", "Very close",
 "Caution"), not in extra colors.
+
+## Wind on the map
+
+An animated layer of particles carried by the wind, switched on in the layers menu ("Viento", `wd=1`
+in the link), readable at any zoom.
+
+- **Data.** The worker (`wind` job, every hour) reads Open-Meteo's current 10 m wind on a grid over
+  `[-76, -56.5, -50, -20.5]` every 1.5° (about 165 km; 450 points, 5 requests), turns
+  speed and the direction it comes from into east and north components in km/h, and writes
+  `data/weather/wind.json`. A point with no answer takes its neighbor's; with more than a quarter
+  missing, or if Open-Meteo is down, the last grid stays. `GET /wind-layer` serves it.
+- **Drawing.** The browser draws on a canvas over the map, not on the map's layers. Each time the
+  map stops, it samples the grid (interpolated between the four nearest points) at a lattice of
+  screen points every 18 px; 500 to 2,600 particles read that lattice and move
+  0.05 px per frame per km/h, leaving a fading trail. Because the speed is in screen pixels, the
+  flow looks the same at country zoom and over one field. Colors go from pale blue (calm) through
+  green and yellow to orange (50 km/h and more).
+- **While the map moves** the layer fades out and comes back when it stops, so it never lags behind
+  the ground. People who ask their system for less motion get one still picture of the flow.
+- It is off while drawing a field. Open-Meteo's free API is for non-commercial use only, as for the
+  forecast.

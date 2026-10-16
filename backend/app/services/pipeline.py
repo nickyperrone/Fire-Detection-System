@@ -30,6 +30,7 @@ from app.services.static_sources import mark_observations
 from app.services.summary import send_due_summaries
 from app.services.telegram_bot import answer_updates, configure_bot
 from app.services.weather_layer import WEATHER_ROOT, refresh_weather_layer
+from app.services.wind_layer import refresh_wind_layer
 from app.versioning import processing_version
 
 # Each field's Sentinel-2 boxes, shared by the unusual-patches check and the photos.
@@ -74,6 +75,11 @@ def run_lightning_pipeline(session: Session, client: httpx.Client, thresholds: d
 def run_weather_layer_pipeline(_: Session, client: httpx.Client, thresholds: dict) -> dict:
     """GOES-19's newest clouds and rain over the region, as an image for the map."""
     return refresh_weather_layer(client, thresholds, WEATHER_ROOT, datetime.now(UTC))
+
+
+def run_wind_layer_pipeline(_: Session, client: httpx.Client, thresholds: dict) -> dict:
+    """The wind now over Argentina, for the animated layer (docs/06-goes.md#wind-on-the-map)."""
+    return refresh_wind_layer(client, thresholds["wind_layer"], WEATHER_ROOT, datetime.now(UTC))
 
 
 # The FIRMS archive top-up only changes once a day.

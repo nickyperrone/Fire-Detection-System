@@ -455,3 +455,13 @@ class SnapOut(BaseModel):
     method: str = Field(description="parcels, edges or none")
     geometry: dict
     parcels: list[dict]
+
+
+class WindLayerOut(BaseModel):
+    bbox: list[float] = Field(description="west, south, east, north")
+    nx: int
+    ny: int
+    dx: float = Field(description="Degrees between points")
+    fetched_at: datetime
+    u: list[float] = Field(description="East component in km/h, rows north to south")
+    v: list[float] = Field(description="North component in km/h")

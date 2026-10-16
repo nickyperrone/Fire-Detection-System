@@ -172,6 +172,10 @@ const en = {
   parcels: {
     layer: "Property lines",
   },
+  windLayer: {
+    layer: "Wind",
+    title: (age: string) => `Wind · data from ${age}`,
+  },
   weatherLayer: {
     layer: "Clouds and rain",
     title: (age: string) => `Clouds and rain · image from ${age}`,
@@ -811,6 +815,10 @@ const es: Messages = {
   },
   parcels: {
     layer: "Líneas de propiedad",
+  },
+  windLayer: {
+    layer: "Viento",
+    title: (age) => `Viento · datos de ${age}`,
   },
   weatherLayer: {
     layer: "Nubes y lluvia",

@@ -24,6 +24,7 @@ from app.services.pipeline import (
     run_summary_pipeline,
     run_telegram_pipeline,
     run_weather_layer_pipeline,
+    run_wind_layer_pipeline,
     set_up_telegram,
 )
 
@@ -123,6 +124,11 @@ def main() -> None:
         (
             job("clouds and rain", run_weather_layer_pipeline),
             intervals["weather_layer_interval_minutes"],
+            "default",
+        ),
+        (
+            job("wind", run_wind_layer_pipeline),
+            intervals["wind_interval_minutes"],
             "default",
         ),
         # A new forecast may bring adverse weather (docs/13-notifications.md#kinds).

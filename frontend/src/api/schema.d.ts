@@ -620,6 +620,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/wind-layer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Wind Layer
+         * @description The wind now over Argentina as a grid of east and north components in km/h, north row
+         *     first: the map animates particles along it.
+         */
+        get: operations["wind_layer_wind_layer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1395,6 +1416,38 @@ export interface components {
             bbox: number[];
             /** Frames */
             frames: components["schemas"]["WeatherFrameOut"][];
+        };
+        /** WindLayerOut */
+        WindLayerOut: {
+            /**
+             * Bbox
+             * @description west, south, east, north
+             */
+            bbox: number[];
+            /**
+             * Dx
+             * @description Degrees between points
+             */
+            dx: number;
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Nx */
+            nx: number;
+            /** Ny */
+            ny: number;
+            /**
+             * U
+             * @description East component in km/h, rows north to south
+             */
+            u: number[];
+            /**
+             * V
+             * @description North component in km/h
+             */
+            v: number[];
         };
     };
     responses: never;
@@ -2604,6 +2657,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    wind_layer_wind_layer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WindLayerOut"];
                 };
             };
         };

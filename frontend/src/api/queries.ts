@@ -235,6 +235,15 @@ export function useWeatherLayer(enabled: boolean) {
   });
 }
 
+export function useWindLayer(enabled: boolean) {
+  return useQuery({
+    queryKey: ["wind-layer"],
+    queryFn: api.windLayer,
+    enabled,
+    refetchInterval: 30 * 60 * 1000,
+  });
+}
+
 export function useHealth() {
   return useQuery({
     queryKey: ["health"],

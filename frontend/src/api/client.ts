@@ -30,6 +30,7 @@ export type Snapshots = Schemas["SnapshotsOut"];
 export type Snapshot = Schemas["SnapshotOut"];
 export type SnapshotView = "true_color" | "greenness";
 export type WeatherLayer = Schemas["WeatherLayerOut"];
+export type WindLayer = Schemas["WindLayerOut"];
 export type Place = Schemas["PlaceOut"];
 
 /** One frame of the clouds and rain loop; a scan never changes, so the browser keeps it. */
@@ -167,6 +168,7 @@ export const api = {
   anomalies: (id: number) =>
     request<GeoJSON.FeatureCollection>(`/territories/${id}/anomalies`),
   weatherLayer: () => request<WeatherLayer>("/weather-layer"),
+  windLayer: () => request<WindLayer>("/wind-layer"),
   places: (query: string, source: "towns" | "streets") =>
     request<Place[]>(`/places?q=${encodeURIComponent(query)}&source=${source}`),
   snapshots: (id: number) => request<Snapshots>(`/territories/${id}/snapshots`),

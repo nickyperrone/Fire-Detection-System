@@ -14,6 +14,8 @@ type Props = {
   onToggleRisk: () => void;
   showWeather: boolean;
   onToggleWeather: () => void;
+  showWind: boolean;
+  onToggleWind: () => void;
   showParcels: boolean;
   onToggleParcels: () => void;
   /** Frames the user's fields, or asks to sign in first. */
@@ -32,6 +34,8 @@ export function MapButtons({
   onToggleRisk,
   showWeather,
   onToggleWeather,
+  showWind,
+  onToggleWind,
   showParcels,
   onToggleParcels,
   onGoToFields,
@@ -81,6 +85,11 @@ export function MapButtons({
               label={t.weatherLayer.layer}
               on={showWeather}
               onToggle={onToggleWeather}
+            />
+            <Switch
+              label={t.windLayer.layer}
+              on={showWind}
+              onToggle={onToggleWind}
             />
             <button
               onClick={() => {

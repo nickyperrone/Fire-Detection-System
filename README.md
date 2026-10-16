@@ -719,6 +719,7 @@ the build of the image Dokploy deploys.
 | Purpose | Source | Terms | Status |
 |---|---|---|---|
 | Active fire detections | [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) (VIIRS NOAA-20, NOAA-21, S-NPP; MODIS) | Free with a key; 5,000 requests per 10 min | Live |
+| Wind animation on the map | Open-Meteo, current wind on a 1.5° grid | Free API for **non-commercial use only** | Live |
 | Fire every 10 minutes, lightning, clouds and rain | GOES-19 ABI fire, cloud top height and rainfall rate products and GLM, NOAA Open Data on AWS | Free, no key | Live |
 | Ten years of fire per field, forecast labels | FIRMS yearly archive for Argentina | Free | Live |
 | Weather and 48 h forecast | [Open-Meteo](https://open-meteo.com/) | Free API for **non-commercial use only** | Live |
