@@ -123,6 +123,10 @@ The map loads what is on screen, at the detail the zoom needs, like Google Maps.
 - **Detail by zoom**: below zoom 9 fires are clustered (count + worst severity) and field outlines are
   simplified (`ST_SimplifyPreserveTopology` with a tolerance that depends on `z`); from zoom 12 individual
   observations and exact outlines appear.
+- **A field never blinks out**: far out a field is smaller than a pixel and its outline drops out of
+  the tile, so it vanished and came back while zooming (as when flying to "Ir a mis campos"). Each
+  field also has a dot in its color, from the label points, which fades out between zoom 11 and
+  12.5 as the outline becomes readable; the name sits under it. A tap on the dot opens the field.
 - Tiles carry `Cache-Control` headers: short for fire layers (5 min), longer for territories, which
   are invalidated by a version parameter when a field changes.
 - Portfolio and detail data (answers, timelines) come from the JSON API, not from tiles. Field tiles

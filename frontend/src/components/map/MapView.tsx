@@ -395,12 +395,15 @@ function applyTerritoryStates(
   states: Map<number, TerritoryState>,
   selectedId: number | null,
 ): void {
-  map.removeFeatureState({ source: "territories", sourceLayer: "territories" });
-  for (const [id, state] of states) {
-    map.setFeatureState(
-      { source: "territories", sourceLayer: "territories", id },
-      { ...state, selected: id === selectedId },
-    );
+  // The outlines and the dots that stand for them far out share each field's state.
+  for (const sourceLayer of ["territories", "territory_labels"]) {
+    map.removeFeatureState({ source: "territories", sourceLayer });
+    for (const [id, state] of states) {
+      map.setFeatureState(
+        { source: "territories", sourceLayer, id },
+        { ...state, selected: id === selectedId },
+      );
+    }
   }
 }
 

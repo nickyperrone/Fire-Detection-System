@@ -41,7 +41,11 @@ export function styleFor(basemap: Basemap): string | StyleSpecification {
     : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 }
 
-export const TERRITORY_LAYERS = ["section-fill", "field-fill"] as const;
+export const TERRITORY_LAYERS = [
+  "section-fill",
+  "field-fill",
+  "field-dot",
+] as const;
 
 function byBand(
   value: (band: (typeof RISK_BANDS)[number]) => string | number,
@@ -106,6 +110,17 @@ const lineOpacity: ExpressionSpecification = [
   1,
 ];
 
+// A field's dot fades out as its outline becomes readable; zoom has to lead the expression.
+const dotOpacity: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  11,
+  lineOpacity,
+  12.5,
+  0,
+];
+
 /** Field outlines grow with zoom, and a highlighted field's is thicker at every zoom. */
 function fieldWidth(extra = 0): ExpressionSpecification {
   const at = (normal: number, picked: number): ExpressionSpecification => [
@@ -135,6 +150,7 @@ const byKind = (kind: string): ExpressionSpecification => [
 
 const TERRITORY_KIND_BY_LAYER = {
   "field-fill": "FIELD",
+  "field-dot": "FIELD",
   "section-fill": "SECTION",
   "field-line": "FIELD",
   "field-casing": "FIELD",
@@ -417,6 +433,25 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
     "text-halo-width": 1.8,
     "text-halo-blur": 0.5,
   };
+  // Far out a field is smaller than a pixel and its outline drops out of the tile, so the field
+  // would vanish and come back while zooming. A dot in the field's color keeps it on the map, and
+  // fades as the outline becomes readable.
+  map.addLayer({
+    id: "field-dot",
+    type: "circle",
+    source: "territories",
+    "source-layer": "territory_labels",
+    filter: byKind("FIELD"),
+    maxzoom: 13,
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3.5, 11, 6],
+      "circle-color": territoryColor,
+      "circle-stroke-color": "#0b0e13",
+      "circle-stroke-width": 1.5,
+      "circle-opacity": dotOpacity,
+      "circle-stroke-opacity": dotOpacity,
+    },
+  });
   // Field names while the field is small on screen, lot names once the lots are readable.
   map.addLayer({
     id: "field-label",
@@ -431,6 +466,9 @@ export function addOverlay(map: MapLibreMap, options: OverlayOptions): void {
       "text-font": LABEL_FONT,
       "text-size": ["interpolate", ["linear"], ["zoom"], 9, 12, 13, 15],
       "text-letter-spacing": 0.02,
+      // Under the field's dot, which marks the spot at these zooms.
+      "text-anchor": "top",
+      "text-offset": [0, 0.7],
     },
     paint: labelPaint,
   });
