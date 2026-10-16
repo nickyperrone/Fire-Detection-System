@@ -16,6 +16,7 @@ import {
   usePortfolio,
   useTags,
   useTerritories,
+  useLandCover,
   useWeatherLayer,
   useWindLayer,
 } from "@/api/queries";
@@ -209,6 +210,17 @@ export function FieldWatchApp() {
   const selected =
     everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
   const patches = useAnomalyPatches(selected?.territory_id ?? null);
+  const land = useLandCover(selected?.territory_id ?? null);
+  const landOutlines = useMemo<GeoJSON.FeatureCollection | null>(
+    () =>
+      land.data?.features.length
+        ? {
+            type: "FeatureCollection",
+            features: land.data.features as unknown as GeoJSON.Feature[],
+          }
+        : null,
+    [land.data],
+  );
   // The wind now at the open field, drawn on it as an arrow (docs/03-rules.md#wind).
   const windArrow = useMemo(() => {
     const shape = territories.data?.find(
@@ -420,6 +432,7 @@ export function FieldWatchApp() {
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
+        landCover={selected && !drawingOn ? landOutlines : null}
         wind={drawingOn ? null : windArrow}
         weather={
           weatherLayer.data && weatherFrames.length > 0

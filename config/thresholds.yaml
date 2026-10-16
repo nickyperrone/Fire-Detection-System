@@ -355,6 +355,12 @@ places:
 land_cover:
   # Buildings within this distance of a field count as nearby.
   ring_m: 300
+  # What a field is used for (docs/15-land-cover.md#why-it-says-planted): a class covering this
+  # share of it, and for crops also a swing in greenness (NDVI, 0 to 1) of at least this much
+  # between its greenest and least green photos, over at least this many clear passes.
+  crops_share: 0.5
+  cycle_swing_ndvi: 0.25
+  cycle_min_passes: 3
   # Fields read per worker run; each takes a few seconds of the public WorldCover files.
   per_run: 40
 

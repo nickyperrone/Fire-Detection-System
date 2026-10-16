@@ -376,6 +376,8 @@ class LandCover(Base):
     built_m2: Mapped[float] = mapped_column(Float)
     # Built-up area in the ring around the territory (`land_cover.ring_m`).
     built_nearby_m2: Mapped[float] = mapped_column(Float)
+    # GeoJSON features of the trees, buildings and water inside, to draw; null until read.
+    features: Mapped[list | None] = mapped_column(JSONB)
     # md5 of the outline it was computed for.
     outline: Mapped[str] = mapped_column(String(32))
     source: Mapped[str] = mapped_column(String(60))

@@ -25,7 +25,7 @@ from app.services.anomalies import field_anomaly_features
 from app.services.field_risk import assess_active_fire_events, compass, reassess_territory
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
-from app.services.land_cover import contents
+from app.services.land_cover import contents, explain
 from app.services.pipeline import answer_territories
 from app.services.snapshots import View, field_snapshots, photo_path
 from app.services.spray_conditions import list_spray_hours
@@ -187,13 +187,15 @@ def replace_tags(
 def land_cover(session: SessionDep, owner: OwnerDep, territory_id: int):
     """Trees, crops and buildings in and around the field; null until the worker has read them
     (docs/15-land-cover.md)."""
-    owned(session, owner, territory_id)
+    territory = owned(session, owner, territory_id)
     row = session.get(LandCover, territory_id)
     holds = contents(row)
     if row is None or holds is None:
         return None
     config = get_thresholds()["field_risk"]["land_cover"]
     return LandCoverOut(
+        features=row.features or [],
+        land_use=explain(session, territory, row, get_thresholds()["land_cover"]),
         shares=row.shares,
         trees_share=holds.trees_share,
         built_m2=row.built_m2,

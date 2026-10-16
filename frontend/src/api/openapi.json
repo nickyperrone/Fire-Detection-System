@@ -658,10 +658,22 @@
             "title": "Computed At",
             "type": "string"
           },
+          "features": {
+            "description": "GeoJSON outlines of trees, buildings and water",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Features",
+            "type": "array"
+          },
           "has_buildings": {
             "description": "Buildings in or near the field",
             "title": "Has Buildings",
             "type": "boolean"
+          },
+          "land_use": {
+            "$ref": "#/components/schemas/LandUseOut"
           },
           "shares": {
             "additionalProperties": {
@@ -686,6 +698,8 @@
           }
         },
         "required": [
+          "features",
+          "land_use",
           "shares",
           "trees_share",
           "built_m2",
@@ -696,6 +710,30 @@
           "computed_at"
         ],
         "title": "LandCoverOut",
+        "type": "object"
+      },
+      "LandUseOut": {
+        "properties": {
+          "reasons": {
+            "description": "Why, as codes with their numbers",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "use": {
+            "description": "cultivated, maybe_cultivated, grassland, wooded or mixed",
+            "title": "Use",
+            "type": "string"
+          }
+        },
+        "required": [
+          "use",
+          "reasons"
+        ],
+        "title": "LandUseOut",
         "type": "object"
       },
       "LatestPassOut": {

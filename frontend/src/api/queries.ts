@@ -125,10 +125,11 @@ export function useTerritories(enabled = true) {
   });
 }
 
-export function useLandCover(id: number) {
+export function useLandCover(id: number | null) {
   return useQuery({
     queryKey: ["land-cover", id],
-    queryFn: () => api.landCover(id),
+    queryFn: () => api.landCover(id!),
+    enabled: id !== null,
     // A new field gets it from the worker within minutes.
     refetchInterval: (query) => (query.state.data ? false : 60_000),
   });

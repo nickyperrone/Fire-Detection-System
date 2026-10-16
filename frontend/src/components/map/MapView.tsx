@@ -5,6 +5,7 @@ import {
   Map as MapLibreMap,
   Marker,
   Popup,
+  type ExpressionSpecification,
   type GeoJSONSource,
   type MapGeoJSONFeature,
   type MapMouseEvent,
@@ -74,6 +75,8 @@ type Props = {
   grayOutside: boolean;
   /** The selected field's unusual patches, drawn while its card is open. */
   patches: GeoJSON.FeatureCollection | null;
+  /** Outlines of the trees, buildings and water inside the open field. */
+  landCover: GeoJSON.FeatureCollection | null;
   /** The clouds and rain loop: the box it covers (west, south, east, north), its frames and
    * which one is on screen. */
   weather: {
@@ -131,6 +134,7 @@ export function MapView(props: Props) {
       );
       hideTerritories(map, [...latest.current.hiddenIds]);
       showPatches(map, latest.current.patches);
+      showLandCover(map, latest.current.landCover);
       showWeather(map, latest.current.weather);
       // A new basemap rebuilds the layers; the selected field keeps its glow.
       if (latest.current.selectedId !== null) fadeInGlow(map);
@@ -223,6 +227,11 @@ export function MapView(props: Props) {
     const map = mapRef.current;
     if (map?.getSource("territories")) showPatches(map, props.patches);
   }, [props.patches]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map?.getSource("territories")) showLandCover(map, props.landCover);
+  }, [props.landCover]);
 
   const weatherFrames = props.weather?.frames.map((f) => f.id).join() ?? "";
   const weatherShown = props.weather?.shown ?? -1;
@@ -402,6 +411,48 @@ function showPatches(
     source: PATCHES_SOURCE,
     layout: { "line-join": "round" },
     paint: { "line-color": "#f87171", "line-width": 2, "line-blur": 0.5 },
+  });
+}
+
+const LAND_SOURCE = "land-cover";
+// What the outlines are colored by: bright on satellite, and apart from the field's own outline.
+const LAND_COLORS: ExpressionSpecification = [
+  "match",
+  ["get", "kind"],
+  "trees",
+  "#22c55e",
+  "built",
+  "#f97316",
+  "water",
+  "#38bdf8",
+  "#ffffff",
+];
+
+/** The trees, buildings and water inside the open field, outlined in their own colors
+ * (docs/15-land-cover.md). */
+function showLandCover(
+  map: MapLibreMap,
+  land: GeoJSON.FeatureCollection | null,
+) {
+  const data = land ?? NO_PATCHES;
+  const source = map.getSource(LAND_SOURCE) as GeoJSONSource | undefined;
+  if (source) {
+    source.setData(data);
+    return;
+  }
+  map.addSource(LAND_SOURCE, { type: "geojson", data });
+  map.addLayer({
+    id: "land-fill",
+    type: "fill",
+    source: LAND_SOURCE,
+    paint: { "fill-color": LAND_COLORS, "fill-opacity": 0.28 },
+  });
+  map.addLayer({
+    id: "land-line",
+    type: "line",
+    source: LAND_SOURCE,
+    layout: { "line-join": "round" },
+    paint: { "line-color": LAND_COLORS, "line-width": 1.6 },
   });
 }
 

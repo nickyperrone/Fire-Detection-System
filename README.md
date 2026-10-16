@@ -593,8 +593,10 @@ flowchart LR
 
 Trees burn and spread embers; where there is a house there may be people
 ([15-land-cover](docs/15-land-cover.md)). Each field's page shows **Qué hay en el campo**: a bar of
-what covers it, and a line when it has many trees or buildings in or near it, saying what that
-changes. The map is ESA's machine-learning land cover map, validated worldwide, read only for the
+what covers it, the outlines of its trees, buildings and water drawn on the map, a verdict ("este
+campo está sembrado") with the reasons (the map's cropland share, and how its greenness rose and
+fell across the year's photos), and a line when it has many trees or buildings in or near it,
+saying what that changes. It says "planted" only when the map and the greenness agree. The map is ESA's machine-learning land cover map, validated worldwide, read only for the
 field's box; a lone small shed can be missed, and the page names the source.
 
 ### The field page and its satellite photos

@@ -212,6 +212,33 @@ const en = {
       built: "Buildings",
     },
     other: "Other",
+    use: {
+      cultivated: "🌾 This field is planted.",
+      maybe_cultivated:
+        "🌾 It looks planted, but there are too few clear photos to confirm it.",
+      grassland: "🌱 This field is mostly grass.",
+      wooded: "🌳 This field is mostly trees.",
+      mixed: "This field mixes several kinds of ground.",
+    },
+    reasons: {
+      map_crops: (pct: string) =>
+        `The land cover map (ESA WorldCover) marks ${pct} % of it as cropland.`,
+      map_grass: (pct: string) =>
+        `The land cover map marks ${pct} % of it as grassland.`,
+      map_trees: (pct: string) =>
+        `The land cover map marks ${pct} % of it as trees.`,
+      greenness_cycle: (
+        low: string,
+        lowOn: string,
+        high: string,
+        highOn: string,
+        passes: string,
+      ) =>
+        `In ${passes} satellite photos its greenness went from ${low} (${lowOn}) to ${high} (${highOn}): that rise and fall is a crop growing and being harvested. Trees or natural grass stay about the same.`,
+      greenness_flat: (low: string, high: string, passes: string) =>
+        `In ${passes} satellite photos its greenness barely moved (${low} to ${high}): a crop would rise and fall, so it may be pasture or fallow.`,
+    },
+    outlined: (n: string) => `${n} outlines on the map:`,
     buildingsInside: (m2: string) =>
       `🏠 Buildings in the field (about ${m2} m²): fires nearby are alerted one level higher and always with sound.`,
     buildingsNearby:
@@ -856,6 +883,27 @@ const es: Messages = {
       built: "Construcciones",
     },
     other: "Otros",
+    use: {
+      cultivated: "🌾 Este campo está sembrado.",
+      maybe_cultivated:
+        "🌾 Parece sembrado, pero hay pocas fotos claras para confirmarlo.",
+      grassland: "🌱 Este campo es sobre todo pasto.",
+      wooded: "🌳 Este campo es sobre todo monte.",
+      mixed: "Este campo mezcla varios tipos de suelo.",
+    },
+    reasons: {
+      map_crops: (pct) =>
+        `El mapa de cobertura (ESA WorldCover) marca el ${pct} % como tierra de cultivo.`,
+      map_grass: (pct) =>
+        `El mapa de cobertura marca el ${pct} % como pastizal.`,
+      map_trees: (pct) =>
+        `El mapa de cobertura marca el ${pct} % como árboles.`,
+      greenness_cycle: (low, lowOn, high, highOn, passes) =>
+        `En ${passes} fotos satelitales su verdor pasó de ${low} (${lowOn}) a ${high} (${highOn}): ese sube y baja es un cultivo que crece y se cosecha. Un monte o un pasto natural casi no cambian.`,
+      greenness_flat: (low, high, passes) =>
+        `En ${passes} fotos satelitales su verdor casi no se movió (${low} a ${high}): un cultivo sube y baja, así que puede ser pastura o barbecho.`,
+    },
+    outlined: (n) => `${n} contornos en el mapa:`,
     buildingsInside: (m2) =>
       `🏠 Hay construcciones en el campo (unos ${m2} m²): los fuegos cercanos se avisan un nivel más alto y siempre con sonido.`,
     buildingsNearby:

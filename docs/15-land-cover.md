@@ -28,6 +28,9 @@ The worker (`land cover` job, every 10 minutes, on the images thread) reads ever
 or lot, that has no land cover yet or whose outline changed since (an md5 of the outline is kept):
 
 - **Shares** of each class inside the outline, adding up to 1.
+- **Outlines** of its trees, buildings and water: the pixels of those classes joined into
+  polygons (up to 300, the biggest first; at least 0.08 ha for trees and water, 0.02 ha for
+  buildings), simplified to about a pixel, kept as GeoJSON in `land_cover.features`.
 - **Buildings inside** and **buildings nearby** (in a 300 m ring around the outline,
   `land_cover.ring_m`), in m², from the pixel count and the pixel's ground area at that latitude.
 
@@ -48,11 +51,31 @@ Thresholds in `field_risk.land_cover`.
   · 🌾 Cultivo 70 %".
 - The risk event's `factors` keep `trees_share`, `built_m2` and `land_raised_by`.
 
+## Why it says "planted"
+
+A field is called planted only when two independent readings agree (`explain`, thresholds in
+`land_cover`):
+
+1. **The map**: cropland covers 50 % of the field or more (the same for grass and trees).
+2. **The greenness through the year**: the field's mean NDVI in its clear Sentinel-2 photos
+   ([12-field-page](12-field-page.md)) swings by 0.25 or more between its greenest and least green
+   date, over at least 3 passes. A crop is sown, grows green and is harvested; trees and natural
+   grass hold about the same.
+
+Map and swing agree → `cultivated`. Cropland on the map but flat greenness, or too few photos →
+`maybe_cultivated`, said as "parece sembrado, pero…" and never as a fact; flat greenness suggests
+pasture or fallow. Each reason is returned as a code with its numbers (the percentages, the lowest
+and highest greenness with their dates, the number of photos) and the page writes it out: "En 22
+fotos satelitales su verdor pasó de 0,26 (29 may) a 0,69 (7 ago)…".
+
 ## On screen
 
 The field page has **Qué hay en el campo** under Fire: a bar with the shares (crops, grass, trees,
 water, buildings), a line for buildings in or near the field and one for many trees, each saying
 what it changes, and the source. A new field says it is being read until the worker has done it.
+Under the bar sits the verdict ("Este campo está sembrado.") with its reasons. While a field is
+open, the **outlines of its trees (green), buildings (orange) and water (blue)** are drawn on the
+map, over any basemap.
 
-`GET /territories/{id}/land-cover` returns the shares, the building areas, `wooded` and
-`has_buildings`, or `null` while it is pending.
+`GET /territories/{id}/land-cover` returns the shares, the outlines, the verdict with its reasons,
+the building areas, `wooded` and `has_buildings`, or `null` while it is pending.

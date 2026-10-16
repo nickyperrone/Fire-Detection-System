@@ -881,10 +881,18 @@ export interface components {
              */
             computed_at: string;
             /**
+             * Features
+             * @description GeoJSON outlines of trees, buildings and water
+             */
+            features: {
+                [key: string]: unknown;
+            }[];
+            /**
              * Has Buildings
              * @description Buildings in or near the field
              */
             has_buildings: boolean;
+            land_use: components["schemas"]["LandUseOut"];
             /**
              * Shares
              * @description Share of the field per class, adding up to 1
@@ -901,6 +909,21 @@ export interface components {
              * @description Enough trees to make a fire there one band worse
              */
             wooded: boolean;
+        };
+        /** LandUseOut */
+        LandUseOut: {
+            /**
+             * Reasons
+             * @description Why, as codes with their numbers
+             */
+            reasons: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Use
+             * @description cultivated, maybe_cultivated, grassland, wooded or mixed
+             */
+            use: string;
         };
         /** LatestPassOut */
         LatestPassOut: {

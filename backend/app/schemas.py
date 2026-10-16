@@ -208,7 +208,14 @@ class FireEventOut(BaseModel):
     geometry: dict
 
 
+class LandUseOut(BaseModel):
+    use: str = Field(description="cultivated, maybe_cultivated, grassland, wooded or mixed")
+    reasons: list[dict] = Field(description="Why, as codes with their numbers")
+
+
 class LandCoverOut(BaseModel):
+    features: list[dict] = Field(description="GeoJSON outlines of trees, buildings and water")
+    land_use: LandUseOut
     shares: dict[str, float] = Field(description="Share of the field per class, adding up to 1")
     trees_share: float
     built_m2: float
