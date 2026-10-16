@@ -179,7 +179,11 @@ point, a field too small, a sign-in limit) has a stable `code` that the page tra
 plain sentence where it happened. Any other failed action shows one friendly line at the bottom
 ("😕 No se pudo hacer. Probá de nuevo en un momento."), from the query client's mutation cache;
 mutations whose page already says it carry `meta.inline` and skip it. A list that cannot load says
-there is no connection and to try again in a few minutes.
+there is no connection and to try again in a few minutes. `ApiError` keeps only the status and the
+`code`, never the server's text. If the page itself breaks, or a link leads nowhere, `error.tsx`,
+`global-error.tsx` and `not-found.tsx` show one friendly screen ("Algo no salió bien", with
+Reintentar) in the browser's language, without the app's providers, so it works even when they are
+what broke; the stack never reaches the person.
 
 ## Basemaps
 

@@ -65,11 +65,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    const detail =
-      typeof body?.detail === "string" ? body.detail : response.statusText;
+    // The server's own words stay here: they are for its log, not for the screen. The page
+    // translates `code` into its own sentence (docs/04-frontend.md#errors).
     throw new ApiError(
       response.status,
-      detail,
+      `HTTP ${response.status}`,
       typeof body?.code === "string" ? body.code : null,
     );
   }
