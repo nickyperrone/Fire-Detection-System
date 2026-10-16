@@ -31,6 +31,7 @@ from app.services.field_risk import SEVERITY_RANK, compass
 from app.services.lightning import nearby_lightning
 from app.services.mail import SEND_ERRORS, SendEmail, message
 from app.services.notification_prefs import CHANNELS, FIRE_KIND, Kind, wants
+from app.services.wind import Push, Wind, push, wind_now
 
 log = logging.getLogger(__name__)
 
@@ -231,17 +232,6 @@ def _weather(session: Session, thresholds: dict, now: datetime) -> list[Found]:
     return found
 
 
-def _wind_now(session: Session, ids: list[int], now: datetime) -> dict[int, tuple[float, float]]:
-    """(km/h, degrees it blows from) at each field in the current hour of the forecast."""
-    rows = session.execute(HOURS_SQL, {"ids": ids, "since": now - timedelta(hours=1), "until": now})
-    wind = {}
-    for row in rows:
-        speed, origin = row.weather.get("wind_speed_kmh"), row.weather.get("wind_direction_deg")
-        if speed is not None and origin is not None:
-            wind[row.territory_id] = (speed, origin)
-    return wind
-
-
 def public_url(url: str) -> bool:
     """Telegram refuses buttons that link to this computer."""
     host = urlparse(url).hostname or ""
@@ -279,7 +269,7 @@ def send_alerts(
     by_user: dict[int, list[Found]] = defaultdict(list)
     for f in found:
         by_user[f.user.id].append(f)
-    wind = _wind_now(session, list({f.group for f in found}), now) if found else {}
+    wind = wind_now(session, list({f.group for f in found}), now)
     counts = {"emails_sent": 0, "emails_failed": 0, "telegram_sent": 0, "telegram_failed": 0}
 
     for items in by_user.values():
@@ -311,6 +301,11 @@ def send_alerts(
             dangers = sorted((f.danger for f in field_items), key=_rank)
             # Distant fires alone arrive without sound; anything closer rings.
             silent = all(f.kind == "fire_far" for f in field_items)
+            here = wind.get(territory_id)
+            fire = next((d for d in dangers if d.kind == "fire"), None)
+            pushed = fire and push(
+                here, fire.bearing_deg, fire.distance_m, thresholds["field_risk"]["wind"]
+            )
             result = _send_telegram(
                 telegram,
                 picture,
@@ -318,7 +313,8 @@ def send_alerts(
                 user,
                 territory,
                 dangers,
-                wind.get(territory_id),
+                here,
+                pushed or None,
                 window_minutes,
                 now,
                 silent,
@@ -355,7 +351,8 @@ def _send_telegram(
     user: User,
     territory: Territory,
     dangers: list[Danger],
-    wind: tuple[float, float] | None,
+    wind: Wind | None,
+    pushed: Push | None,
     window_minutes: int,
     now: datetime,
     silent: bool,
@@ -364,14 +361,7 @@ def _send_telegram(
     es = user.locale == "es"
     chat = user.telegram_chat_id
     fire = next((d for d in dangers if d.kind == "fire"), None)
-    caption = alert_caption(
-        user.locale,
-        dangers,
-        wind,
-        fire.bearing_deg if fire else None,
-        window_minutes,
-        now,
-    )
+    caption = alert_caption(user.locale, dangers, wind, pushed, window_minutes, now)
     links = []
     # Only to a public address: a link to this computer would not open on a phone, and Telegram
     # refuses it in a button.

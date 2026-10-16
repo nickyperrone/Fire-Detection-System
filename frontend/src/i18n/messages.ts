@@ -63,6 +63,10 @@ const en = {
     times: (pass: string, received: string) =>
       `Satellite pass ${pass} · received ${received}`,
     rulesVersion: (v: string) => `Rules version ${v}`,
+    windToward: (kmh: string) =>
+      `💨 Wind of ${kmh} km/h blowing from the fire toward the field: more danger.`,
+    arrival: (span: string) =>
+      `⏱️ If it runs with the wind, it would arrive in ${span} (estimate).`,
     popupTitle: "Possible fire",
     detected: (age: string) => `detected ${age}`,
   },
@@ -565,7 +569,8 @@ const en = {
     findFirst:
       "🔎 First find your field: search a town or road above, or zoom in on the map. Up close the property lines show; then pick how to mark it.",
     searching: "Looking up the parcel…",
-    detecting: "Detecting the field in a year of satellite images… it can take up to a minute.",
+    detecting:
+      "Detecting the field in a year of satellite images… it can take up to a minute.",
     detected: (dates: number, first: string, last: string) =>
       `Detected in Sentinel-2 images (${dates} dates, ${first} to ${last}). Check the outline.`,
     notices: {
@@ -684,6 +689,10 @@ const es: Messages = {
     times: (pass, received) =>
       `Pasada del satélite ${pass} · recibido ${received}`,
     rulesVersion: (v) => `Versión de reglas ${v}`,
+    windToward: (kmh) =>
+      `💨 Viento de ${kmh} km/h desde el fuego hacia el campo: más peligro.`,
+    arrival: (span) =>
+      `⏱️ Si avanza con el viento, llegaría en ${span} (estimado).`,
     popupTitle: "Posible fuego",
     detected: (age) => `detectado ${age}`,
   },
@@ -1152,7 +1161,8 @@ const es: Messages = {
     findFirst:
       "🔎 Primero encontrá tu campo: buscá un pueblo o camino arriba, o acercate en el mapa. De cerca aparecen las líneas de los campos; ahí elegí cómo marcarlo.",
     searching: "Buscando la parcela…",
-    detecting: "Detectando el campo en un año de imágenes satelitales… puede tardar hasta un minuto.",
+    detecting:
+      "Detectando el campo en un año de imágenes satelitales… puede tardar hasta un minuto.",
     detected: (dates, first, last) =>
       `Detectado en imágenes Sentinel-2 (${dates} fechas, del ${first} al ${last}). Revisá el borde.`,
     notices: {

@@ -19,6 +19,7 @@ import {
   useWeatherLayer,
 } from "@/api/queries";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { formatNumber } from "@/i18n/text";
 import { hazardTone, TONE_HEX } from "@/lib/status";
 import { leadingTag } from "@/lib/tags";
 import { type FieldTab, formatCamera, useUrlState } from "@/lib/useUrlState";
@@ -63,6 +64,8 @@ function boundsOf(territories: Territory[]): Bounds | null {
     [Math.max(...lons), Math.max(...lats)],
   ];
 }
+
+const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
 /** Picked fields plus their lots: picking a field brings its lots along. */
 function withLots(ids: number[], entries: PortfolioEntry[]): Set<number> {
@@ -203,6 +206,22 @@ export function FieldWatchApp() {
   const selected =
     everything.data?.find((e) => e.territory_id === url.selectedId) ?? null;
   const patches = useAnomalyPatches(selected?.territory_id ?? null);
+  // The wind now at the open field, drawn on it as an arrow (docs/03-rules.md#wind).
+  const windArrow = useMemo(() => {
+    const shape = territories.data?.find(
+      (t) => t.id === selected?.territory_id,
+    );
+    const box = shape && boundsOf([shape]);
+    const kmh = selected?.weather.wind_speed_kmh;
+    const from = COMPASS.indexOf(selected?.weather.wind_from ?? "");
+    if (!box || kmh == null || from < 0) return null;
+    return {
+      lon: (box[0][0] + box[1][0]) / 2,
+      lat: (box[0][1] + box[1][1]) / 2,
+      fromDeg: from * 45,
+      label: `${formatNumber(t, kmh)} km/h`,
+    };
+  }, [territories.data, selected, t]);
 
   // Fits a box in the part of the map the panels leave free.
   const fitBox = useCallback(
@@ -398,6 +417,7 @@ export function FieldWatchApp() {
         boundary={boundary.data ?? null}
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
+        wind={drawingOn ? null : windArrow}
         weather={
           weatherLayer.data && weatherFrames.length > 0
             ? {

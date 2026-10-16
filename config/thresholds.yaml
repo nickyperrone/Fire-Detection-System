@@ -179,6 +179,15 @@ field_risk:
     - {severity: VERY_HIGH, max_distance_m: 2000}
     - {severity: HIGH, max_distance_m: 5000}
     - {severity: WATCH, max_distance_m: 10000}
+  # Wind from the fire toward the field (docs/03-rules.md#wind). Below min_kmh a fire is not
+  # pushed anywhere in particular; at each speed it moves one band closer to danger. A grass fire
+  # runs at about spread_share of the wind speed, which gives a rough time of arrival.
+  wind:
+    min_kmh: 5
+    toward_within_deg: 45
+    raise_one_from_kmh: 15
+    raise_two_from_kmh: 30
+    spread_share: 0.1
 
 weather:
   forecast_hours: 48

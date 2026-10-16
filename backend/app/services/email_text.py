@@ -13,6 +13,7 @@ from app.models import Severity, SummaryFrequency
 
 if TYPE_CHECKING:
     from app.services.summary import FieldSummary
+    from app.services.wind import Push, Wind
 
 LOCAL = ZoneInfo(LOCAL_TZ)
 WEEKDAYS = {
@@ -176,12 +177,6 @@ def alert_email(
     return subject, "\n\n".join(lines) + "\n\n" + footer + "\n"
 
 
-def wind_toward(bearing_deg: float, wind_from_deg: float) -> bool:
-    """Whether the wind blows from the fire's side toward the field: the bearing from the field to
-    the fire within 45° of where the wind comes from."""
-    return abs((bearing_deg - wind_from_deg + 180) % 360 - 180) <= 45
-
-
 def _headline(danger: Danger, what: str, locale: str) -> str:
     """The line of an alert with the field's name in it: "Posible fuego a 1,9 km al E de …"."""
     es = locale == "es"
@@ -202,14 +197,14 @@ def _headline(danger: Danger, what: str, locale: str) -> str:
 def alert_caption(
     locale: str,
     dangers: list[Danger],
-    wind: tuple[float, float] | None,
-    bearing_deg: float | None,
+    wind: "Wind | None",
+    pushed: "Push | None",
     window_minutes: int,
     now: datetime,
 ) -> str:
     """The Telegram message of one field's new dangers, worst first, in Telegram's HTML.
-    `wind` is (km/h, degrees it blows from) now at the field; `bearing_deg` is toward the closest
-    fire. The link to the field is a button, not part of the text."""
+    `wind` is the wind now at the field and `pushed` what it does to the closest fire
+    (docs/03-rules.md#wind). The link to the field is a button, not part of the text."""
     es = locale == "es"
     lines = ["🔴 <b>ALERTA!</b>" if es else "🔴 <b>ALERT!</b>"]
     for i, danger in enumerate(dangers):
@@ -221,14 +216,32 @@ def alert_caption(
         )
         if details:
             lines.append(escape(" · ".join(details)))
-    if wind and bearing_deg is not None and wind_toward(bearing_deg, wind[1]):
-        speed = f"{wind[0]:.0f} km/h"
+    if wind and pushed and pushed.toward:
+        speed = f"{wind.speed_kmh:.0f} km/h"
         lines.append(
             f"💨 Viento de {speed} desde el fuego hacia el campo."
             if es
             else f"💨 Wind of {speed} blowing from the fire toward the field."
         )
+        if pushed.arrival_h is not None:
+            lines.append(f"⏱️ {arrival(pushed.arrival_h, locale)}")
     return "\n".join(lines)[:1024]
+
+
+def arrival(hours: float, locale: str) -> str:
+    """A rough time for the fire front to reach the field, said as an estimate."""
+    es = locale == "es"
+    if hours < 1:
+        span = f"~{max(5, round(hours * 60 / 5) * 5)} min"
+    else:
+        span = (
+            f"~{hours:.0f} h" if hours >= 3 else f"~{hours:.1f} h".replace(".", "," if es else ".")
+        )
+    return (
+        f"Si avanza con el viento, llegaría en {span} (estimado)."
+        if es
+        else f"If it runs with the wind, it would arrive in {span} (estimate)."
+    )
 
 
 def _count(n: int, one: str, many: str) -> str:

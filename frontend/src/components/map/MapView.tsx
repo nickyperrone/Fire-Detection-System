@@ -3,6 +3,7 @@
 import {
   AttributionControl,
   Map as MapLibreMap,
+  Marker,
   Popup,
   type GeoJSONSource,
   type MapGeoJSONFeature,
@@ -80,6 +81,8 @@ type Props = {
     frames: { id: string; url: string }[];
     shown: number;
   } | null;
+  /** The wind now at the selected field: an arrow on it pointing where the wind blows. */
+  wind: { lon: number; lat: number; fromDeg: number; label: string } | null;
 };
 
 export function MapView(props: Props) {
@@ -240,6 +243,24 @@ export function MapView(props: Props) {
     if (map?.getLayer("field-fill")) hideTerritories(map, [...props.hiddenIds]);
   }, [props.hiddenIds]);
 
+  const windKey = props.wind
+    ? `${props.wind.lon},${props.wind.lat},${props.wind.fromDeg},${props.wind.label}`
+    : "";
+  useEffect(() => {
+    const map = mapRef.current;
+    const wind = latest.current.wind;
+    if (!map || !wind) return;
+    const marker = new Marker({
+      element: windArrow(wind.fromDeg, wind.label),
+      rotationAlignment: "map",
+    })
+      .setLngLat([wind.lon, wind.lat])
+      .addTo(map);
+    return () => {
+      marker.remove();
+    };
+  }, [windKey]);
+
   // MapLibre's stylesheet makes its container position: relative, so the positioning lives on a
   // wrapper and the container only fills it.
   return (
@@ -327,6 +348,25 @@ function showWeather(map: MapLibreMap, weather: Props["weather"]) {
       index === weather.shown ? WEATHER_OPACITY : 0,
     );
   });
+}
+
+/** An arrow that points where the wind blows (away from where it comes from), with its speed. */
+function windArrow(fromDeg: number, label: string): HTMLElement {
+  const element = document.createElement("div");
+  element.className = "pointer-events-none flex flex-col items-center gap-1";
+  const arrow = document.createElement("div");
+  arrow.style.transform = `rotate(${(fromDeg + 180) % 360}deg)`;
+  arrow.innerHTML =
+    '<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="11" fill="rgba(11,14,19,0.75)"/>' +
+    '<path d="M12 4v15M12 4l-5 5M12 4l5 5" stroke="#e2e8f0" stroke-width="2.2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+  const text = document.createElement("span");
+  text.className =
+    "rounded-full bg-slate-950/75 px-2 py-0.5 text-[11px] font-medium text-slate-100";
+  text.textContent = label;
+  element.append(arrow, text);
+  return element;
 }
 
 const PATCHES_SOURCE = "patches";

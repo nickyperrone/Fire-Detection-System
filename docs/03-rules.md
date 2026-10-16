@@ -65,10 +65,27 @@ polygon, so it is 0 when they intersect.
 
 - Bearing is measured from the territory centroid to the fire event centroid, and is shown as a
   compass direction (`NE`).
-- `factors` stores distance, confidence, maximum FRP, sensor count and observation count. In Phase 4
-  they feed a score that also uses wind direction toward the field.
+- `factors` stores distance, confidence, maximum FRP, sensor count and observation count, and what
+  the wind does (below).
 - When a fire event changes, its field risk events are recomputed with the current processing
   version. Status `SEEN` and `RESOLVED` are kept unless severity goes up, which resets it to `NEW`.
+  Every run recomputes every active fire, so a change of wind moves the severity both ways.
+
+### Wind
+
+More wind from the fire's side means more caution. The wind is the current hour of the field's
+forecast (Open-Meteo, 10 m), thresholds in `field_risk.wind`.
+
+- **Toward the field**: the wind comes from within 45° of the bearing from the field to the fire,
+  and blows at 5 km/h or more (calmer air does not carry a fire anywhere in particular).
+- **Severity**: toward the field at 15 km/h or more, the fire moves one band up (`WATCH` → `HIGH`);
+  at 30 km/h or more, two bands. It never becomes `CRITICAL`, which means the fire is inside.
+- **Time of arrival**: a grass fire runs at about a tenth of the wind speed, so 20 km/h of wind
+  moves the front about 2 km/h, and a fire 5 km away "would arrive in ~2.5 h". It is a rough
+  estimate and is always said as one ("si avanza con el viento, llegaría en ~2,5 h (estimado)").
+- `factors` keeps `wind_kmh`, `wind_from_deg`, `wind_toward`, `wind_raised_by` and `arrival_h`. The
+  field page and the Telegram alert say it in words; the map draws an arrow on the open field
+  pointing where the wind blows, with its speed.
 
 ## Spray conditions
 

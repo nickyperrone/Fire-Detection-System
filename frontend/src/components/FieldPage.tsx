@@ -28,6 +28,7 @@ import {
 
 import type { FieldTab } from "@/lib/useUrlState";
 import { FIELD_TABS } from "@/lib/useUrlState";
+import { windPush } from "@/lib/wind";
 
 import { AnomalySection } from "./Anomalies";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -230,6 +231,10 @@ function Now({
   const risks = useRiskEvents(entry.territory_id);
   const hours = useSprayConditions(entry.territory_id);
   const { fire, spray } = entry;
+  const closest = risks.data?.toSorted(
+    (a, b) => a.distance_m - b.distance_m,
+  )[0];
+  const pushed = windPush(t, closest);
 
   return (
     <>
@@ -267,6 +272,12 @@ function Now({
               {t.fire.lastRead(formatAge(t, fire.last_read_at))}
             </p>
           )
+        )}
+        {pushed && (
+          <div className="mt-2 rounded-xl bg-bad/10 px-3 py-2 text-sm text-slate-100 ring-1 ring-bad/30">
+            <p>{pushed.toward}</p>
+            {pushed.arrival && <p className="mt-0.5">{pushed.arrival}</p>}
+          </div>
         )}
         {(risks.data?.length ?? 0) > 1 && (
           <ul className="mt-2 space-y-1 text-sm text-slate-300">

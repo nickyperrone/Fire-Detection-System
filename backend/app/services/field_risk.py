@@ -6,6 +6,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from app.models import FieldRiskEvent, FireEvent, FireEventStatus, RiskStatus, Severity
+from app.services.wind import Push, Wind, push, wind_now
 
 SEVERITY_RANK = {Severity.WATCH: 0, Severity.HIGH: 1, Severity.VERY_HIGH: 2, Severity.CRITICAL: 3}
 COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
@@ -30,6 +31,12 @@ def severity_for(distance_m: float, intersects: bool, bands: list[dict]) -> Seve
         if band["max_distance_m"] > 0 and distance_m < band["max_distance_m"]:
             return Severity(band["severity"])
     return None
+
+
+def raised(severity: Severity, by: int) -> Severity:
+    """Moved `by` bands closer to danger, never to CRITICAL: that one means the fire is inside."""
+    order = sorted(SEVERITY_RANK, key=SEVERITY_RANK.get)
+    return order[min(SEVERITY_RANK[severity] + by, SEVERITY_RANK[Severity.VERY_HIGH])]
 
 
 def compass(bearing_deg: float | None) -> str | None:
@@ -74,22 +81,40 @@ def assess_fire_events(
             FireEvent.id.in_(fire_event_ids), FireEvent.status == FireEventStatus.ACTIVE
         )
     ).all()
-    touched = 0
-    for event in events:
-        rows = session.execute(
+    nearby = {
+        event.id: session.execute(
             NEARBY_TERRITORIES_SQL, {"fire_event_id": event.id, "max_distance_m": widest}
         ).all()
-        for row in rows:
+        for event in events
+    }
+    wind = wind_now(
+        session, list({row.territory_id for rows in nearby.values() for row in rows}), now
+    )
+    touched = 0
+    for event in events:
+        for row in nearby[event.id]:
             severity = severity_for(row.distance_m, row.intersects, bands)
-            if severity is not None:
-                _upsert(session, event, row, severity, version, now)
-                touched += 1
+            if severity is None:
+                continue
+            here = wind.get(row.territory_id)
+            pushed = push(here, row.bearing_deg, row.distance_m, config["wind"])
+            if severity != Severity.CRITICAL:
+                severity = raised(severity, pushed.raise_by)
+            _upsert(session, event, row, severity, here, pushed, version, now)
+            touched += 1
     session.commit()
     return touched
 
 
 def _upsert(
-    session: Session, event: FireEvent, row, severity: Severity, version: str, now: datetime
+    session: Session,
+    event: FireEvent,
+    row,
+    severity: Severity,
+    wind: Wind | None,
+    pushed: Push,
+    version: str,
+    now: datetime,
 ):
     risk = session.scalar(
         select(FieldRiskEvent).where(
@@ -114,6 +139,11 @@ def _upsert(
         "max_frp_mw": event.max_frp_mw,
         "sensor_count": len(event.sensors),
         "observation_count": event.observation_count,
+        "wind_kmh": wind and round(wind.speed_kmh, 1),
+        "wind_from_deg": wind and round(wind.from_deg),
+        "wind_toward": pushed.toward,
+        "wind_raised_by": pushed.raise_by,
+        "arrival_h": pushed.arrival_h,
     }
     risk.processing_version = version
     risk.updated_at = now
