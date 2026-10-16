@@ -182,6 +182,11 @@ field_risk:
   # Wind from the fire toward the field (docs/03-rules.md#wind). Below min_kmh a fire is not
   # pushed anywhere in particular; at each speed it moves one band closer to danger. A grass fire
   # runs at about spread_share of the wind speed, which gives a rough time of arrival.
+  # Trees burn, and a house nearby must hear of a fire sooner (docs/15-land-cover.md): either one
+  # moves a fire one band up.
+  land_cover:
+    trees_share: 0.15
+    built_m2: 300
   wind:
     min_kmh: 5
     toward_within_deg: 45
@@ -230,6 +235,8 @@ worker:
   # Sentinel-2 passes every 5 days; checking 4 times a day catches each scene the day it lands.
   anomaly_interval_minutes: 360
   snapshot_interval_minutes: 360
+  # New and redrawn fields get their land cover within this long.
+  land_cover_interval_minutes: 10
   weather_layer_interval_minutes: 10
   # How often the bot looks for messages and button taps (docs/13-notifications.md#telegram).
   telegram_interval_seconds: 5
@@ -343,3 +350,9 @@ places:
   limit: 5
   min_letters: 3
   cache_seconds: 3600
+
+land_cover:
+  # Buildings within this distance of a field count as nearby.
+  ring_m: 300
+  # Fields read per worker run; each takes a few seconds of the public WorldCover files.
+  per_run: 40

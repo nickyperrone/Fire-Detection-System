@@ -37,6 +37,7 @@ import { FieldSettings } from "./FieldSettings";
 import { FieldChips, headline, lightningSentence } from "./FieldSummary";
 import { FireHistory } from "./FireHistory";
 import { ForecastSection } from "./ForecastSection";
+import { LandCoverSection } from "./LandCoverSection";
 import {
   BoltIcon,
   ChevronIcon,
@@ -48,6 +49,7 @@ import {
   PencilPlusIcon,
   PlusIcon,
   SprayIcon,
+  TreeIcon,
   WindIcon,
 } from "./Icons";
 import { SprayTimeline } from "./SprayTimeline";
@@ -294,6 +296,13 @@ function Now({
             {t.fire.rulesVersion(risks.data[0].processing_version)}
           </p>
         )}
+      </section>
+
+      <section>
+        <SectionTitle icon={<TreeIcon className="size-4" />}>
+          {t.sections.land}
+        </SectionTitle>
+        <LandCoverSection territoryId={entry.territory_id} />
       </section>
 
       <section>

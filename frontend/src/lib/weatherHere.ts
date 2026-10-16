@@ -41,11 +41,19 @@ export function skyOf(pixels: Uint8ClampedArray): SkyHere {
   const rank = (s: SkyHere) =>
     ["clear", "clouds", "light", "moderate", "heavy"].indexOf(s);
   for (let i = 0; i < pixels.length; i += 4) {
-    const [r, g, b, a] = [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]];
+    const [r, g, b, a] = [
+      pixels[i],
+      pixels[i + 1],
+      pixels[i + 2],
+      pixels[i + 3],
+    ];
     let sky: SkyHere = a >= CLOUD_MIN_ALPHA ? "clouds" : "clear";
     for (const band of RAIN) {
       const [br, bg, bb] = band.rgb;
-      if (a > 0 && Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb) < 30) {
+      if (
+        a > 0 &&
+        Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb) < 30
+      ) {
         sky = band.name;
       }
     }

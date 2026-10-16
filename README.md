@@ -178,7 +178,7 @@ sequenceDiagram
     W->>DB: observation, idempotent (dedup key, native id)
     W->>DB: flag it if it sits on a static heat source (steel plants, flares)
     W->>DB: join to a fire event (FIRMS 1 km, GOES 3 km, 24 h)
-    W->>DB: field risk event per territory within 10 km
+    W->>DB: field risk event per territory within 10 km,<br/>a band worse with wind from the fire, trees or houses
     App->>DB: portfolio + tiles
     DB-->>App: "Possible fire 3.9 km NE · acquired 2 h ago · received 5 min ago"
 ```
@@ -188,6 +188,12 @@ sequenceDiagram
   fifteen field risk events.
 - **Severity by distance:** inside the field `CRITICAL`, under 2 km `VERY_HIGH`, under 5 km `HIGH`,
   under 10 km `WATCH`.
+- **Then wind and what is in the field** ([03-rules](docs/03-rules.md#wind),
+  [15-land-cover](docs/15-land-cover.md)): wind blowing from the fire toward the field at 15 km/h
+  moves the fire one band up, at 30 km/h two, and gives a rough time of arrival ("llegaría en
+  ~2,5 h (estimado)": a grass fire runs at about a tenth of the wind speed). A field with many
+  trees, or with buildings in or within 300 m of it, is one band worse too, and its alerts of far
+  fires ring. Never up to `CRITICAL`, which means inside.
 - **Two timestamps.** `acquired_at` (the pass) and `ingested_at` (when we received it). FIRMS data
   for Argentina arrives hours after the pass, and the UI says so.
 - **Data quality on every answer:** `GOOD`, `PARTIAL`, `STALE`, `CLOUD_OBSCURED`, `NO_DATA`. "No
@@ -573,6 +579,24 @@ flowchart LR
 - Classic computer vision on index time series (no trained model), about 15 s per lot the first
   time and a single date per new scene afterwards, cached per lot.
 
+### Computer vision: what is in the field
+
+```mermaid
+flowchart LR
+    F["New or redrawn field"] --> W["Worker: land cover job<br/>every 10 min"]
+    W --> C["ESA WorldCover 10 m<br/>(ML classification of<br/>Sentinel-1 + Sentinel-2)"]
+    C --> S["Shares inside the outline:<br/>crops, grass, trees, water, buildings"]
+    C --> R["Buildings in a 300 m ring"]
+    S & R --> D["Fire danger: one band worse<br/>if wooded or with buildings"]
+    S & R --> A["Alert says it:<br/>🏠 construcciones cerca · 🌳 árboles 22 %"]
+```
+
+Trees burn and spread embers; where there is a house there may be people
+([15-land-cover](docs/15-land-cover.md)). Each field's page shows **Qué hay en el campo**: a bar of
+what covers it, and a line when it has many trees or buildings in or near it, saying what that
+changes. The map is ESA's machine-learning land cover map, validated worldwide, read only for the
+field's box; a lone small shed can be missed, and the page names the source.
+
 ### The field page and its satellite photos
 
 Each field and lot has its own page ([12-field-page](docs/12-field-page.md)). Breadcrumbs say where
@@ -683,6 +707,7 @@ The logo is a satellite on its orbit over a field's rows (`docs/brand/`). The de
 | [12-field-page](docs/12-field-page.md) | A page per field and lot: breadcrumbs, tabs, satellite photos and greenness over time |
 | [13-notifications](docs/13-notifications.md) | Which dangers to hear about (fire by distance, lightning, adverse weather, summaries) and where: email or Telegram, with a photo of the area; the bot and its buttons |
 | [14-deploy](docs/14-deploy.md) | One image on Dokploy: what runs where, the settings, and moving the data from the laptop |
+| [15-land-cover](docs/15-land-cover.md) | What is in each field (trees, crops, buildings) from ESA WorldCover, and how it changes fire danger and alerts |
 | [09-accounts-and-alerts](docs/09-accounts-and-alerts.md) | Sign-in by email link and its confirmation page, bots (Turnstile and limits), fields per account, email alerts, SMTP |
 
 CI runs on every push: ruff, the banned-words check, `alembic check` (migrations match the models),
@@ -707,6 +732,7 @@ the build of the image Dokploy deploys.
 | Field outlines by computer vision | Sentinel-2 L2A from the Earth Search STAC catalog | Free (Copernicus) | Live |
 | Unusual patches in a field, 10 m | Sentinel-2 L2A | Free (Copernicus) | Live |
 | Field photos and greenness over time | Sentinel-2 L2A | Free (Copernicus) | Live |
+| Trees, crops and buildings per field | [ESA WorldCover](https://esa-worldcover.org/) 10 m 2021, public COGs on AWS | Free, CC BY 4.0 | Live |
 | Email | [Resend](https://resend.com/) over SMTP, from a verified domain | Free up to 100 emails a day and 3,000 a month | Live |
 | Field imagery, 30 m, thermal | Landsat 8/9 Collection 2 Level-2 | Free (USGS) | Planned |
 | Radar through clouds, flooding | Sentinel-1 GRD | Free (Copernicus) | Planned |

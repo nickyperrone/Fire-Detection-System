@@ -195,6 +195,27 @@ const en = {
     lightning: "Lightning",
     spray: "Spraying, next 48 h",
     unusual: "Areas to check",
+    land: "What is in the field",
+  },
+  landCover: {
+    pending:
+      "Reading what covers the field from satellite maps… it takes a few minutes.",
+    classes: {
+      crops: "Crops",
+      grass: "Grass",
+      trees: "Trees",
+      water: "Water",
+      built: "Buildings",
+    },
+    other: "Other",
+    buildingsInside: (m2: string) =>
+      `🏠 Buildings in the field (about ${m2} m²): fires nearby are alerted one level higher and always with sound.`,
+    buildingsNearby:
+      "🏠 Buildings within 300 m: fires nearby are alerted one level higher and always with sound.",
+    wooded:
+      "🌳 Many trees: they burn, so fires nearby are alerted one level higher.",
+    source:
+      "ESA WorldCover 10 m: a land cover map made with machine learning from Sentinel-1 and Sentinel-2.",
   },
   anomaly: {
     kinds: {
@@ -813,7 +834,28 @@ const es: Messages = {
     history: "Historial de fuegos",
     lightning: "Rayos",
     spray: "Pulverización, próximas 48 h",
+    land: "Qué hay en el campo",
     unusual: "Zonas para revisar",
+  },
+  landCover: {
+    pending:
+      "Leyendo qué cubre el campo en los mapas satelitales… tarda unos minutos.",
+    classes: {
+      crops: "Cultivo",
+      grass: "Pasto",
+      trees: "Árboles",
+      water: "Agua",
+      built: "Construcciones",
+    },
+    other: "Otros",
+    buildingsInside: (m2) =>
+      `🏠 Hay construcciones en el campo (unos ${m2} m²): los fuegos cercanos se avisan un nivel más alto y siempre con sonido.`,
+    buildingsNearby:
+      "🏠 Hay construcciones a menos de 300 m: los fuegos cercanos se avisan un nivel más alto y siempre con sonido.",
+    wooded:
+      "🌳 Muchos árboles: se prenden fuego, así que los fuegos cercanos se avisan un nivel más alto.",
+    source:
+      "ESA WorldCover 10 m: un mapa de cobertura hecho con aprendizaje automático sobre imágenes Sentinel-1 y Sentinel-2.",
   },
   anomaly: {
     kinds: { less_green: "Menos verde", water: "Agua", burnt: "Quemado" },

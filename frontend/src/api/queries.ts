@@ -125,6 +125,15 @@ export function useTerritories(enabled = true) {
   });
 }
 
+export function useLandCover(id: number) {
+  return useQuery({
+    queryKey: ["land-cover", id],
+    queryFn: () => api.landCover(id),
+    // A new field gets it from the worker within minutes.
+    refetchInterval: (query) => (query.state.data ? false : 60_000),
+  });
+}
+
 export function useRiskEvents(id: number | null) {
   return useQuery({
     queryKey: ["risk-events", id],

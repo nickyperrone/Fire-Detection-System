@@ -17,6 +17,7 @@ from app.services.pipeline import (
     run_fire_pipeline,
     run_forecast_pipeline,
     run_goes_fire_pipeline,
+    run_land_cover_pipeline,
     run_lightning_pipeline,
     run_snapshot_pipeline,
     run_spray_pipeline,
@@ -97,6 +98,11 @@ def main() -> None:
         (
             job("photos", run_snapshot_pipeline),
             intervals["snapshot_interval_minutes"],
+            "images",
+        ),
+        (
+            job("land cover", run_land_cover_pipeline),
+            intervals["land_cover_interval_minutes"],
             "images",
         ),
         (

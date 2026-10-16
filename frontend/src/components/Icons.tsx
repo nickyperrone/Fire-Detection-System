@@ -159,6 +159,12 @@ export const WindIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const TreeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 21v-5M7.5 16h9a3.5 3.5 0 0 0 .9-6.9A5.5 5.5 0 0 0 6.6 9.1 3.5 3.5 0 0 0 7.5 16Z" />
+  </Icon>
+);
+
 export const PatchIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 5h16v14H4z" />

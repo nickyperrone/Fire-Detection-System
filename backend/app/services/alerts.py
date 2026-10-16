@@ -26,8 +26,9 @@ from app.models import (
     User,
 )
 from app.providers.telegram import Telegram, TelegramBlocked, TelegramError
-from app.services.email_text import Danger, alert_caption, alert_email
+from app.services.email_text import Danger, alert_caption, alert_email, holds_line
 from app.services.field_risk import SEVERITY_RANK, compass
+from app.services.land_cover import contents_of
 from app.services.lightning import nearby_lightning
 from app.services.mail import SEND_ERRORS, SendEmail, message
 from app.services.notification_prefs import CHANNELS, FIRE_KIND, Kind, wants
@@ -269,7 +270,10 @@ def send_alerts(
     by_user: dict[int, list[Found]] = defaultdict(list)
     for f in found:
         by_user[f.user.id].append(f)
-    wind = wind_now(session, list({f.group for f in found}), now)
+    groups = list({f.group for f in found})
+    wind = wind_now(session, groups, now)
+    cover = contents_of(session, groups)
+    cover_config = thresholds["field_risk"]["land_cover"]
     counts = {"emails_sent": 0, "emails_failed": 0, "telegram_sent": 0, "telegram_failed": 0}
 
     for items in by_user.values():
@@ -299,8 +303,12 @@ def send_alerts(
         for territory_id, field_items in by_field.items():
             territory = field_items[0].territory
             dangers = sorted((f.danger for f in field_items), key=_rank)
-            # Distant fires alone arrive without sound; anything closer rings.
-            silent = all(f.kind == "fire_far" for f in field_items)
+            # Distant fires alone arrive without sound; anything closer rings, and so does any fire
+            # near a field with buildings: people may be there (docs/15-land-cover.md).
+            holds = cover.get(territory_id)
+            silent = all(f.kind == "fire_far" for f in field_items) and not (
+                holds and holds.has_buildings(cover_config)
+            )
             here = wind.get(territory_id)
             fire = next((d for d in dangers if d.kind == "fire"), None)
             pushed = fire and push(
@@ -315,6 +323,7 @@ def send_alerts(
                 dangers,
                 here,
                 pushed or None,
+                holds_line(holds, cover_config, user.locale) if fire else None,
                 window_minutes,
                 now,
                 silent,
@@ -353,6 +362,7 @@ def _send_telegram(
     dangers: list[Danger],
     wind: Wind | None,
     pushed: Push | None,
+    holds: str | None,
     window_minutes: int,
     now: datetime,
     silent: bool,
@@ -361,7 +371,7 @@ def _send_telegram(
     es = user.locale == "es"
     chat = user.telegram_chat_id
     fire = next((d for d in dangers if d.kind == "fire"), None)
-    caption = alert_caption(user.locale, dangers, wind, pushed, window_minutes, now)
+    caption = alert_caption(user.locale, dangers, wind, pushed, holds, window_minutes, now)
     links = []
     # Only to a public address: a link to this computer would not open on a phone, and Telegram
     # refuses it in a button.

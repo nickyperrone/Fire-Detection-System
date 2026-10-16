@@ -22,6 +22,7 @@ from app.services.field_risk import assess_active_fire_events
 from app.services.fire_correlation import correlate
 from app.services.fire_ingestion import ingest_firms
 from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
+from app.services.land_cover import refresh_land_cover
 from app.services.mail import smtp_sender
 from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
@@ -212,6 +213,11 @@ def run_anomaly_pipeline(session: Session, client: httpx.Client, thresholds: dic
         datetime.now(UTC),
         SENTINEL2_FIELDS,
     )
+
+
+def run_land_cover_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:
+    """Trees, crops and buildings in and around new or redrawn fields (docs/15-land-cover.md)."""
+    return refresh_land_cover(session, thresholds["land_cover"], datetime.now(UTC))
 
 
 def run_snapshot_pipeline(session: Session, client: httpx.Client, thresholds: dict) -> dict:

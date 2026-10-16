@@ -423,6 +423,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/territories/{territory_id}/land-cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Land Cover
+         * @description Trees, crops and buildings in and around the field; null until the worker has read them
+         *     (docs/15-land-cover.md).
+         */
+        get: operations["land_cover_territories__territory_id__land_cover_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/territories/{territory_id}/outline": {
         parameters: {
             query?: never;
@@ -826,6 +847,39 @@ export interface components {
             processing_version: string;
             /** Sources */
             sources: components["schemas"]["SourceStatusOut"][];
+        };
+        /** LandCoverOut */
+        LandCoverOut: {
+            /** Built M2 */
+            built_m2: number;
+            /** Built Nearby M2 */
+            built_nearby_m2: number;
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            /**
+             * Has Buildings
+             * @description Buildings in or near the field
+             */
+            has_buildings: boolean;
+            /**
+             * Shares
+             * @description Share of the field per class, adding up to 1
+             */
+            shares: {
+                [key: string]: number;
+            };
+            /** Source */
+            source: string;
+            /** Trees Share */
+            trees_share: number;
+            /**
+             * Wooded
+             * @description Enough trees to make a fire there one band worse
+             */
+            wooded: boolean;
         };
         /** LatestPassOut */
         LatestPassOut: {
@@ -2180,6 +2234,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FireHistoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    land_cover_territories__territory_id__land_cover_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                territory_id: number;
+            };
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandCoverOut"] | null;
                 };
             };
             /** @description Validation Error */

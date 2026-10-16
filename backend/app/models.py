@@ -362,6 +362,26 @@ class CellForecast(Base):
     )
 
 
+class LandCover(Base):
+    """What covers a territory and the ring around it, from ESA WorldCover
+    (docs/15-land-cover.md). Recomputed when the outline changes."""
+
+    __tablename__ = "land_cover"
+
+    territory_id: Mapped[int] = mapped_column(
+        ForeignKey("territory.id", ondelete="CASCADE"), primary_key=True
+    )
+    # Share of the territory per class name ("trees", "crops", ...), adding up to 1.
+    shares: Mapped[dict] = mapped_column(JSONB)
+    built_m2: Mapped[float] = mapped_column(Float)
+    # Built-up area in the ring around the territory (`land_cover.ring_m`).
+    built_nearby_m2: Mapped[float] = mapped_column(Float)
+    # md5 of the outline it was computed for.
+    outline: Mapped[str] = mapped_column(String(32))
+    source: Mapped[str] = mapped_column(String(60))
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class FireForecast(Base):
     """Latest fire probability per territory and horizon (cells within the radius combined)."""
 

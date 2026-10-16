@@ -9,6 +9,7 @@ export type LightningAnswer = Schemas["LightningAnswerOut"];
 export type Territory = Schemas["TerritoryOut"];
 export type TerritoryIn = Schemas["TerritoryIn"];
 export type RiskEvent = Schemas["RiskEventOut"];
+export type LandCover = Schemas["LandCoverOut"];
 export type SprayHour = Schemas["SprayHourOut"];
 export type Health = Schemas["HealthOut"];
 export type FireHistory = Schemas["FireHistoryOut"];
@@ -114,6 +115,8 @@ export const api = {
     }),
   deleteTerritory: (id: number) =>
     request<void>(`/territories/${id}`, { method: "DELETE" }),
+  landCover: (id: number) =>
+    request<LandCover | null>(`/territories/${id}/land-cover`),
   riskEvents: (id: number) =>
     request<RiskEvent[]>(`/territories/${id}/risk-events`),
   sprayConditions: (id: number) =>

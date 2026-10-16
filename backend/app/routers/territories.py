@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.boundaries import allowed_area
 from app.config import get_thresholds
-from app.models import Territory
+from app.models import LandCover, Territory
 from app.routers.dependencies import HttpDep, OwnerDep, PhotoRootDep, SessionDep, TagsQuery
 from app.schemas import (
     FireHistoryOut,
+    LandCoverOut,
     OutlineIn,
     RiskEventOut,
     SettingsIn,
@@ -24,6 +25,7 @@ from app.services.anomalies import field_anomaly_features
 from app.services.field_risk import assess_active_fire_events, compass, reassess_territory
 from app.services.fire_events import geojson, list_risk_events
 from app.services.fire_history import field_history
+from app.services.land_cover import contents
 from app.services.pipeline import answer_territories
 from app.services.snapshots import View, field_snapshots, photo_path
 from app.services.spray_conditions import list_spray_hours
@@ -179,6 +181,28 @@ def replace_tags(
     set_tags(session, territory, body.tags)
     session.commit()
     return territory_out(territory)
+
+
+@router.get("/{territory_id}/land-cover", response_model=LandCoverOut | None)
+def land_cover(session: SessionDep, owner: OwnerDep, territory_id: int):
+    """Trees, crops and buildings in and around the field; null until the worker has read them
+    (docs/15-land-cover.md)."""
+    owned(session, owner, territory_id)
+    row = session.get(LandCover, territory_id)
+    holds = contents(row)
+    if row is None or holds is None:
+        return None
+    config = get_thresholds()["field_risk"]["land_cover"]
+    return LandCoverOut(
+        shares=row.shares,
+        trees_share=holds.trees_share,
+        built_m2=row.built_m2,
+        built_nearby_m2=row.built_nearby_m2,
+        wooded=holds.wooded(config),
+        has_buildings=holds.has_buildings(config),
+        source=row.source,
+        computed_at=row.computed_at,
+    )
 
 
 @router.get("/{territory_id}/risk-events", response_model=list[RiskEventOut])

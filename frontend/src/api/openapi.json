@@ -643,6 +643,61 @@
         "title": "HealthOut",
         "type": "object"
       },
+      "LandCoverOut": {
+        "properties": {
+          "built_m2": {
+            "title": "Built M2",
+            "type": "number"
+          },
+          "built_nearby_m2": {
+            "title": "Built Nearby M2",
+            "type": "number"
+          },
+          "computed_at": {
+            "format": "date-time",
+            "title": "Computed At",
+            "type": "string"
+          },
+          "has_buildings": {
+            "description": "Buildings in or near the field",
+            "title": "Has Buildings",
+            "type": "boolean"
+          },
+          "shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Share of the field per class, adding up to 1",
+            "title": "Shares",
+            "type": "object"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "trees_share": {
+            "title": "Trees Share",
+            "type": "number"
+          },
+          "wooded": {
+            "description": "Enough trees to make a fire there one band worse",
+            "title": "Wooded",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shares",
+          "trees_share",
+          "built_m2",
+          "built_nearby_m2",
+          "wooded",
+          "has_buildings",
+          "source",
+          "computed_at"
+        ],
+        "title": "LandCoverOut",
+        "type": "object"
+      },
       "LatestPassOut": {
         "properties": {
           "acquired_at": {
@@ -3449,6 +3504,73 @@
           }
         },
         "summary": "Fire History",
+        "tags": [
+          "territories"
+        ]
+      }
+    },
+    "/territories/{territory_id}/land-cover": {
+      "get": {
+        "description": "Trees, crops and buildings in and around the field; null until the worker has read them\n(docs/15-land-cover.md).",
+        "operationId": "land_cover_territories__territory_id__land_cover_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "territory_id",
+            "required": true,
+            "schema": {
+              "title": "Territory Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LandCoverOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Land Cover Territories  Territory Id  Land Cover Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Land Cover",
         "tags": [
           "territories"
         ]

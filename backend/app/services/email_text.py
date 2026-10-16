@@ -12,6 +12,7 @@ from app.forecast.live_weather import LOCAL_TZ
 from app.models import Severity, SummaryFrequency
 
 if TYPE_CHECKING:
+    from app.services.land_cover import Contents
     from app.services.summary import FieldSummary
     from app.services.wind import Push, Wind
 
@@ -199,12 +200,14 @@ def alert_caption(
     dangers: list[Danger],
     wind: "Wind | None",
     pushed: "Push | None",
+    holds: str | None,
     window_minutes: int,
     now: datetime,
 ) -> str:
     """The Telegram message of one field's new dangers, worst first, in Telegram's HTML.
     `wind` is the wind now at the field and `pushed` what it does to the closest fire
-    (docs/03-rules.md#wind). The link to the field is a button, not part of the text."""
+    (docs/03-rules.md#wind); `holds` says what is in the field (docs/15-land-cover.md). The link to
+    the field is a button, not part of the text."""
     es = locale == "es"
     lines = ["🔴 <b>ALERTA!</b>" if es else "🔴 <b>ALERT!</b>"]
     for i, danger in enumerate(dangers):
@@ -225,6 +228,8 @@ def alert_caption(
         )
         if pushed.arrival_h is not None:
             lines.append(f"⏱️ {arrival(pushed.arrival_h, locale)}")
+    if holds:
+        lines.append(escape(holds))
     return "\n".join(lines)[:1024]
 
 
@@ -242,6 +247,27 @@ def arrival(hours: float, locale: str) -> str:
         if es
         else f"If it runs with the wind, it would arrive in {span} (estimate)."
     )
+
+
+def holds_line(holds: "Contents | None", config: dict, locale: str) -> str | None:
+    """What is in the field, for an alert: "🏠 Hay construcciones cerca · 🌳 Árboles 22 % · 🌾
+    Cultivo 70 %". Buildings first: they are what matters most when a fire comes."""
+    if holds is None:
+        return None
+    es = locale == "es"
+    parts = []
+    if holds.built_m2 >= config["built_m2"]:
+        parts.append("🏠 Hay construcciones en el campo" if es else "🏠 Buildings in the field")
+    elif holds.has_buildings(config):
+        parts.append("🏠 Hay construcciones cerca" if es else "🏠 Buildings nearby")
+    for share, es_name, en_name, icon in (
+        (holds.trees_share, "Árboles", "Trees", "🌳"),
+        (holds.crops_share, "Cultivo", "Crops", "🌾"),
+        (holds.grass_share, "Pasto", "Grass", "🌱"),
+    ):
+        if share >= 0.05:
+            parts.append(f"{icon} {es_name if es else en_name} {share * 100:.0f} %")
+    return " · ".join(parts) or None
 
 
 def _count(n: int, one: str, many: str) -> str:

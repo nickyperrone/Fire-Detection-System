@@ -208,6 +208,17 @@ class FireEventOut(BaseModel):
     geometry: dict
 
 
+class LandCoverOut(BaseModel):
+    shares: dict[str, float] = Field(description="Share of the field per class, adding up to 1")
+    trees_share: float
+    built_m2: float
+    built_nearby_m2: float
+    wooded: bool = Field(description="Enough trees to make a fire there one band worse")
+    has_buildings: bool = Field(description="Buildings in or near the field")
+    source: str
+    computed_at: datetime
+
+
 class RiskEventOut(BaseModel):
     id: int
     territory_id: int
