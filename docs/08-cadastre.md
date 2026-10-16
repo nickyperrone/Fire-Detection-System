@@ -66,5 +66,6 @@ them all would download hundreds of megabytes nobody looks at. Instead:
   The card says what happened ("Fitted to 3 parcels") and offers **Use my drawing**, which puts
   the original shape back; it can be fitted again. Thresholds are in `cadastre.snap`.
 - Drawing a field has a third tool, **Parcel**: tap a parcel and its exact outline becomes the
-  field, which can still be adjusted point by point. The parcel's department, `partida` and `plano`
-  are kept in the field's attributes.
+  field, which can still be adjusted point by point. Tapping another parcel outside it takes its
+  place; a tap inside is left for adjusting. The parcel's department, `partida` and `plano` are
+  kept in the field's attributes.

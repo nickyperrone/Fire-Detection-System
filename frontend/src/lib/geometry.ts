@@ -86,3 +86,17 @@ export function simplifyRing(
   const simplified = [...first.slice(0, -1), ...second];
   return simplified.length >= 4 ? simplified : ring;
 }
+
+/** Whether a point falls inside a ring of [lon, lat] corners (even-odd rule). */
+export function insideRing(point: [number, number], ring: number[][]): boolean {
+  const [x, y] = point;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}

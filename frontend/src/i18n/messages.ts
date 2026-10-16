@@ -562,7 +562,7 @@ const en = {
     cornersCount: (n: number) => `${n} ${n === 1 ? "corner" : "corners"}`,
     zoomHint: "Zoom with two fingers or the wheel.",
     searching: "Looking up the parcel…",
-    detecting: "Detecting the field in satellite images…",
+    detecting: "Detecting the field in a year of satellite images… it can take up to a minute.",
     detected: (dates: number, first: string, last: string) =>
       `Detected in Sentinel-2 images (${dates} dates, ${first} to ${last}). Check the outline.`,
     notices: {
@@ -1146,7 +1146,7 @@ const es: Messages = {
     cornersCount: (n) => `${n} ${n === 1 ? "esquina" : "esquinas"}`,
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
     searching: "Buscando la parcela…",
-    detecting: "Detectando el campo en imágenes satelitales…",
+    detecting: "Detectando el campo en un año de imágenes satelitales… puede tardar hasta un minuto.",
     detected: (dates, first, last) =>
       `Detectado en imágenes Sentinel-2 (${dates} fechas, del ${first} al ${last}). Revisá el borde.`,
     notices: {

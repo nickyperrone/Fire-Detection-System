@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
   // A server with only the files it needs, for the Docker image (docs/14-deploy.md).
   output: "standalone",
   poweredByHeader: false,
+  experimental: {
+    // Finding a field in a year of images can take a minute; the default 30 s cut it off and the
+    // user saw nothing (docs/14-deploy.md).
+    proxyTimeout: 150_000,
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

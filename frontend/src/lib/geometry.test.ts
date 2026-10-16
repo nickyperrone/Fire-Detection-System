@@ -1,7 +1,7 @@
 import area from "@turf/area";
 import { describe, expect, it } from "vitest";
 
-import { simplifyRing } from "./geometry";
+import { insideRing, simplifyRing } from "./geometry";
 
 // A 1 km x 1 km square near Larroque traced with a point every ~10 m.
 function tracedSquare(): number[][] {
@@ -40,5 +40,19 @@ describe("simplifyRing", () => {
     const ring = tracedSquare();
     ring[150] = [ring[150][0] + 0.0005, ring[150][1]]; // ~45 m bump on the east side
     expect(simplifyRing(ring, 3).length).toBeGreaterThan(5);
+  });
+});
+
+describe("inside a ring", () => {
+  const square = [
+    [0, 0],
+    [2, 0],
+    [2, 2],
+    [0, 2],
+    [0, 0],
+  ];
+  it("tells a point inside from one outside", () => {
+    expect(insideRing([1, 1], square)).toBe(true);
+    expect(insideRing([3, 1], square)).toBe(false);
   });
 });

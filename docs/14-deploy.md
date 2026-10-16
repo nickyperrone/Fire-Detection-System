@@ -19,7 +19,8 @@ flowchart LR
 
 - **One image** (`Dockerfile` at the root) runs the web, the API and the worker
   (`docker/start.sh`). Only the web is published, on **port 3000**; it forwards `/api` to the API
-  inside the container, as in development. If one of the three stops, the container stops and
+  inside the container, as in development, waiting up to 150 s for an answer (`proxyTimeout`;
+  Next's default of 30 s cut off field detection, which reads a year of images). If one of the three stops, the container stops and
   Dokploy restarts it.
 - **PostGIS** runs apart, as a Dokploy database: its data outlives every deploy of the app.
 - On start, the container applies the migrations (`alembic upgrade head`), hands the data volumes

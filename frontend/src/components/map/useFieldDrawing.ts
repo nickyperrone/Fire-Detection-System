@@ -15,7 +15,7 @@ import {
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 
 import { api, ApiError } from "@/api/client";
-import { simplifyRing } from "@/lib/geometry";
+import { insideRing, simplifyRing } from "@/lib/geometry";
 
 export type DrawnPolygon = { type: "Polygon"; coordinates: number[][][] };
 
@@ -293,8 +293,24 @@ export function useFieldDrawing(
 
       const onTap = async (event: MapMouseEvent) => {
         const tool = toolRef.current;
-        if (!TAP_TOOLS.includes(tool) || closedIdRef.current !== null) return;
+        if (!TAP_TOOLS.includes(tool)) return;
         const { lat, lng } = event.lngLat;
+        const closedId = closedIdRef.current;
+        if (closedId !== null) {
+          // A tap inside the shape is for adjusting it; outside, another parcel or field takes
+          // its place, as if "Empezar de nuevo" had been tapped first.
+          const shape = polygonOf(closedId);
+          if (!shape || insideRing([lng, lat], shape.coordinates[0])) return;
+          draw.setMode(MODE[tool]);
+          draw.clear();
+          closedIdRef.current = null;
+          setPolygon(null);
+          setHectares(0);
+          setParcel(null);
+          setDetected(null);
+          setFit(null);
+          shapesRef.current = null;
+        }
         setNotice(null);
         setSearching(true);
         try {
