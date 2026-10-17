@@ -433,6 +433,7 @@ export function FieldWatchApp() {
         grayOutside={drawingOn}
         patches={selected && !drawingOn ? (patches.data ?? null) : null}
         landCover={selected && !drawingOn ? landOutlines : null}
+        parcelsWithin={selected && !drawingOn ? selected.territory_id : null}
         weather={
           weatherLayer.data && weatherFrames.length > 0
             ? {

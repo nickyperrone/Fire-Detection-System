@@ -53,6 +53,11 @@ them all would download hundreds of megabytes nobody looks at. Instead:
 
 - "Property lines" in the layers menu, on by default, thin light lines that read over the dark,
   light and satellite basemaps.
+- **With a field or lot open, only the divisions inside it show**, finer and softer, and the lines
+  around it are hidden, so what is in the field reads clearly. They come as their own tiles,
+  `GET /tiles/parcels/{z}/{x}/{y}.pbf?within={territory id}`: the parcels cut to the outline,
+  only for the signed-in owner's own territory (anyone else, or signed out, gets nothing), cached
+  privately for an hour and fetched again when the outline is redrawn.
 - A shape drawn by hand (Trace or Corners) is fitted to the property lines when it closes,
   by the first rule that applies (`POST /cadastre/snap`):
   1. **Whole parcels.** Every parcel the drawing covers for at least half of its area is taken,

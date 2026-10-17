@@ -156,3 +156,49 @@ def test_a_parcel_that_crosses_itself_is_stored_valid(session):
         select(func.ST_IsValid(CadastralParcel.geom), func.ST_Area(CadastralParcel.geom))
     ).one()
     assert valid and area > 0
+
+
+def tile_extent(tile: bytes) -> tuple[float, float]:
+    """Width and height, in tile units, of everything a parcel tile draws."""
+    decoded = mapbox_vector_tile.decode(tile)["parcels"]["features"]
+
+    def points(geometry):
+        if isinstance(geometry, (int, float)):
+            return
+        if isinstance(geometry[0], (int, float)):
+            yield geometry
+        else:
+            for part in geometry:
+                yield from points(part)
+
+    found = [p for f in decoded for p in points(f["geometry"]["coordinates"])]
+    xs, ys = [p[0] for p in found], [p[1] for p in found]
+    return max(xs) - min(xs), max(ys) - min(ys)
+
+
+def test_the_open_field_shows_only_the_property_lines_inside_it(session, wfs):
+    from app.services.territories import create_territory
+    from tests.conftest import ARGENTINA
+
+    _, client = wfs
+    ensure_tile(session, client, CONFIG, 13, *tile_of(-32.9452, -59.1036, 13))
+    field = create_territory(
+        session,
+        owner="default",
+        name="Small",
+        geometry=square(-59.1045, -32.9465, 0.002),
+        section_tolerance_m=0,
+        allowed_area=ARGENTINA,
+    )
+    session.commit()
+    x, y = tile_of(-32.946, -59.1035, 14)
+
+    whole = build_tile(session, Layer.PARCELS, 14, x, y, "default", None)
+    inside = build_tile(session, Layer.PARCELS, 14, x, y, "default", None, within=field.id)
+    assert inside != b""
+    # A territory of 0.002° is a few hundred units on a tile of 4,096; the parcels around it
+    # span far more.
+    assert tile_extent(inside)[0] < 600 < tile_extent(whole)[0]
+    # Only the owner's own territory: someone else's, or nobody, gets nothing.
+    assert build_tile(session, Layer.PARCELS, 14, x, y, "other", None, within=field.id) == b""
+    assert build_tile(session, Layer.PARCELS, 14, x, y, None, None, within=field.id) == b""

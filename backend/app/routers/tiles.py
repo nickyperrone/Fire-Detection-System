@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, HTTPException, Path, Response
+from fastapi import APIRouter, HTTPException, Path, Query, Response
 
 from app.config import get_thresholds
 from app.routers.dependencies import SessionDep, UserDep
@@ -35,6 +35,8 @@ def tile(
     z: Annotated[int, Path(ge=0, le=22)],
     x: Annotated[int, Path(ge=0)],
     y: Annotated[int, Path(ge=0)],
+    # Parcels only: the lines inside this territory of the signed-in user, nothing around it.
+    within: Annotated[int | None, Query(ge=1)] = None,
 ):
     if x >= 2**z or y >= 2**z:
         raise HTTPException(404, "tile outside the zoom level")
@@ -57,8 +59,11 @@ def tile(
         thresholds["lightning"]["window_minutes"],
         (west, south, thresholds["forecast"]["cell_degrees"]),
         thresholds["forecast"]["bands"],
+        within,
     )
-    headers = {"Cache-Control": CACHE_CONTROL[layer]}
+    cache = CACHE_CONTROL[layer]
+    # The lines inside a field follow its outline, which only its owner can see.
+    headers = {"Cache-Control": "private, max-age=3600" if within is not None else cache}
     if not content:
         return Response(status_code=204, headers=headers)
     return Response(content, media_type=MVT_MEDIA_TYPE, headers=headers)

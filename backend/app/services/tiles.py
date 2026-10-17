@@ -156,6 +156,25 @@ PARCELS_SQL = text("""
     ) AS mvt
     WHERE geom IS NOT NULL
 """)
+# The property lines inside one territory, for the open field: its parcels cut to its outline, so
+# the map shows the divisions within it and nothing around. Only the owner's territory.
+FIELD_PARCELS_SQL = text("""
+    WITH bounds AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env)
+    SELECT ST_AsMVT(mvt, 'parcels', :extent, 'geom') FROM (
+        SELECT ST_AsMVTGeom(
+                   ST_Transform(
+                       ST_CollectionExtract(ST_Intersection(p.geom, t.geom), 3), 3857
+                   ),
+                   bounds.env, :extent, :buffer, true
+               ) AS geom
+        FROM territory t
+        JOIN cadastral_parcel p ON ST_Intersects(p.geom, t.geom)
+        CROSS JOIN bounds
+        WHERE t.id = :within AND t.owner = :owner
+          AND ST_Intersects(p.geom, ST_Transform(bounds.env, 4326))
+    ) AS mvt
+    WHERE geom IS NOT NULL
+""")
 # Property lines below this zoom would be a solid mesh (docs/08-cadastre.md); at 12, about
 # 10 km across here, fields still read well, which is the distance to start drawing one.
 PARCELS_FROM_ZOOM = 12
@@ -172,6 +191,7 @@ def build_tile(
     lightning_window_minutes: int = 60,
     forecast_grid: tuple[float, float, float] | None = None,
     forecast_bands: list[dict] | None = None,
+    within: int | None = None,
 ) -> bytes:
     params = {"z": z, "x": x, "y": y, "extent": EXTENT, "buffer": BUFFER}
     if layer == Layer.TERRITORIES:
@@ -195,6 +215,11 @@ def build_tile(
         if z < PARCELS_FROM_ZOOM:
             return b""
         statement = PARCELS_SQL
+        if within is not None:
+            if owner is None:
+                return b""
+            statement = FIELD_PARCELS_SQL
+            params |= {"within": within, "owner": owner}
     elif layer == Layer.LIGHTNING:
         statement = LIGHTNING_SQL
         params |= {"now": now, "since": now - timedelta(minutes=lightning_window_minutes)}

@@ -25,6 +25,7 @@ import {
   FIRE_LAYER,
   hideTerritories,
   PARCELS_LAYER,
+  PARCELS_MIN_ZOOM,
   RISK_LAYER,
   SELECTED_GLOW_LAYERS,
   styleFor,
@@ -76,6 +77,8 @@ type Props = {
   grayOutside: boolean;
   /** The selected field's unusual patches, drawn while its card is open. */
   patches: GeoJSON.FeatureCollection | null;
+  /** The open field or lot: its property lines are drawn, finer, and the rest are not. */
+  parcelsWithin: number | null;
   /** Outlines of the trees, buildings and water inside the open field. */
   landCover: GeoJSON.FeatureCollection | null;
   /** The clouds and rain loop: the box it covers (west, south, east, north), its frames and
@@ -134,6 +137,7 @@ export function MapView(props: Props) {
       hideTerritories(map, [...latest.current.hiddenIds]);
       showPatches(map, latest.current.patches);
       showLandCover(map, latest.current.landCover);
+      showParcelLines(map, latest.current);
       showWeather(map, latest.current.weather);
       // A new basemap rebuilds the layers; the selected field keeps its glow.
       if (latest.current.selectedId !== null) fadeInGlow(map);
@@ -195,14 +199,8 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map?.getLayer(PARCELS_LAYER)) {
-      map.setLayoutProperty(
-        PARCELS_LAYER,
-        "visibility",
-        props.showParcels ? "visible" : "none",
-      );
-    }
-  }, [props.showParcels]);
+    if (map?.getLayer(PARCELS_LAYER)) showParcelLines(map, latest.current);
+  }, [props.showParcels, props.parcelsWithin, props.territoriesVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -374,6 +372,58 @@ function showPatches(
     layout: { "line-join": "round" },
     paint: { "line-color": "#f87171", "line-width": 2, "line-blur": 0.5 },
   });
+}
+
+const FIELD_PARCELS_SOURCE = "parcels-field";
+const FIELD_PARCELS_LAYER = "parcel-field-line";
+
+/** Property lines: all of them, or with a field open only the ones inside it, finer. The lines
+ * inside come as their own tiles, cut to the field's outline by the server
+ * (docs/08-cadastre.md#in-the-map). */
+function showParcelLines(
+  map: MapLibreMap,
+  { showParcels, parcelsWithin, territoriesVersion }: Props,
+) {
+  const within = showParcels ? parcelsWithin : null;
+  map.setLayoutProperty(
+    PARCELS_LAYER,
+    "visibility",
+    showParcels && within === null ? "visible" : "none",
+  );
+  const tiles = (id: number) =>
+    `${tileUrl("parcels", territoriesVersion)}&within=${id}`;
+  if (within !== null && !map.getSource(FIELD_PARCELS_SOURCE)) {
+    map.addSource(FIELD_PARCELS_SOURCE, {
+      type: "vector",
+      tiles: [tiles(within)],
+      minzoom: PARCELS_MIN_ZOOM,
+      maxzoom: 16,
+    });
+    map.addLayer({
+      id: FIELD_PARCELS_LAYER,
+      type: "line",
+      source: FIELD_PARCELS_SOURCE,
+      "source-layer": "parcels",
+      // The same color as the lines it replaces for this basemap, but finer and softer.
+      paint: {
+        "line-color": (map.getPaintProperty(PARCELS_LAYER, "line-color") ??
+          "#ffffff") as string,
+        "line-opacity": 0.55,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.35, 17, 1],
+      },
+    });
+  } else if (within !== null) {
+    (map.getSource(FIELD_PARCELS_SOURCE) as VectorTileSource).setTiles([
+      tiles(within),
+    ]);
+  }
+  if (map.getLayer(FIELD_PARCELS_LAYER)) {
+    map.setLayoutProperty(
+      FIELD_PARCELS_LAYER,
+      "visibility",
+      within !== null ? "visible" : "none",
+    );
+  }
 }
 
 const LAND_SOURCE = "land-cover";
