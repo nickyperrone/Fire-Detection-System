@@ -68,10 +68,13 @@ more than two taps.
   longer near the field leaves its list. Spray and forecast answers follow on their next hourly run.
 - **Provenance in one tap**: every fire answer opens a card with sensors, confidence, "acquired 2 h ago ·
   received 5 min ago", and the processing version.
-- **Visual style**: dark basemap by default (fires and colors read better, less glare), with light and
-  satellite basemaps in the layers button; satellite is what a contractor uses to recognize a field.
+- **Visual style**: satellite basemap by default, since it is what a contractor uses to recognize a
+  field and what the trees, buildings and unusual patches are read against; dark and light are in
+  the layers button (`b=dark`, `b=light` in the link).
   One accent color, large type for the three answers, system font stack. Smooth camera moves
   (`flyTo`) when selecting a field, like a navigation app.
+- **The open field is only an outline**: its green (or red) fill, and its lots', is cleared while it
+  is open, so the ground and what is outlined on it (trees, buildings, patches) can be read.
 - **Fields stand out on every basemap**: a dark edge under each outline keeps red, green and tag
   colors readable over crops of any color on the satellite photo; outlines and labels grow with
   zoom; the selected field or lot glows white, and an open lot's dashed edge turns solid and as

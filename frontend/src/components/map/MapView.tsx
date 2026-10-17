@@ -50,6 +50,8 @@ export type TerritoryState = {
   color: string;
   dimmed: boolean;
   picked: boolean;
+  /** The open field or one of its lots: no fill, only the outline, to see the ground. */
+  open: boolean;
 };
 
 type Props = {

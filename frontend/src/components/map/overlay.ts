@@ -95,6 +95,8 @@ const highlighted: ExpressionSpecification = [
 function fillOpacity(base: number): ExpressionSpecification {
   return [
     "case",
+    ["boolean", ["feature-state", "open"], false],
+    0,
     highlighted,
     base + 0.1,
     ["boolean", ["feature-state", "dimmed"], false],

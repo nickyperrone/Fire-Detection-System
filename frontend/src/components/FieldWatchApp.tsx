@@ -192,6 +192,9 @@ export function FieldWatchApp() {
               : TONE_HEX[hazardTone(e.fire, e.lightning)],
           dimmed: narrowed && !shown.has(e.territory_id),
           picked: url.picked.includes(e.territory_id),
+          open:
+            e.territory_id === url.selectedId ||
+            (url.selectedId !== null && e.parent_id === url.selectedId),
         },
       ]),
     );
@@ -201,6 +204,7 @@ export function FieldWatchApp() {
     url.tags,
     url.onlyPicked,
     url.picked,
+    url.selectedId,
     url.colorBy,
     tagColors,
   ]);

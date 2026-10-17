@@ -79,7 +79,7 @@ export function useUrlState() {
   const showParcels = params.get("p") !== "0";
   const basemapParam = params.get("b") as Basemap | null;
   const basemap =
-    basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "dark";
+    basemapParam && BASEMAPS.includes(basemapParam) ? basemapParam : "satellite";
   // Read once: afterwards the map owns the camera and only writes it back.
   const initialCamera = useMemo(() => parseCamera(params.get("v")), []); // eslint-disable-line react-hooks/exhaustive-deps
   const linkHasCamera = useMemo(() => params.has("v"), []); // eslint-disable-line react-hooks/exhaustive-deps
