@@ -86,6 +86,8 @@ export function FieldWatchApp() {
     url.selectedId === null ? "peek" : url.tab === "photos" ? "full" : "half",
   );
   const [drawingActive, setDrawingActive] = useState(false);
+  // The field a lot is being drawn in; null while drawing a new field.
+  const [lotOf, setLotOf] = useState<number | null>(null);
   // The field whose outline is being edited; drawing then makes a piece to add or remove.
   const [editingId, setEditingId] = useState<number | null>(null);
   const [tilesVersion, setTilesVersion] = useState(0);
@@ -129,7 +131,19 @@ export function FieldWatchApp() {
   );
   const editing = editingId !== null ? territoryById.get(editingId) : undefined;
   const drawingOn = drawingActive || editing !== undefined;
-  const drawing = useFieldDrawing(map, drawingOn);
+  const lotParent =
+    lotOf !== null ? territories.data?.find((t) => t.id === lotOf) : undefined;
+  // "+" starts a new field; "Dividir en lotes" starts a lot of the open field.
+  const startDrawing = (parentId: number | null) => {
+    setLotOf(parentId);
+    setDrawingActive(true);
+  };
+  const drawing = useFieldDrawing(
+    map,
+    drawingOn,
+    (lotParent?.geometry as unknown as
+      GeoJSON.Polygon | GeoJSON.MultiPolygon | undefined) ?? null,
+  );
   // A hidden field hides its lots too.
   const hiddenIds = useMemo(() => {
     const entries = everything.data ?? [];
@@ -385,6 +399,7 @@ export function FieldWatchApp() {
 
   const finishDrawing = (created: Territory | null) => {
     setDrawingActive(false);
+    setLotOf(null);
     setEditingId(null);
     if (!created) return;
     setTilesVersion((v) => v + 1);
@@ -442,9 +457,7 @@ export function FieldWatchApp() {
           drawing={drawing}
           editing={editing ?? null}
           fields={fields}
-          defaultParentId={
-            selected?.kind === "FIELD" ? selected.territory_id : null
-          }
+          lotOf={lotOf}
           onDone={finishDrawing}
           search={
             <SearchBar
@@ -529,7 +542,7 @@ export function FieldWatchApp() {
               }
               onLocate={locate}
               onAddField={() =>
-                signedIn ? setDrawingActive(true) : setSignIn("open")
+                signedIn ? startDrawing(null) : setSignIn("open")
               }
             />
           </div>
@@ -562,7 +575,7 @@ export function FieldWatchApp() {
                 onOpen={open}
                 onEditOutline={() => setEditingId(selected.territory_id)}
                 // The drawing starts as a lot of the open field.
-                onAddLot={() => setDrawingActive(true)}
+                onAddLot={() => startDrawing(selected.territory_id)}
                 addingTag={addingTag}
                 onAddingTagChange={setAddingTag}
               />
@@ -587,7 +600,7 @@ export function FieldWatchApp() {
               me.data && (
                 <FirstField
                   me={me.data}
-                  onAddField={() => setDrawingActive(true)}
+                  onAddField={() => startDrawing(null)}
                   onNotifications={openNotifications}
                 />
               )

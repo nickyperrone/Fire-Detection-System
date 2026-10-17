@@ -618,6 +618,32 @@ const en = {
     closeField: "Close field",
     cornersCount: (n: number) => `${n} ${n === 1 ? "corner" : "corners"}`,
     zoomHint: "Zoom with two fingers or the wheel.",
+    step1: "1 · Mark the field",
+    step1Lot: (name: string) => `1 · Mark the lot inside ${name}`,
+    step2: "2 · Adjust it",
+    toolHelp: {
+      parcel: "Official edge · 1 tap",
+      detect: "From satellite images · 1 tap",
+      trace: "With your finger, around it",
+      corners: "Tapping each corner",
+    },
+    adjustBar: "What to do with the shape",
+    modes: { move: "Move corners", add: "Add zone", remove: "Remove zone" },
+    modeHints: {
+      move: "Drag the points on the edge to adjust it; the points in the middle of each side add a corner.",
+      add: "Mark the zone to add: it joins the field.",
+      remove: "Mark the zone to take out: it is cut from the field.",
+    },
+    undo: "Undo",
+    notes: {
+      kept_largest:
+        "It left several pieces: the biggest stays, since a field is one piece.",
+      piece_outside: "That zone does not touch the field.",
+      removed_all: "That would remove the whole field.",
+      unusable: "That zone could not be used. Try marking it again.",
+      clipped: "Cut to the edge of its field.",
+      outside_parent: "That zone is outside the field.",
+    },
     findFirst:
       "🔎 First find your field: search a town or road above, or zoom in on the map. Up close the property lines show; then pick how to mark it.",
     searching: "Looking up the parcel…",
@@ -632,6 +658,7 @@ const en = {
         "No clear field boundary around that point. Try Trace or Corners.",
       no_images: "No clear satellite images there in the last year.",
       detect_failed: "The images could not be read. Try again in a minute.",
+      outside_parent: "That is outside the field. Mark the lot inside it.",
     },
     fromParcel: (partida: number, plano: number | null) =>
       `Parcel ${partida}${plano ? `, plan ${plano}` : ""}.`,
@@ -1256,6 +1283,32 @@ const es: Messages = {
     closeField: "Cerrar campo",
     cornersCount: (n) => `${n} ${n === 1 ? "esquina" : "esquinas"}`,
     zoomHint: "Hacé zoom con dos dedos o la rueda.",
+    step1: "1 · Marcá el campo",
+    step1Lot: (name) => `1 · Marcá el lote dentro de ${name}`,
+    step2: "2 · Acomodalo",
+    toolHelp: {
+      parcel: "Borde oficial · 1 toque",
+      detect: "Con imágenes satelitales · 1 toque",
+      trace: "Con el dedo, alrededor",
+      corners: "Tocando cada esquina",
+    },
+    adjustBar: "Qué hacer con la forma",
+    modes: { move: "Mover esquinas", add: "Sumar zona", remove: "Quitar zona" },
+    modeHints: {
+      move: "Arrastrá los puntos del borde para acomodarlo; los puntos del medio de cada lado agregan una esquina.",
+      add: "Marcá la zona que querés sumar: se une al campo.",
+      remove: "Marcá la zona que querés quitar: se saca del campo.",
+    },
+    undo: "Deshacer",
+    notes: {
+      kept_largest:
+        "Quedaron varias partes: se queda la más grande, porque un campo es una sola pieza.",
+      piece_outside: "Esa zona no toca el campo.",
+      removed_all: "Así se borraría el campo entero.",
+      unusable: "No pude usar esa zona. Probá marcarla de nuevo.",
+      clipped: "Lo recorté al borde de su campo.",
+      outside_parent: "Esa zona queda fuera del campo.",
+    },
     findFirst:
       "🔎 Primero encontrá tu campo: buscá un pueblo o camino arriba, o acercate en el mapa. De cerca aparecen las líneas de los campos; ahí elegí cómo marcarlo.",
     searching: "Buscando la parcela…",
@@ -1272,6 +1325,7 @@ const es: Messages = {
       no_images: "No hay imágenes satelitales despejadas ahí en el último año.",
       detect_failed:
         "No se pudieron leer las imágenes. Probá de nuevo en un minuto.",
+      outside_parent: "Eso queda fuera del campo. Marcá el lote dentro de él.",
     },
     fromParcel: (partida, plano) =>
       `Partida ${partida}${plano ? `, plano ${plano}` : ""}.`,

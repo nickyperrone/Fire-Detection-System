@@ -46,11 +46,29 @@ more than two taps.
   (`GET /places?q=`, from 3 letters, results kept in memory for an hour) so the browser never
   calls them directly and repeated searches cost nothing. Picking a place frames its area, or flies
   to a street or address close enough to draw a field there.
-- **Drawing a field**: a floating "+" starts draw mode, tap corners, close the shape, hectares update
-  live, then name and tags. A drawn field can be split into sections the same way.
-- **Finding the field first**: draw mode keeps the search box under the tool switch, for towns,
-  roads and one's own fields. While the map is too far out to see property lines (below zoom 12),
-  the card says to search or zoom in first instead of the tool's hint.
+- **Drawing a field, in steps.** A floating "+" starts draw mode: a slim bar on top (Cancelar and
+  the title) and one card at the bottom that follows the steps, so nothing shows before it is
+  needed (`lib/drawStep.ts` decides what each step shows, and is tested without a map):
+  1. **Mark the field.** The card offers four ways, each with what it takes: *Parcela* (the
+     official edge, one tap; the default, since it is exact), *Detectar* (from satellite images,
+     one tap), *Trazar* (with the finger, around it) and *Esquinas* (tapping each corner). The
+     place search sits on top, only in this step. Too far out to see property lines (below zoom
+     12), the card says to search or zoom in first.
+  2. **Adjust it.** Once there is a shape, the card shows its area and an adjust bar:
+     **Mover esquinas** (the default: drag the points of the edge; the midpoints of each side add a
+     corner), **Sumar zona** and **Quitar zona** (mark a zone with any tool, and it is joined to
+     the shape or cut from it on the spot, in the browser), **Deshacer** (up to 30 changes back,
+     also after dragging a corner) and **Empezar de nuevo**. Taking a zone out offers only Trazar
+     and Esquinas: there is no parcel or satellite outline to tap. While a zone is being drawn
+     Guardar is hidden. A result in several pieces keeps the biggest ("un campo es una sola
+     pieza"), and a zone that does not touch the shape, or would take all of it, is said so.
+  3. **Save.** Name and Guardar; lot of and tags are under "más opciones". The name box does not
+     take focus by itself, so the keyboard does not cover the map.
+- **Lots are cut to their field.** "+" always starts a new field; a lot starts from the open
+  field's own page ("Dividir en lotes", "Agregar lote"). The card says "Marcá el lote dentro de
+  X", and whatever is marked is cut to the edge of X ("Lo recorté al borde de su campo"); a zone
+  fully outside it is refused.
+- **Finding the field first**: the search box is in step 1 for towns, roads and one's own fields.
 - **Corners never trap the user**: while placing corners a drag still moves the map (a tap places
   a corner, a drag pans), the card counts the corners and offers **Undo corner** (also Cmd or
   Ctrl+Z) and **Close field** from three corners on, besides tapping the first corner again.
