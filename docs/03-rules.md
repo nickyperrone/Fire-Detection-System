@@ -84,8 +84,8 @@ forecast (Open-Meteo, 10 m), thresholds in `field_risk.wind`.
   moves the front about 2 km/h, and a fire 5 km away "would arrive in ~2.5 h". It is a rough
   estimate and is always said as one ("si avanza con el viento, llegaría en ~2,5 h (estimado)").
 - `factors` keeps `wind_kmh`, `wind_from_deg`, `wind_toward`, `wind_raised_by` and `arrival_h`. The
-  field page and the Telegram alert say it in words; the map draws an arrow on the open field
-  pointing where the wind blows, with its speed.
+  field page and the Telegram alert say it in words; the map shows the wind as the animated layer
+  ([06-goes](06-goes.md#wind-on-the-map)), not as a mark on the field.
 
 ## Spray conditions
 
