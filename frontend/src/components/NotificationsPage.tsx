@@ -19,6 +19,7 @@ import {
 import { useLocale } from "@/i18n/LocaleProvider";
 
 import { Breadcrumbs } from "./Breadcrumbs";
+import { DeleteAccount } from "./DeleteAccount";
 import { CloseIcon } from "./Icons";
 
 type Kind = keyof Notifications;
@@ -188,6 +189,8 @@ export function NotificationsPage({
         {(change.isError || changeSummary.isError) && (
           <p className="text-xs text-bad">{t.notifications.failed}</p>
         )}
+
+        <DeleteAccount email={me.email} />
       </div>
     </div>
   );

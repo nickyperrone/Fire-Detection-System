@@ -462,6 +462,22 @@ const en = {
       "Data from NASA FIRMS, NOAA GOES-19, ESA Sentinel-2 and Open-Meteo. The map shows an example field.",
     exampleField: "Example field",
   },
+  deleteAccount: {
+    open: "Delete my account",
+    title: "Delete my account",
+    intro: (fields: string, lots: string) =>
+      `This deletes your account, your ${fields} fields and ${lots} lots with their photos, alerts and history. It cannot be undone.`,
+    introShort:
+      "This deletes your account, your fields and lots with their photos, alerts and history. It cannot be undone.",
+    telegram:
+      "Telegram stops sending you alerts; you can delete the bot's chat whenever you like.",
+    type: (email: string) => `Type ${email} to confirm`,
+    mismatch: "That is not your email. Check how it is written.",
+    failed: "It could not be deleted. Try again in a moment.",
+    cancel: "Cancel",
+    confirm: "Yes, delete everything",
+    deleting: "Deleting…",
+  },
   notifications: {
     title: "Notifications",
     open: "Notifications",
@@ -1144,6 +1160,22 @@ const es: Messages = {
     sources:
       "Datos de NASA FIRMS, NOAA GOES-19, ESA Sentinel-2 y Open-Meteo. El mapa muestra un campo de ejemplo.",
     exampleField: "Campo de ejemplo",
+  },
+  deleteAccount: {
+    open: "Eliminar mi cuenta",
+    title: "Eliminar mi cuenta",
+    intro: (fields, lots) =>
+      `Se borran tu cuenta, tus ${fields} campos y ${lots} lotes, con sus fotos, avisos e historial. No se puede deshacer.`,
+    introShort:
+      "Se borran tu cuenta, tus campos y lotes, con sus fotos, avisos e historial. No se puede deshacer.",
+    telegram:
+      "Telegram deja de mandarte avisos; podés borrar el chat del bot cuando quieras.",
+    type: (email) => `Escribí ${email} para confirmar`,
+    mismatch: "Ese no es tu email. Revisá cómo está escrito.",
+    failed: "No se pudo eliminar. Probá de nuevo en un momento.",
+    cancel: "Cancelar",
+    confirm: "Sí, eliminar todo",
+    deleting: "Eliminando…",
   },
   notifications: {
     title: "Notificaciones",

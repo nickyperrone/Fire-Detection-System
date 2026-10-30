@@ -31,6 +31,7 @@ export type Snapshot = Schemas["SnapshotOut"];
 export type SnapshotView = "true_color" | "greenness";
 export type WeatherLayer = Schemas["WeatherLayerOut"];
 export type WindLayer = Schemas["WindLayerOut"];
+export type Account = Schemas["AccountOut"];
 export type Place = Schemas["PlaceOut"];
 
 /** One frame of the clouds and rain loop; a scan never changes, so the browser keeps it. */
@@ -132,6 +133,12 @@ export const api = {
       body: JSON.stringify({ email, locale, captcha }),
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
+  account: () => request<Account>("/auth/me/account"),
+  deleteAccount: (confirm: string) =>
+    request<void>("/auth/me", {
+      method: "DELETE",
+      body: JSON.stringify({ confirm }),
+    }),
   changeSummary: (summary: SummaryFrequency) =>
     request<Me>("/auth/me", {
       method: "PATCH",

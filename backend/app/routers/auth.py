@@ -1,5 +1,6 @@
 import logging
 import smtplib
+from dataclasses import asdict
 from datetime import UTC, datetime
 from html import escape
 from typing import Annotated
@@ -16,11 +17,23 @@ from app.routers.dependencies import (
     SESSION_COOKIE,
     HttpDep,
     MailDep,
+    PhotoRootDep,
     SessionDep,
     SettingsDep,
     UserDep,
 )
-from app.schemas import AuthConfigOut, LoginIn, MeIn, MeOut, TelegramLinkOut, TelegramOut
+from app.schemas import (
+    AccountOut,
+    AuthConfigOut,
+    DeleteAccountIn,
+    LoginIn,
+    MeIn,
+    MeOut,
+    TelegramLinkOut,
+    TelegramOut,
+)
+from app.services.accounts import contents as account_contents
+from app.services.accounts import delete_account
 from app.services.auth import (
     create_login_link,
     end_session,
@@ -195,6 +208,32 @@ def change_me(session: SessionDep, settings: SettingsDep, user: UserDep, body: M
         user.notifications = body.notifications.model_dump()
     session.commit()
     return _me(user, settings)
+
+
+@router.delete("/me", status_code=204)
+def delete_me(
+    session: SessionDep,
+    user: UserDep,
+    photo_root: PhotoRootDep,
+    body: DeleteAccountIn,
+):
+    """Closes the account and everything in it. The email is typed again so a stray request
+    cannot do it."""
+    user = _signed_in(user)
+    if body.confirm.strip().lower() != user.email:
+        return JSONResponse(
+            status_code=400, content={"detail": "confirmation does not match", "code": "confirm"}
+        )
+    delete_account(session, user, photo_root)
+    response = Response(status_code=204)
+    response.delete_cookie(SESSION_COOKIE)
+    return response
+
+
+@router.get("/me/account", response_model=AccountOut)
+def my_account(session: SessionDep, user: UserDep):
+    """What closing the account would remove, to say it first."""
+    return asdict(account_contents(session, _signed_in(user)))
 
 
 @router.post("/me/telegram", response_model=TelegramLinkOut)

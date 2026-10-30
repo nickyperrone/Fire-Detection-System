@@ -5,15 +5,19 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import httpx
+from sqlalchemy import select
 
 from app.boundaries import allowed_area
 from app.config import REPO_ROOT, get_settings, get_thresholds
 from app.db import session_factory
 from app.logging_setup import configure_logging
-from app.models import DataQuality
+from app.models import DataQuality, User
+from app.services.accounts import contents as account_contents
+from app.services.accounts import delete_account, find_users
 from app.services.auth import normalize_email
 from app.services.fire_history import load_history
 from app.services.pipeline import (
+    PHOTO_ROOT,
     answer_territories,
     run_fire_pipeline,
     run_forecast_pipeline,
@@ -131,6 +135,14 @@ def main() -> None:
         "claim", help="give the fields and tags loaded without an account to an account"
     )
     claim.add_argument("email")
+    users = commands.add_parser("users", help="list the accounts, to find one to close")
+    users.add_argument("--like", default="", help="only emails containing this text")
+    close = commands.add_parser(
+        "delete-user",
+        help="close an account and everything in it; without --yes it only says what would go",
+    )
+    close.add_argument("email")
+    close.add_argument("--yes", action="store_true", help="really do it")
     args = parser.parse_args()
 
     configure_logging()
@@ -176,6 +188,28 @@ def main() -> None:
             listed_ids = {e.territory.id for e in entries}
             for entry in entries:
                 print_entry(entry, listed_ids, now)
+        if args.command == "users":
+            for user in find_users(session, args.like):
+                c = account_contents(session, user)
+                last = user.last_login_at.date() if user.last_login_at else "never"
+                print(f"{user.email:<40} {c.fields} fields, {c.lots} lots, last sign-in {last}")
+        if args.command == "delete-user":
+            user = session.scalar(select(User).where(User.email == normalize_email(args.email)))
+            if user is None:
+                matches = [u.email for u in find_users(session, args.email.split("@")[0])]
+                print(
+                    f"no account {args.email!r}."
+                    + (f" Similar: {', '.join(matches)}" if matches else "")
+                )
+                return
+            c = account_contents(session, user)
+            chat = "linked" if c.telegram else "not linked"
+            what = f"{c.email}: {c.fields} fields, {c.lots} lots, telegram {chat}"
+            if not args.yes:
+                print(f"would delete {what}. Run again with --yes to do it.")
+                return
+            delete_account(session, user, PHOTO_ROOT)
+            print(f"deleted {what}")
         if args.command == "claim":
             moved = claim_fields(session, DEFAULT_OWNER, normalize_email(args.email))
             session.commit()

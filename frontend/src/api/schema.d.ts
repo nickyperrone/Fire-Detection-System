@@ -98,11 +98,36 @@ export interface paths {
         get: operations["me_auth_me_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Me
+         * @description Closes the account and everything in it. The email is typed again so a stray request
+         *     cannot do it.
+         */
+        delete: operations["delete_me_auth_me_delete"];
         options?: never;
         head?: never;
         /** Change Me */
         patch: operations["change_me_auth_me_patch"];
+        trace?: never;
+    };
+    "/auth/me/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Account
+         * @description What closing the account would remove, to say it first.
+         */
+        get: operations["my_account_auth_me_account_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/auth/me/summary": {
@@ -645,6 +670,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountOut */
+        AccountOut: {
+            /** Email */
+            email: string;
+            /** Fields */
+            fields: number;
+            /** Lots */
+            lots: number;
+            /** Telegram */
+            telegram: boolean;
+        };
         /** AnomalyAnswerOut */
         AnomalyAnswerOut: {
             /**
@@ -698,6 +734,14 @@ export interface components {
          * @enum {string}
          */
         DataQuality: "GOOD" | "PARTIAL" | "STALE" | "CLOUD_OBSCURED" | "NO_DATA";
+        /** DeleteAccountIn */
+        DeleteAccountIn: {
+            /**
+             * Confirm
+             * @description The account's own email, typed again
+             */
+            confirm: string;
+        };
         /** DetectIn */
         DetectIn: {
             /** Lat */
@@ -1645,6 +1689,39 @@ export interface operations {
             };
         };
     };
+    delete_me_auth_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     change_me_auth_me_patch: {
         parameters: {
             query?: never;
@@ -1667,6 +1744,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_account_auth_me_account_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
                 };
             };
             /** @description Validation Error */
@@ -2603,7 +2711,9 @@ export interface operations {
     };
     tile_tiles__layer___z___x___y__pbf_get: {
         parameters: {
-            query?: never;
+            query?: {
+                within?: number | null;
+            };
             header?: never;
             path: {
                 layer: components["schemas"]["Layer"];

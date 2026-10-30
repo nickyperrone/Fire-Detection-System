@@ -472,3 +472,14 @@ class WindLayerOut(BaseModel):
     fetched_at: datetime
     u: list[float] = Field(description="East component in km/h, rows north to south")
     v: list[float] = Field(description="North component in km/h")
+
+
+class AccountOut(BaseModel):
+    email: str
+    fields: int
+    lots: int
+    telegram: bool
+
+
+class DeleteAccountIn(BaseModel):
+    confirm: str = Field(max_length=254, description="The account's own email, typed again")

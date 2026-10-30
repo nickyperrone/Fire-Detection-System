@@ -107,6 +107,24 @@ export function useLogout() {
   });
 }
 
+export function useAccount(enabled: boolean) {
+  return useQuery({
+    queryKey: ["account"],
+    queryFn: api.account,
+    enabled,
+  });
+}
+
+export function useDeleteAccount() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteAccount,
+    meta: { inline: true },
+    // Everything cached belonged to the account that is gone.
+    onSuccess: () => client.resetQueries(),
+  });
+}
+
 // Field data exists only for a signed-in user; `enabled` is false while signed out.
 export function usePortfolio(tags: string[], enabled = true) {
   return useQuery({

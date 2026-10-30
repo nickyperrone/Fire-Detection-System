@@ -64,6 +64,23 @@ quota. Three limits stand in the way:
 - Fields loaded without an account (owner `default`, for example by `make seed`) are moved to an
   account with `make claim EMAIL=…`.
 
+## Closing an account
+
+Anyone can close their own account: at the end of **Notificaciones**, "Eliminar mi cuenta" says
+what goes ("tus 2 campos y 3 lotes, con sus fotos, avisos e historial"), asks for the email to be
+typed again, and then deletes (`DELETE /auth/me {confirm}`; `GET /auth/me/account` gives the counts
+the page says first). A wrong email changes nothing.
+
+- **What goes**: the account, its fields and lots with everything derived from them (the database
+  cascades: fire risk events, spraying assessments, forecasts, photo rows, land cover), its tags,
+  sign-in links, sessions, alert log and push devices, and the photos kept as files.
+- **What stays**: nothing of the account's. The Telegram chat is the user's own: the bot stops
+  writing to it, and they can delete the chat.
+- **From the server**, for an account that cannot do it (`docs/14-deploy.md`): in the app's
+  terminal, `python -m app.cli users --like text` lists accounts (fields, lots, last sign-in), and
+  `python -m app.cli delete-user someone@example.com` says what it would remove; the same with
+  `--yes` does it.
+
 ## Email alerts
 
 Same rule as browser alerts ([01-product](01-product.md#settings-per-field)): danger near a field
