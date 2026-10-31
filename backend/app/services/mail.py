@@ -12,13 +12,20 @@ SendEmail = Callable[[EmailMessage], None]
 SEND_ERRORS = (smtplib.SMTPException, OSError)
 
 
-def message(settings: Settings, to: str, subject: str, body: str) -> EmailMessage:
+def message(
+    settings: Settings, to: str, subject: str, body: str, unsubscribe_url: str | None = None
+) -> EmailMessage:
+    """With `unsubscribe_url`, mail apps show their own "Unsubscribe" button and, for those that
+    support it, use it with one tap (RFC 8058)."""
     email = EmailMessage()
     email["From"] = settings.smtp_from
     email["To"] = to
     # A header with a line break raises, and one bad name would stop everyone's alerts: the
     # subject is always one line.
     email["Subject"] = " ".join(subject.split())
+    if unsubscribe_url:
+        email["List-Unsubscribe"] = f"<{unsubscribe_url}>"
+        email["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
     email.set_content(body)
     return email
 

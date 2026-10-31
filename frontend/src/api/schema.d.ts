@@ -324,6 +324,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/push/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Subscribe
+         * @description This browser agrees to push alerts. The same device again only refreshes its keys; a device
+         *     that was another account's moves to this one.
+         */
+        post: operations["subscribe_push_subscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/push/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Forget
+         * @description This browser no longer wants push alerts; only the account's own devices can be forgotten.
+         */
+        post: operations["forget_push_unsubscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/risk-events/{risk_id}": {
         parameters: {
             query?: never;
@@ -608,6 +649,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Confirm Unsubscribe
+         * @description The link in an alert: a page with a button. Opening it changes nothing, so a mail scanner
+         *     that opens every link does not unsubscribe anyone.
+         */
+        get: operations["confirm_unsubscribe_unsubscribe_get"];
+        put?: never;
+        /**
+         * Do Unsubscribe
+         * @description The page's button, a mail app's one-tap unsubscribe (RFC 8058, the token in the address)
+         *     and the notification's own button: turns that kind off for that channel.
+         */
+        post: operations["do_unsubscribe_unsubscribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/weather-layer": {
         parameters: {
             query?: never;
@@ -726,6 +793,8 @@ export interface components {
         Channels: {
             /** Email */
             email: boolean;
+            /** Push */
+            push?: boolean | null;
             /** Telegram */
             telegram: boolean;
         };
@@ -1031,6 +1100,7 @@ export interface components {
             /** Locale */
             locale: string;
             notifications: components["schemas"]["Notifications"];
+            push: components["schemas"]["PushOut"];
             summary: components["schemas"]["SummaryFrequency"];
             telegram: components["schemas"]["TelegramOut"];
         };
@@ -1114,6 +1184,34 @@ export interface components {
          * @enum {string}
          */
         Priority: "HIGH" | "NORMAL" | "LOW";
+        /** PushOut */
+        PushOut: {
+            /** Available */
+            available: boolean;
+            /** Devices */
+            devices: number;
+            /** Public Key */
+            public_key: string | null;
+        };
+        /** PushSubscribeIn */
+        PushSubscribeIn: {
+            /** Auth */
+            auth: string;
+            /** Endpoint */
+            endpoint: string;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+            /** P256Dh */
+            p256dh: string;
+        };
+        /** PushUnsubscribeIn */
+        PushUnsubscribeIn: {
+            /** Endpoint */
+            endpoint: string;
+        };
         /** RiskEventOut */
         RiskEventOut: {
             /** Direction */
@@ -2127,6 +2225,72 @@ export interface operations {
             };
         };
     };
+    subscribe_push_subscribe_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscribeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forget_push_unsubscribe_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                fw_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushUnsubscribeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_risk_status_risk_events__risk_id__patch: {
         parameters: {
             query?: never;
@@ -2733,6 +2897,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_unsubscribe_unsubscribe_get: {
+        parameters: {
+            query?: {
+                t?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    do_unsubscribe_unsubscribe_post: {
+        parameters: {
+            query?: {
+                t?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
             };
             /** @description Validation Error */
             422: {

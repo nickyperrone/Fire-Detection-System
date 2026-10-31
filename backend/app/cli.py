@@ -32,6 +32,7 @@ from app.services.portfolio import (
     SprayAnswer,
     build_portfolio,
 )
+from app.services.push import make_vapid_keys
 from app.services.territories import DEFAULT_OWNER, claim_fields, load_feature_collection
 
 LOCAL_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -137,6 +138,9 @@ def main() -> None:
     claim.add_argument("email")
     users = commands.add_parser("users", help="list the accounts, to find one to close")
     users.add_argument("--like", default="", help="only emails containing this text")
+    commands.add_parser(
+        "vapid-keys", help="make the key pair for push alerts (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)"
+    )
     close = commands.add_parser(
         "delete-user",
         help="close an account and everything in it; without --yes it only says what would go",
@@ -144,6 +148,12 @@ def main() -> None:
     close.add_argument("email")
     close.add_argument("--yes", action="store_true", help="really do it")
     args = parser.parse_args()
+
+    if args.command == "vapid-keys":
+        public, private = make_vapid_keys()
+        print(f"VAPID_PUBLIC_KEY={public}\nVAPID_PRIVATE_KEY={private}")
+        print("\nPut both in the app's environment (Dokploy) and keep the private one secret.")
+        return
 
     configure_logging()
     settings, thresholds = get_settings(), get_thresholds()

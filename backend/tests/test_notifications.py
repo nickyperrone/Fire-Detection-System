@@ -136,7 +136,9 @@ def test_a_fire_goes_by_email_and_as_a_telegram_photo(session, thresholds, outbo
     assert texts(message["buttons"]) == [
         ["Abrir en el mapa", "📍 Cómo llegar"],
         ["Ya lo vi", "Ver el campo"],
+        ["🔕 Silenciar este tipo"],
     ]
+    assert message["buttons"][2][0]["callback_data"] == "mute:fire_high"
     assert message["buttons"][0][0]["url"] == f"https://fieldwatch.example/?f={field.id}"
     assert message["buttons"][0][1]["url"].startswith(
         "https://www.google.com/maps/search/?api=1&query=-32.995,-59.07"
@@ -152,7 +154,11 @@ def test_a_local_app_url_is_left_out(session, thresholds, outbox, bot, field):
     alert(session, thresholds, outbox, bot, app_url="http://localhost:3000")
     message = bot.sent[0]
     assert "localhost" not in message["text"]
-    assert texts(message["buttons"]) == [["📍 Cómo llegar"], ["Ya lo vi", "Ver el campo"]]
+    assert texts(message["buttons"]) == [
+        ["📍 Cómo llegar"],
+        ["Ya lo vi", "Ver el campo"],
+        ["🔕 Silenciar este tipo"],
+    ]
 
 
 def test_a_kind_turned_off_is_not_sent_but_is_marked(session, thresholds, outbox, bot, field):
@@ -218,7 +224,11 @@ def test_adverse_weather_is_announced_once_per_episode(session, thresholds, outb
     )
     assert outbox[0]["Subject"] == "La Esperanza: clima adverso: ráfagas de 72 km/h el sáb 3 18:00"
     # No fire to mark as seen: only the link.
-    assert texts(bot.sent[0]["buttons"]) == [["Abrir en el mapa"], ["Ver el campo"]]
+    assert texts(bot.sent[0]["buttons"]) == [
+        ["Abrir en el mapa"],
+        ["Ver el campo"],
+        ["🔕 Silenciar este tipo"],
+    ]
 
     # Still coming an hour later: the same episode, not announced again.
     later = NOW + timedelta(hours=1)
@@ -394,7 +404,7 @@ def test_mis_alertas_turns_kinds_on_and_off_from_the_chat(session, bot, field):
     answer_updates(session, bot, NOW)
     assert bot.answers[-1] == "✅ Prendida"
     assert texts(bot.edits[-1]["buttons"])[2] == ["✅  🔥 Fuego lejano"]
-    assert user.notifications["fire_far"] == {"email": False, "telegram": True}
+    assert user.notifications["fire_far"] == {"email": False, "telegram": True, "push": False}
     # "Saber más" explains each kind, with the way back.
     bot.queue = [tap("i:alerts")]
     answer_updates(session, bot, NOW)
@@ -479,11 +489,12 @@ def test_the_account_chooses_kinds_and_channels(anonymous, outbox):
 
     sign_in(anonymous, outbox, "uno@example.com")
     me = anonymous.get("/auth/me").json()
-    assert me["notifications"]["fire_far"] == {"email": False, "telegram": False}
-    assert me["notifications"]["summary"] == {"email": True, "telegram": False}
+    assert me["notifications"]["fire_far"] == {"email": False, "telegram": False, "push": False}
+    assert me["notifications"]["summary"] == {"email": True, "telegram": False, "push": False}
     choices = me["notifications"] | {"weather": {"email": False, "telegram": True}}
     changed = anonymous.patch("/auth/me", json={"notifications": choices}).json()
-    assert changed["notifications"]["weather"] == {"email": False, "telegram": True}
+    # A page that does not send push (loaded before it existed) leaves it as it was.
+    assert changed["notifications"]["weather"] == {"email": False, "telegram": True, "push": True}
     assert changed["summary"] == "WEEKLY"
 
 

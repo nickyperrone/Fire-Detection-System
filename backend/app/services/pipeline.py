@@ -24,6 +24,8 @@ from app.services.fire_ingestion import ingest_firms
 from app.services.goes_ingestion import ingest_goes_fire, ingest_lightning
 from app.services.land_cover import refresh_land_cover
 from app.services.mail import smtp_sender
+from app.services.push import available as push_available
+from app.services.push import web_pusher
 from app.services.snapshots import PHOTO_ROOT, take_snapshots
 from app.services.spray_conditions import assess_spray
 from app.services.static_sources import mark_observations
@@ -156,6 +158,7 @@ def run_alert_pipeline(
         now,
         telegram_bot(client, settings),
         picture,
+        web_pusher(settings) if push_available(settings) else None,
     )
 
 

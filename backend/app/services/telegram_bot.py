@@ -27,6 +27,7 @@ FIELD = "f:"
 ALERTS = "alerts"
 MENU = "menu"
 TOGGLE = "t:"
+MUTE = "mute:"
 # "Saber más": the menu's, the alerts' or a field's (with its id).
 MORE = "i:"
 SPRAY_PROFILE = "default"
@@ -58,6 +59,9 @@ TEXTS = {
         "to_menu": "‹ Menú",
         "seen": "Marcado como visto",
         "seen_button": "✓ Visto",
+        "mute": "🔕 Silenciar este tipo",
+        "muted_button": "🔕 Silenciado",
+        "muted": "🔕 Listo: no te aviso más de eso por Telegram. Lo cambiás en Mis alertas.",
         "already": "Ya estaba marcado como visto",
         "fields_title": "📋 <b>Tus campos</b>",
         "fields_hint": "Tocá un campo para ver más.",
@@ -152,6 +156,9 @@ TEXTS = {
         "to_menu": "‹ Menu",
         "seen": "Marked as seen",
         "seen_button": "✓ Seen",
+        "mute": "🔕 Mute this kind",
+        "muted_button": "🔕 Muted",
+        "muted": "🔕 Done: no more of those by Telegram. Change it in My alerts.",
         "already": "Already marked as seen",
         "fields_title": "📋 <b>Your fields</b>",
         "fields_hint": "Tap a field to see more.",
@@ -706,6 +713,19 @@ def _on_button(
         on = _toggle(session, user, data[len(TOGGLE) :])
         bot.answer_button(query["id"], texts["on"] if on else texts["off"])
         bot.edit_text(chat_id, message_id, *alerts_view(user))
+    elif data.startswith(MUTE) and data[len(MUTE) :] in KINDS:
+        chosen = preferences(user)
+        chosen[data[len(MUTE) :]]["telegram"] = False
+        user.notifications = chosen
+        session.commit()
+        bot.answer_button(query["id"], texts["muted"])
+        rows = (message.get("reply_markup") or {}).get("inline_keyboard") or []
+        muted = {"text": texts["muted_button"], "callback_data": MUTE}
+        buttons = [
+            [muted if (b.get("callback_data") or "").startswith(MUTE) else b for b in row]
+            for row in rows
+        ]
+        bot.set_buttons(chat_id, message_id, buttons)
     elif data.startswith(SEEN) and data[len(SEEN) :].isdigit():
         mark_seen(session, user, int(data[len(SEEN) :]))
         bot.answer_button(query["id"], texts["seen"])

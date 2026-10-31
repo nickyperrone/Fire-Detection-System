@@ -46,7 +46,11 @@ flowchart LR
    | `FIRMS_MAP_KEY` | The NASA FIRMS key |
    | `SMTP_HOST` `SMTP_PORT` `SMTP_USERNAME` `SMTP_PASSWORD` `SMTP_STARTTLS` `SMTP_FROM` | As in `.env` (Resend) |
    | `TELEGRAM_BOT_TOKEN` | The bot's token |
+   | `VAPID_PUBLIC_KEY` `VAPID_PRIVATE_KEY` `VAPID_SUBJECT` | Push alerts ([13](13-notifications.md#push)): the pair comes from `python -m app.cli vapid-keys`, run once; the subject is `mailto:` and an address you read |
    | `TURNSTILE_SITE_KEY` `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile, for the sign-in form ([09](09-accounts-and-alerts.md#bots)) |
+
+   Push alerts need `APP_URL` on `https://` (browsers only allow them on secure sites) and keep
+   the private key secret. Without the keys, push is off and the page says so.
 
    With `APP_URL` on `https://`, the sign-in cookie is Secure and Telegram alerts get the
    **Abrir en el mapa** button.

@@ -61,7 +61,8 @@ make web                  # in a second terminal: the map on http://localhost:30
 - Optional in `.env`: `TELEGRAM_BOT_TOKEN` for Telegram alerts and the bot
   ([13](docs/13-notifications.md#telegram)), and `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` for
   Cloudflare's check on the sign-in form ([09](docs/09-accounts-and-alerts.md#bots)). Without them
-  both are off. Only one worker may run per bot: Telegram refuses a second one.
+  both are off. Only one worker may run per bot: Telegram refuses a second one. Push alerts need
+  `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (`uv run python -m app.cli vapid-keys` makes them).
 - `docker compose up --build` runs the database, API and worker together.
 - The `postgis/postgis` image is amd64 only. On Apple Silicon Docker runs it under emulation, which
   works but makes the first start take about a minute.

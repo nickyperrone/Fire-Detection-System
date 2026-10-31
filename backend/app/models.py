@@ -1,3 +1,4 @@
+import secrets
 from datetime import date, datetime
 from enum import StrEnum
 
@@ -474,6 +475,32 @@ class User(Base):
     # The one-time code that links a Telegram chat, hashed like sign-in tokens.
     telegram_code_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     telegram_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Signs the "unsubscribe" links in alerts, so they work without signing in and cannot be made
+    # up for another account (docs/13-notifications.md#unsubscribing).
+    alert_key: Mapped[str] = mapped_column(
+        String(32),
+        default=lambda: secrets.token_hex(16),
+        server_default=text("md5(random()::text)"),
+    )
+    push_subscriptions: Mapped[list["PushSubscription"]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
+class PushSubscription(Base):
+    """A browser or phone that agreed to push alerts (docs/13-notifications.md#push)."""
+
+    __tablename__ = "push_subscription"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"), index=True)
+    # The push service's address for this device, and the keys that encrypt what is sent to it.
+    endpoint: Mapped[str] = mapped_column(String(2000), unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    # A short name to tell devices apart ("Chrome en Android").
+    label: Mapped[str] = mapped_column(String(80), server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class LoginLink(Base):

@@ -2,7 +2,9 @@
 
 A contractor with many fields does not want every distant fire on the phone, but does want the
 fire next to a client's field at once, wherever they are. Each account chooses which kinds of
-danger it hears about and through which channel: email, Telegram, and later WhatsApp.
+danger it hears about and through which channel: email, Telegram, push notifications on its
+devices, and later WhatsApp. Every alert, in every channel, has a one-tap way to stop that kind
+([Unsubscribing](#unsubscribing)).
 
 ## Kinds
 
@@ -26,11 +28,56 @@ danger it hears about and through which channel: email, Telegram, and later What
 
 ## Channels
 
-Each kind has its own channels: email and Telegram, each on or off. Telegram only counts once the
-account is connected. WhatsApp shows as coming soon until it is set up
+Each kind has its own channels: email, Telegram and push, each on or off. Telegram only counts once
+the account is connected, and push once a device has agreed to it. WhatsApp shows as coming soon until it is set up
 ([WhatsApp](#whatsapp)).
 
-Defaults: every kind that is on goes to both email and Telegram; the summary goes by email.
+Defaults: every kind that is on goes to email, Telegram and push (where there is one); the summary
+goes by email.
+
+## Push
+
+Notifications on the phone or the computer, which arrive even with Field Watch closed. They use
+the standard Web Push (VAPID): free, with no app to install. The server signs each push with its own
+key pair, `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` (`python -m app.cli vapid-keys` makes one);
+without them push is off and the page says it is not available.
+
+- **Turning it on.** In Notificaciones, "Activar avisos acá" asks the browser for permission (only
+  when tapped), subscribes it and sends the server its address and keys (`POST /push/subscribe`).
+  An account can have up to 10 devices, each turned on or off on its own page. On an iPhone it
+  works only once Field Watch has been added to the Home Screen, and the page says so.
+- **The alert** is one notification per field with new danger, in the same words as Telegram's
+  ("Posible fuego a 1,9 km al E de Campo Larroque", the wind toward the field and the time it
+  would take to arrive, what the field holds). The next one for the same field replaces it and
+  rings again. It stays on screen until someone looks at it, except a distant fire alone, which
+  arrives without sound like Telegram's. Tapping it opens the field in the app, in the open window
+  if there is one.
+- **Buttons:** *Abrir*, and *Desuscribirme*, which turns that kind of alert off for push in one
+  tap, without opening anything ([Unsubscribing](#unsubscribing)).
+- A device that has been uninstalled or cleared answers "gone" and is forgotten on the next alert.
+  A push that fails for another reason is not marked as delivered, so the next run tries again.
+  A push is kept by the push service for 3 hours at most: an alert that old is worse than none.
+- **If this browser gets push, it does not also show the alert of the open tab**, so nobody is told
+  twice.
+
+## Unsubscribing
+
+Every alert carries a way out that needs no sign-in and no steps:
+
+- **Email** (alerts and the summary): a line at the end ("Dejar de recibir estos avisos por mail
+  con un toque") and the `List-Unsubscribe` headers, so Gmail and others show their own
+  "Unsubscribe" button (RFC 8058, one tap).
+- **Push:** the notification's *Desuscribirme* button.
+- **Telegram:** the alert's *🔕 Silenciar este tipo* button, which turns that kind off in that chat
+  and says so.
+
+Each link carries a signature made with a key that belongs to the account, so it cannot be made up
+for another account, another kind or another channel. It points to `GET /unsubscribe?t=…`, a page
+with a button that changes nothing by itself (a mail scanner opens every link), and `POST` turns
+that kind off for that channel and says so, with a link to Notificaciones to change it back. A
+mail app's own one-tap and the notification's button do the `POST` directly. What it turns off is
+exactly one kind (or "all danger alerts" from an email, which never touches the summary) in one
+channel; the other channels and kinds stay as they were.
 
 ## Telegram
 
@@ -111,7 +158,14 @@ Made by the worker for each alert, 800 × 600 px:
 From the account menu, **Notificaciones** opens a page in the panel (`?view=notifications`, with
 "Mis campos › Notificaciones" breadcrumbs):
 
-- A row per kind with its switch, and under it the channels (Mail, Telegram, WhatsApp coming
+- **At the top, "¿Cuánto querés enterarte?"**: four presets that set every kind at once, in every
+  channel the account can use: *Todo*, *Lo importante* (what a new account has: fires within 5 km,
+  lightning and adverse weather), *Solo urgentes* (only a fire inside a field or within 2 km) and
+  *Silencio*. The one that matches the choices is highlighted; a mix of one's own matches none and
+  says so. The summary is left alone.
+- **Alerts on this device** (push): on or off for this browser, and how many other devices the
+  account has.
+- A row per kind with its switch, and under it the channels (Mail, Telegram, Push, WhatsApp coming
   soon) as chips that turn on and off. Fuego lejano and Clima adverso say what they mean in one
   line.
 - The summary: frequency (Semanal, Diario, No) and channels.

@@ -20,6 +20,7 @@ from app.services.email_text import summary_email
 from app.services.mail import SEND_ERRORS, SendEmail, message
 from app.services.notification_prefs import wants
 from app.services.portfolio import PortfolioEntry, build_portfolio
+from app.services.unsubscribe import link as unsubscribe_link
 
 log = logging.getLogger(__name__)
 
@@ -159,9 +160,10 @@ def send_summary(
     fields = build_summary(session, user.email, thresholds, since, now)
     if not fields:
         return False
-    subject, body = summary_email(user.locale, frequency, fields, settings.app_url)
+    stop = unsubscribe_link(settings, user, "summary", "email")
+    subject, body = summary_email(user.locale, frequency, fields, settings.app_url, stop)
     if not by_preference or wants(user, "summary", "email"):
-        send(message(settings, user.email, subject, body))
+        send(message(settings, user.email, subject, body, stop))
     if by_preference and telegram and wants(user, "summary", "telegram"):
         # The same words as the email; Telegram takes up to 4,096 characters.
         text = f"<b>{escape(subject)}</b>\n\n{escape(body)}"

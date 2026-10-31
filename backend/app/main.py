@@ -12,6 +12,7 @@ from app.routers import (
     health,
     places,
     portfolio,
+    push,
     tags,
     territories,
     tiles,
@@ -40,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(fields.router)
 app.include_router(weather.router)
 app.include_router(places.router)
+app.include_router(push.router)
 
 
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}

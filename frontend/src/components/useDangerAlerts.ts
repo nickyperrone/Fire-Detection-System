@@ -5,6 +5,7 @@ import { useEffect, useReducer, useRef, useSyncExternalStore } from "react";
 import type { PortfolioEntry } from "@/api/client";
 import type { Messages } from "@/i18n/messages";
 import { type Danger, dangerGrew, dangerOf } from "@/lib/danger";
+import { detect as detectPush } from "@/lib/usePush";
 
 import { headline } from "./FieldSummary";
 
@@ -50,10 +51,14 @@ export function useDangerAlerts(
       const grew = dangerGrew(seen.current.get(entry.territory_id), now);
       seen.current.set(entry.territory_id, now);
       if (grew && entry.alerts && readPermission() === "granted") {
-        new Notification(entry.name, {
-          body: headline(t, entry),
-          // One notification per field: a newer one replaces the older.
-          tag: `field-${entry.territory_id}`,
+        // A browser that gets real push alerts is not told twice.
+        void detectPush().then((state) => {
+          if (state === "on") return;
+          new Notification(entry.name, {
+            body: headline(t, entry),
+            // One notification per field: a newer one replaces the older.
+            tag: `field-${entry.territory_id}`,
+          });
         });
       }
     }

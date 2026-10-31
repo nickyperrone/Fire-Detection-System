@@ -140,6 +140,17 @@
             "title": "Email",
             "type": "boolean"
           },
+          "push": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push"
+          },
           "telegram": {
             "title": "Telegram",
             "type": "boolean"
@@ -944,6 +955,9 @@
           "notifications": {
             "$ref": "#/components/schemas/Notifications"
           },
+          "push": {
+            "$ref": "#/components/schemas/PushOut"
+          },
           "summary": {
             "$ref": "#/components/schemas/SummaryFrequency"
           },
@@ -956,7 +970,8 @@
           "locale",
           "summary",
           "notifications",
-          "telegram"
+          "telegram",
+          "push"
         ],
         "title": "MeOut",
         "type": "object"
@@ -1177,6 +1192,86 @@
         ],
         "title": "Priority",
         "type": "string"
+      },
+      "PushOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "devices": {
+            "title": "Devices",
+            "type": "integer"
+          },
+          "public_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Key"
+          }
+        },
+        "required": [
+          "available",
+          "public_key",
+          "devices"
+        ],
+        "title": "PushOut",
+        "type": "object"
+      },
+      "PushSubscribeIn": {
+        "properties": {
+          "auth": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Auth",
+            "type": "string"
+          },
+          "endpoint": {
+            "maxLength": 2000,
+            "minLength": 20,
+            "pattern": "^https://",
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Label",
+            "type": "string"
+          },
+          "p256dh": {
+            "maxLength": 200,
+            "minLength": 20,
+            "title": "P256Dh",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth"
+        ],
+        "title": "PushSubscribeIn",
+        "type": "object"
+      },
+      "PushUnsubscribeIn": {
+        "properties": {
+          "endpoint": {
+            "maxLength": 2000,
+            "title": "Endpoint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint"
+        ],
+        "title": "PushUnsubscribeIn",
+        "type": "object"
       },
       "RiskEventOut": {
         "properties": {
@@ -3213,6 +3308,112 @@
         ]
       }
     },
+    "/push/subscribe": {
+      "post": {
+        "description": "This browser agrees to push alerts. The same device again only refreshes its keys; a device\nthat was another account's moves to this one.",
+        "operationId": "subscribe_push_subscribe_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscribeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Subscribe",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/push/unsubscribe": {
+      "post": {
+        "description": "This browser no longer wants push alerts; only the account's own devices can be forgotten.",
+        "operationId": "forget_push_unsubscribe_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "fw_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fw Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushUnsubscribeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forget",
+        "tags": [
+          "push"
+        ]
+      }
+    },
     "/risk-events/{risk_id}": {
       "patch": {
         "operationId": "update_risk_status_risk_events__risk_id__patch",
@@ -4381,6 +4582,92 @@
         "summary": "Tile",
         "tags": [
           "tiles"
+        ]
+      }
+    },
+    "/unsubscribe": {
+      "get": {
+        "description": "The link in an alert: a page with a button. Opening it changes nothing, so a mail scanner\nthat opens every link does not unsubscribe anyone.",
+        "operationId": "confirm_unsubscribe_unsubscribe_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "T",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Unsubscribe",
+        "tags": [
+          "push"
+        ]
+      },
+      "post": {
+        "description": "The page's button, a mail app's one-tap unsubscribe (RFC 8058, the token in the address)\nand the notification's own button: turns that kind off for that channel.",
+        "operationId": "do_unsubscribe_unsubscribe_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "T",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Do Unsubscribe",
+        "tags": [
+          "push"
         ]
       }
     },

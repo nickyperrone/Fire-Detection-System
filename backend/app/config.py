@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     smtp_from: str = "Field Watch <alerts@fieldwatch.local>"
     # docs/13-notifications.md#telegram: empty turns Telegram off.
     telegram_bot_token: str = ""
+    # docs/13-notifications.md#push: the server's key pair for push alerts (`python -m app.cli
+    # vapid-keys` makes one) and a contact the push services can reach. Empty turns push off.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:alerts@fieldwatch.local"
     # docs/09-accounts-and-alerts.md#bots: both empty turn the check off, as in development.
     turnstile_site_key: str = ""
     turnstile_secret_key: str = ""

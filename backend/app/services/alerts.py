@@ -26,12 +26,20 @@ from app.models import (
     User,
 )
 from app.providers.telegram import Telegram, TelegramBlocked, TelegramError
-from app.services.email_text import Danger, alert_caption, alert_email, holds_line
+from app.services.email_text import (
+    Danger,
+    alert_caption,
+    alert_email,
+    alert_push,
+    holds_line,
+)
 from app.services.field_risk import SEVERITY_RANK, compass
 from app.services.land_cover import contents_of
 from app.services.lightning import nearby_lightning
 from app.services.mail import SEND_ERRORS, SendEmail, message
 from app.services.notification_prefs import CHANNELS, FIRE_KIND, Kind, wants
+from app.services.push import PushMessage, PushSender
+from app.services.unsubscribe import link as unsubscribe_link
 from app.services.wind import Push, Wind, push, wind_now
 
 log = logging.getLogger(__name__)
@@ -260,6 +268,7 @@ def send_alerts(
     now: datetime,
     telegram: Telegram | None = None,
     picture: Picture | None = None,
+    pusher: PushSender | None = None,
 ) -> dict:
     """Per account: one email with every field whose danger started or grew, and one Telegram
     photo per field, each with the kinds the account wants by that channel."""
@@ -274,7 +283,14 @@ def send_alerts(
     wind = wind_now(session, groups, now)
     cover = contents_of(session, groups)
     cover_config = thresholds["field_risk"]["land_cover"]
-    counts = {"emails_sent": 0, "emails_failed": 0, "telegram_sent": 0, "telegram_failed": 0}
+    counts = {
+        "emails_sent": 0,
+        "emails_failed": 0,
+        "telegram_sent": 0,
+        "telegram_failed": 0,
+        "push_sent": 0,
+        "push_failed": 0,
+    }
 
     for items in by_user.values():
         user = items[0].user
@@ -285,9 +301,12 @@ def send_alerts(
             (f.danger for f in items if f.shown and wants(user, f.kind, "email")), key=_rank
         )
         if emailed:
-            subject, body = alert_email(user.locale, emailed, settings.app_url, window_minutes, now)
+            stop = unsubscribe_link(settings, user, "alerts", "email")
+            subject, body = alert_email(
+                user.locale, emailed, settings.app_url, window_minutes, now, stop
+            )
             try:
-                send(message(settings, user.email, subject, body))
+                send(message(settings, user.email, subject, body, stop))
             except SEND_ERRORS as exc:
                 log.warning("alert email to user %s not sent: %s", user.id, exc)
                 counts["emails_failed"] += 1
@@ -327,6 +346,7 @@ def send_alerts(
                 window_minutes,
                 now,
                 silent,
+                min(field_items, key=lambda f: _rank(f.danger)).kind,
             )
             if result == "blocked":
                 # The user blocked the bot or deleted the chat: disconnected, as with /stop.
@@ -341,10 +361,59 @@ def send_alerts(
             else:
                 counts["telegram_failed"] += 1
 
+        pushed_by_field: dict[int, list[Found]] = defaultdict(list)
+        for f in items:
+            if f.shown and pusher and wants(user, f.kind, "push"):
+                pushed_by_field[f.territory.id].append(f)
+        for territory_id, field_items in pushed_by_field.items():
+            territory = field_items[0].territory
+            worst = min(field_items, key=lambda f: _rank(f.danger))
+            dangers = sorted((f.danger for f in field_items), key=_rank)
+            holds = cover.get(territory_id)
+            fire = next((d for d in dangers if d.kind == "fire"), None)
+            spread = fire and push(
+                wind.get(territory_id),
+                fire.bearing_deg,
+                fire.distance_m,
+                thresholds["field_risk"]["wind"],
+            )
+            title, text = alert_push(
+                user.locale,
+                dangers,
+                spread or None,
+                holds_line(holds, cover_config, user.locale) if fire else None,
+                window_minutes,
+                now,
+            )
+            message_ = PushMessage(
+                title=title,
+                body=text,
+                url=f"{settings.app_url}/?f={territory_id}",
+                tag=f"field-{territory_id}",
+                unsubscribe=unsubscribe_link(settings, user, worst.kind, "push"),
+                silent=all(f.kind == "fire_far" for f in field_items)
+                and not (holds and holds.has_buildings(cover_config)),
+            )
+            reached = 0
+            for device in list(user.push_subscriptions):
+                result = pusher(device, message_)
+                if result == "gone":
+                    session.delete(device)
+                    user.push_subscriptions.remove(device)
+                elif result == "sent":
+                    reached += 1
+                else:
+                    counts["push_failed"] += 1
+            if reached:
+                delivered.add(("push", territory_id))
+                _log(session, user, "push", dangers, version, now)
+                counts["push_sent"] += 1
+
         for f in items:
             wanted = [c for c in CHANNELS if wants(user, f.kind, c)]
             carried = ("email", None) in delivered and "email" in wanted
             carried |= ("telegram", f.group) in delivered and "telegram" in wanted
+            carried |= ("push", f.group) in delivered and "push" in wanted
             # Not wanted by any channel: marked too, so turning a kind on later does not bring
             # back old dangers. Wanted but not carried: left for the next run to try again.
             if carried or not wanted:
@@ -366,6 +435,7 @@ def _send_telegram(
     window_minutes: int,
     now: datetime,
     silent: bool,
+    kind: str,
 ) -> str:
     """One field's photo alert; "sent", "failed" (retried on the next run) or "blocked"."""
     es = user.locale == "es"
@@ -392,11 +462,15 @@ def _send_telegram(
         )
     see = "Ver el campo" if es else "See the field"
     actions = [{"text": see, "callback_data": f"f:{territory.id}"}]
+    # One tap to stop this kind of alert in this chat, in the alert itself.
+    mute = "🔕 Silenciar este tipo" if es else "🔕 Mute this kind"
     if fire:
         actions.insert(
             0, {"text": "Ya lo vi" if es else "Seen it", "callback_data": f"seen:{territory.id}"}
         )
-    buttons = [row for row in (links, actions) if row]
+    buttons = [
+        row for row in (links, actions, [{"text": mute, "callback_data": f"mute:{kind}"}]) if row
+    ]
     try:
         telegram.chat_action(chat, "upload_photo")
     except (TelegramError, httpx.HTTPError):

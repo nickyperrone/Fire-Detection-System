@@ -140,8 +140,22 @@ def _line(danger: Danger, locale: str, window_minutes: int, now: datetime) -> st
     return " · ".join(details)
 
 
+def stop_line(locale: str, url: str | None, what: str) -> str:
+    """The one-tap way out at the end of an email: no sign-in, no steps."""
+    if not url:
+        return ""
+    if locale == "es":
+        return f"\n\nDejar de recibir {what} por mail con un toque: {url}"
+    return f"\n\nStop {what} by email with one tap: {url}"
+
+
 def alert_email(
-    locale: str, dangers: list[Danger], app_url: str, window_minutes: int, now: datetime
+    locale: str,
+    dangers: list[Danger],
+    app_url: str,
+    window_minutes: int,
+    now: datetime,
+    unsubscribe_url: str | None = None,
 ) -> tuple[str, str]:
     """Subject and body for one user's new dangers, which come worst first."""
     first = dangers[0]
@@ -175,6 +189,9 @@ def alert_email(
             "To choose which alerts you get and where, open Notifications (the bell): "
             f"{app_url}/?view=notifications"
         )
+    footer += stop_line(
+        locale, unsubscribe_url, "estos avisos" if locale == "es" else "these alerts"
+    )
     return subject, "\n\n".join(lines) + "\n\n" + footer + "\n"
 
 
@@ -231,6 +248,32 @@ def alert_caption(
     if holds:
         lines.append(escape(holds))
     return "\n".join(lines)[:1024]
+
+
+def alert_push(
+    locale: str,
+    dangers: list[Danger],
+    pushed: "Push | None",
+    holds: str | None,
+    window_minutes: int,
+    now: datetime,
+) -> tuple[str, str]:
+    """Title and text of one field's push alert, worst danger first: short, since it is read on a
+    lock screen."""
+    title = "🔴 ¡ALERTA!" if locale == "es" else "🔴 ALERT!"
+    lines = []
+    for danger in dangers:
+        what, *_ = _line(danger, locale, window_minutes, now).split(" · ")
+        lines.append(_headline(danger, what, locale))
+    if pushed and pushed.toward:
+        lines.append(
+            "💨 " + ("Viento hacia el campo." if locale == "es" else "Wind toward the field.")
+        )
+        if pushed.arrival_h is not None:
+            lines.append(f"⏱️ {arrival(pushed.arrival_h, locale)}")
+    if holds:
+        lines.append(holds)
+    return title, "\n".join(lines)
 
 
 def arrival(hours: float, locale: str) -> str:
@@ -352,7 +395,11 @@ def _field_lines(item: "FieldSummary", locale: str, patches: bool = True) -> lis
 
 
 def summary_email(
-    locale: str, frequency: SummaryFrequency, items: list["FieldSummary"], app_url: str
+    locale: str,
+    frequency: SummaryFrequency,
+    items: list["FieldSummary"],
+    app_url: str,
+    unsubscribe_url: str | None = None,
 ) -> tuple[str, str]:
     """Every field in the list's order; its lots listed in full only where they differ."""
     es = locale == "es"
@@ -409,5 +456,8 @@ def summary_email(
         if es
         else "Change how often this summary comes (daily, weekly or never) and where in "
         f"Notifications (the bell): {app_url}/?view=notifications"
+    )
+    footer += stop_line(
+        "es" if es else "en", unsubscribe_url, "este resumen" if es else "this summary"
     )
     return f"{period}: {news}", "\n\n".join(blocks) + "\n\n" + footer + "\n"

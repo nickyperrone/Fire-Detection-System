@@ -134,6 +134,21 @@ export const api = {
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   account: () => request<Account>("/auth/me/account"),
+  pushSubscribe: (device: {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    label: string;
+  }) =>
+    request<void>("/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(device),
+    }),
+  pushUnsubscribe: (endpoint: string) =>
+    request<void>("/push/unsubscribe", {
+      method: "POST",
+      body: JSON.stringify({ endpoint }),
+    }),
   deleteAccount: (confirm: string) =>
     request<void>("/auth/me", {
       method: "DELETE",

@@ -29,6 +29,7 @@ from app.schemas import (
     LoginIn,
     MeIn,
     MeOut,
+    PushOut,
     TelegramLinkOut,
     TelegramOut,
 )
@@ -45,6 +46,7 @@ from app.services.captcha import client_ip, limit_key, login_requests, turnstile
 from app.services.email_text import login_email
 from app.services.mail import SEND_ERRORS, message
 from app.services.notification_prefs import preferences
+from app.services.push import available as push_available
 from app.services.summary import send_summary
 from app.services.telegram_bot import bot_username, link_code
 
@@ -187,6 +189,11 @@ def _me(user: User, settings: Settings) -> MeOut:
         locale=user.locale,
         summary=user.summary,
         notifications=preferences(user),
+        push=PushOut(
+            available=push_available(settings),
+            public_key=settings.vapid_public_key or None,
+            devices=len(user.push_subscriptions),
+        ),
         telegram=TelegramOut(
             available=bool(settings.telegram_bot_token),
             connected=user.telegram_chat_id is not None,
@@ -205,7 +212,15 @@ def change_me(session: SessionDep, settings: SettingsDep, user: UserDep, body: M
     if body.summary is not None:
         user.summary = body.summary
     if body.notifications is not None:
-        user.notifications = body.notifications.model_dump()
+        # A channel the page did not send keeps its current value.
+        current = preferences(user)
+        user.notifications = {
+            kind: {
+                channel: current[kind][channel] if value is None else value
+                for channel, value in channels.items()
+            }
+            for kind, channels in body.notifications.model_dump().items()
+        }
     session.commit()
     return _me(user, settings)
 

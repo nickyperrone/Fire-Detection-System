@@ -6,17 +6,17 @@ from typing import Literal, get_args
 from app.models import Severity, User
 
 Kind = Literal["fire_high", "fire_medium", "fire_far", "lightning", "weather", "summary"]
-Channel = Literal["email", "telegram"]
+Channel = Literal["email", "telegram", "push"]
 KINDS: tuple[Kind, ...] = get_args(Kind)
 CHANNELS: tuple[Channel, ...] = get_args(Channel)
 
 DEFAULTS: dict[Kind, dict[Channel, bool]] = {
-    "fire_high": {"email": True, "telegram": True},
-    "fire_medium": {"email": True, "telegram": True},
-    "fire_far": {"email": False, "telegram": False},
-    "lightning": {"email": True, "telegram": True},
-    "weather": {"email": True, "telegram": True},
-    "summary": {"email": True, "telegram": False},
+    "fire_high": {"email": True, "telegram": True, "push": True},
+    "fire_medium": {"email": True, "telegram": True, "push": True},
+    "fire_far": {"email": False, "telegram": False, "push": False},
+    "lightning": {"email": True, "telegram": True, "push": True},
+    "weather": {"email": True, "telegram": True, "push": True},
+    "summary": {"email": True, "telegram": False, "push": False},
 }
 
 FIRE_KIND: dict[Severity, Kind] = {
@@ -40,7 +40,10 @@ def preferences(user: User) -> dict[Kind, dict[Channel, bool]]:
 
 
 def wants(user: User, kind: Kind, channel: Channel) -> bool:
-    """Whether this kind goes through this channel; Telegram also needs a linked chat."""
+    """Whether this kind goes through this channel; Telegram also needs a linked chat, and push a
+    device that agreed to it."""
     if channel == "telegram" and user.telegram_chat_id is None:
+        return False
+    if channel == "push" and not user.push_subscriptions:
         return False
     return preferences(user)[kind][channel]

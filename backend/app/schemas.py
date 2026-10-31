@@ -132,6 +132,8 @@ class Channels(BaseModel):
 
     email: bool
     telegram: bool
+    # None in a change: leave push as it is, for pages loaded before push existed.
+    push: bool | None = None
 
 
 class Notifications(BaseModel):
@@ -149,12 +151,21 @@ class TelegramOut(BaseModel):
     connected: bool
 
 
+class PushOut(BaseModel):
+    # False when the server has no VAPID key: the page says push is not available.
+    available: bool
+    public_key: str | None
+    # Devices of this account that agreed to push alerts.
+    devices: int
+
+
 class MeOut(BaseModel):
     email: str
     locale: str
     summary: SummaryFrequency
     notifications: Notifications
     telegram: TelegramOut
+    push: PushOut
 
 
 class MeIn(BaseModel):
@@ -483,3 +494,14 @@ class AccountOut(BaseModel):
 
 class DeleteAccountIn(BaseModel):
     confirm: str = Field(max_length=254, description="The account's own email, typed again")
+
+
+class PushSubscribeIn(BaseModel):
+    endpoint: str = Field(min_length=20, max_length=2000, pattern=r"^https://")
+    p256dh: str = Field(min_length=20, max_length=200)
+    auth: str = Field(min_length=8, max_length=100)
+    label: str = Field(default="", max_length=80)
+
+
+class PushUnsubscribeIn(BaseModel):
+    endpoint: str = Field(max_length=2000)
